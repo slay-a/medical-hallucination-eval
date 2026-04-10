@@ -1,0 +1,41 @@
+# Virtual environment
+.venv/
+venv/
+env/
+
+# IDE / editor
+.claude/
+.idea/
+.vscode/
+*.code-workspace
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Data — large raw dataset (download separately)
+mtsamples.csv
+
+# Thesis draft document
+thesis_final.docx
+
+# Intermediate / partial pipeline outputs
+results/summaries_partial.csv
+results/claims_partial.csv
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Secrets
+.env
+*.key

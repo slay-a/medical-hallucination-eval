@@ -1,0 +1,819 @@
+doc_id,specialty,description,source_word_count,e0_summary,e0_summary_words,E0_UFR,E0_CR,E0_n_claims,E0_n_supported,E0_n_contradicted,E0_n_not_supported,e1_summary,e1_summary_words,E1_UFR,E1_CR,E1_n_claims,E1_n_supported,E1_n_contradicted,E1_n_not_supported,e2_summary,e2_summary_words,E2_UFR,E2_CR,E2_n_claims,E2_n_supported,E2_n_contradicted,E2_n_not_supported
+0,Consult - History and Phy.,Foul-smelling urine and stomach pain after meals.,228,"**Reason for Visit / Diagnosis:**  
+You came in today due to foul-smelling urine and stomach pain after meals. These symptoms have been ongoing for about a year and a half. The assessment indicates that you have a urinary tract infection (UTI), gastroesophageal reflux disease (GERD), and some difficulty swallowing (dysphagia).
+
+**Key Findings:**  
+During the examination, your overall health appeared unremarkable. Your abdomen was soft and without tenderness, and your lungs and heart sounded normal. A urinalysis showed some blood, likely due to your menstrual cycle, and moderate white blood cells, which supports the diagnosis of a UTI.
+
+**Treatment or Procedures Performed:**  
+You were prescribed Cipro for the UTI, as well as omeprazole and famotidine to help with your stomach issues. Additionally, a barium swallow series has been ordered to further investigate your swallowing difficulties.
+
+**Follow-up Instructions:**  
+Please take your medications as prescribed. If your symptoms do not improve or worsen, contact our office. Make sure to follow up for your barium swallow test, and we will also discuss contraception options during your next visit.",174,0.8571428571428571,0.2142857142857142,14,2,3,9,"You visited us today due to concerns about foul-smelling urine and stomach pain after meals. You've been experiencing stomach pain with most meals for the past year and a half, along with urinary symptoms during the same time frame. 
+
+During your visit, we noted that you have pain and cramping in your stomach, but you did not report any nausea, vomiting, or diarrhea. You mentioned experiencing some regurgitation with gas after meals. Your urine was described as having a strong odor. Overall, your physical examination was unremarkable, and there were no significant findings in other areas.
+
+In the past, you have been prescribed medications to help with your gastrointestinal symptoms and a treatment for a urinary tract infection. 
+
+For your follow-up, please continue to monitor your symptoms and reach out if they worsen or if you have any new concerns. It may be helpful to keep a record of your meals and any associated symptoms to discuss during your next visit.",161,0.5555555555555556,0.1111111111111111,9,4,1,4,"No visual disturbances, no eye irritation. No sore throat or masses. No palpitations or pain. Denies nausea, vomiting, or diarrhea. Dysphagia.",21,0.2,0.2,5,4,1,0
+1,Consult - History and Phy.,A female with unknown gestational age who presents to the ED after a suicide attempt.,418,"**Reason for Visit / Diagnosis:**  
+You visited today due to concerns about your menstrual periods and a possible pregnancy. You mentioned having daily spotting for three months and recently passing what you believed to be a fetus, although you were unaware of being pregnant at that time.
+
+**Key Findings:**  
+During your examination, your vital signs were stable, and you did not show signs of acute distress. Your abdomen was soft and non-tender, and there were no concerning symptoms noted during the review of your health.
+
+**Treatment or Procedures Performed:**  
+We discussed your situation and recommended a blood test to check your pregnancy hormone levels (quantitative HCG) and a transvaginal ultrasound to determine how far along you are in your pregnancy. Additionally, we advised you to start taking prenatal vitamins.
+
+**Follow-Up Instructions:**  
+It is important for you to follow up as an outpatient for routine prenatal care. We will monitor your health and the development of the pregnancy closely. If you have any questions or concerns before your next appointment, please reach out.",172,0.9166666666666666,0.4166666666666667,12,1,5,6,"You visited us today due to concerns about your menstrual periods and possible pregnancy. You reported experiencing abnormal menstrual cycles and had daily spotting for three months. Recently, you believe you passed a fetus, although you were unaware of being pregnant at that time. You did not report any abdominal pain or vaginal bleeding.
+
+During your examination, no significant physical issues were found, and your neurological functions appeared normal. However, it was noted that you have been feeling emotionally flat, which is important for your overall well-being.
+
+We understand that you are currently separated from your partner and living with your parents, which may be contributing to your stress. You have no history of abnormal Pap smears or sexually transmitted infections.
+
+As part of your care, we will ensure you receive the support you need. It’s important to follow up with your healthcare provider to discuss your emotional health and any further steps regarding your menstrual concerns. Please reach out if you have any questions or if your symptoms change.",170,0.9090909090909092,0.1818181818181818,11,1,2,8,"She denies any abdominal pain or vaginal bleeding. ,PAST SURGICAL HISTORY:,1. Gastric bypass.,2. No acute distress. No clubbing, cyanosis, or edema.",21,0.0,0.0,5,5,0,0
+2,Consult - History and Phy.,"A 7-year-old white male started to complain of pain in his fingers, elbows, and neck.  This patient may have had reactive arthritis.",561,"**Reason for Visit / Diagnosis:**  
+You visited our Pediatric Rheumatology Clinic due to joint pain in your fingers, elbows, and neck that started a couple of months ago. 
+
+**Key Findings:**  
+During the visit, we noted that your joint pain has improved significantly and is almost gone. You have been active and cooperative, with no signs of swelling or tenderness in your joints today. Your medical history shows no serious illnesses, and you have seasonal allergies for which you take Claritin. There is a family history of arthritis on your grandmother's side.
+
+**Treatment or Procedures Performed:**  
+We conducted a physical examination and ran some laboratory tests, including an arthritis panel. The results were normal, indicating no current issues with your joints. 
+
+**Follow-Up Instructions:**  
+We believe your joint pain may have been related to a recent viral infection. We recommend monitoring your condition. If you experience any recurrence of symptoms, swelling, or limitations in your joints, please contact us to schedule a follow-up appointment. If you have any questions or concerns, feel free to reach out.",174,0.6428571428571429,0.1428571428571428,14,5,2,7,"You visited our Pediatric Rheumatology Clinic today due to joint pain in your fingers, elbows, and neck that started a couple of months ago. Although the pain has improved significantly and is almost gone now, it was severe enough at times to make you cry. 
+
+During the examination, we found no tenderness in your joints, and your muscle strength is normal. Your lab tests, including an arthritis panel, showed no significant issues, which suggests that your joint pain may have been related to a recent viral infection. 
+
+For now, we recommend observing your condition. If you notice any return of symptoms, swelling, or limitations in your joints, please let us know, and we would be happy to see you again. If you have any questions or need further assistance, don’t hesitate to reach out.",134,0.4285714285714285,0.1428571428571428,7,4,1,2,"This is a 7-year-old white male who has no history of systemic disease, who until 2 months ago, was doing well and 2 months ago, he started to complain of pain in his fingers, elbows, and neck. Soft, nontender with no visceromegaly.,MUSCULOSKELETAL:  Shows no limitation in any of his joints or active swelling today. He has no tenderness either in any of his joints. His mother stated that this was done while he was having symptoms.,ASSESSMENT AND PLAN: , This patient may have had reactive arthritis. Mother was oriented about the finding and my recommendation is to observe him and if there is any recurrence of the symptoms or persistence of swelling or limitation in any of his joints, I will be glad to see him back.,If",127,0.2,0.2,5,4,1,0
+3,Consult - History and Phy.,"The patient is a 16-month-old boy, who had a circumcision performed approximately 4 days before he developed penile swelling and fever and discharge.",648,"**Reason for Visit / Diagnosis:**  
+You brought your 16-month-old son in for treatment of penile cellulitis following a recent circumcision. He developed swelling, fever, and discharge about four days after the procedure.
+
+**Key Findings:**  
+Your son was hospitalized after experiencing significant swelling in the penis and scrotum, along with a fever reaching up to 103°F. Tests showed he has a Staph infection, and he has been responding well to treatment. During the examination, the doctor noted some swelling and dullness in the tissue around the penis, but no active signs of infection were present.
+
+**Treatment or Procedures Performed:**  
+He has been started on clindamycin and will likely continue with Bactrim for 10 days. You were advised to apply bacitracin ointment during diaper changes for the next 2 to 3 weeks and to give him sitz baths once or twice daily.
+
+**Follow-Up Instructions:**  
+It’s important to gently retract the skin to prevent it from adhering again due to the swelling. Your son has a follow-up appointment scheduled with his urologist, and you should keep this appointment. If you notice any new problems or concerns before then, please reach out to your healthcare provider.",192,0.7857142857142857,0.3571428571428571,14,3,5,6,"**Reason for Visit / Diagnosis:**  
+You brought your 16-month-old son in because he developed swelling, fever, and discharge after having a circumcision about 4 days ago. This condition is known as penile cellulitis.
+
+**Key Findings:**  
+During the examination, it was noted that your son has significant swelling in the penis and scrotum, as well as in the area above the pubic bone. He also has a fever reaching up to 103°F. The swelling is likely a mix of the healing process and an infection, which is suspected to be caused by Staph bacteria.
+
+**Treatment or Procedures Performed:**  
+Your son is currently being treated for the infection. The healthcare team is monitoring his condition and will check the results of tests to determine the specific type of bacteria involved.
+
+**Follow-Up Instructions:**  
+Please keep an eye on your son's symptoms. If the swelling worsens, the fever continues, or if you notice any new symptoms, contact your healthcare provider immediately. Follow-up appointments may be necessary to ensure he is healing properly.",168,0.7692307692307693,0.1538461538461538,13,3,2,8,"Surgeries; he has had 2 circumcisions. He also had an ear infection about 1 to 2 weeks before his circumcision.,SOCIAL He has a buried appearance of the penis after recent circumcision with a normal appearing glans. The scrotum was normal, and there was no erythema, there was no tenderness. ,BACK:  Normal.,IMPRESSION/PLAN: , The patient had a recent circumcision with a fairly prominent suprapubic fat pad but also has a penile and suprapubic cellulitis.",73,0.2,0.2,5,4,1,0
+4,Consult - History and Phy.,Difficulty with both distance vision and with fine print at near.,602,"**Reason for Visit / Diagnosis:**  
+Mr. ABC, a 61-year-old man, came to our clinic as a new patient due to difficulties with both distance vision, especially while driving, and reading fine print. He has a history of astigmatism and has not worn his glasses for several years.
+
+**Key Findings:**  
+During the examination, Mr. ABC's vision was measured at 20/20 in the right eye and 20/40 in the left eye without correction. After further testing, both eyes showed improved vision at 20/16. The examination revealed mild cataracts and signs of age-related macular degeneration, with some changes in the optic nerve that suggest he may be at risk for glaucoma.
+
+**Treatment or Procedures Performed:**  
+We discussed the findings with Mr. ABC and started him on Ocuvite PreserVision, a supplement for age-related macular degeneration. We also conducted visual field tests and took photographs of his optic discs for future reference.
+
+**Follow-Up Instructions:**  
+Mr. ABC is scheduled to return to the Glaucoma Clinic in 4 months for further evaluation and testing. He should also follow up with the Comprehensive Eye Service Clinic for a refraction. Additionally, he is encouraged to return sooner if he experiences any worsening symptoms. A routine follow-up appointment is set for 12 months from now.",205,0.9230769230769232,0.3846153846153846,13,1,5,7,"**Reason for Visit / Diagnosis:**  
+Mr. ABC, a 61-year-old man, came in as a new patient because he has been experiencing increasing difficulty with his distance vision, especially while driving, and has trouble reading fine print. He occasionally uses over-the-counter reading glasses for better near vision.
+
+**Key Findings:**  
+Mr. ABC has a history of astigmatism and has not worn his glasses for the past few years. He also has other medical conditions, including high blood pressure and high cholesterol. There is a family history of diabetes, but no known family history of serious eye conditions.
+
+**Treatment or Procedures Performed:**  
+During the visit, Mr. ABC was advised to start taking Ocuvite PreserVision, a supplement for age-related macular degeneration. He underwent visual field tests and disc photographs to assess his eye health, particularly due to concerns about glaucoma.
+
+**Follow-up Instructions:**  
+Mr. ABC is scheduled to return to the Glaucoma Clinic in four months for further evaluation and repeat visual tests. He will also have an appointment for a comprehensive eye exam. Additionally, he should come back sooner if he experiences any worsening eye symptoms.",182,0.8181818181818182,0.2727272727272727,11,2,3,6,",FINDINGS:,  Visual acuity today without correction was 20/20 -2 pinholing to 20/16 in the right eye, and 20/40 +2 pinholing to 20/16 in the left eye. ,Examination of the anterior segment was unremarkable in both eyes except for mild nuclear sclerotic opacities in both eyes. Peripheral retinal examination was entirely normal.,On funduscopic examination of the left eye, there was a sharp and pink disc with a healthy rim, but with central excavation and a cup-to-disc ratio of 0.6. Humphrey visual field and disc photographs today for baseline documentation in view of glaucoma suspicion. Followup in Glaucoma Clinic arranged in 4 months' time with repeat Humphrey visual fields at this time for reevaluation and comparison.",114,0.2,0.2,5,4,1,0
+5,Consult - History and Phy.,Elevated cholesterol and is on medication to lower it.,314,"**Reason for Visit / Diagnosis:**  
+You came in to discuss your elevated cholesterol levels and to review your dietary and exercise habits.
+
+**Key Findings:**  
+You have made significant improvements in your diet by reducing high-fat foods and packing your lunch more often. You are also exercising regularly, training for a triathlon, and have already started losing weight. Your current weight is 204 pounds, and your cholesterol levels are 251, with LDL at 166.
+
+**Treatment or Procedures Performed:**  
+During your visit, we discussed dietary guidelines to help lower your cholesterol. I provided you with a printed information sheet and a booklet on cholesterol management. You were encouraged to aim for a specific range of fat intake while continuing your weight loss efforts.
+
+**Follow-Up Instructions:**  
+You plan to have your cholesterol levels rechecked with Dr. XYZ. If you have any questions about your diet or need further assistance, feel free to call me. Keep up the great work with your diet and exercise!",161,0.5833333333333334,0.3333333333333333,12,5,4,3,"**Reason for Visit / Diagnosis:**  
+You came in for a check-up regarding your elevated cholesterol levels. 
+
+**Key Findings:**  
+Your recent lab results show that your cholesterol is 251, with an LDL level of 166. Your body weight is at 107% of the midpoint ideal, and your BMI is 26.189. 
+
+**Treatment or Procedures Performed:**  
+During our visit, we discussed dietary changes to help improve your cholesterol. You've already made significant improvements by reducing high-fat foods and packing your lunch more often. You are also exercising regularly, which is great for your health. I provided you with guidelines for fat intake and shared printed materials on lowering cholesterol.
+
+**Follow-Up Instructions:**  
+Continue with your healthy eating habits and regular exercise. Aim for a daily fat intake of 26 to 51 to 77 grams based on your calorie needs. Please review the materials I provided and let me know if you have any questions. We will monitor your progress and schedule a follow-up appointment to check your cholesterol levels again.",166,0.8461538461538461,0.3076923076923077,13,2,4,7,"He says he is already losing weight due to his efforts. I explained to the patient the dietary guidelines to help improve his lipids. I went over the printed information sheet on lowering your cholesterol and that was given to him along with a booklet on the same topic to read. His 24-hour recall shows he is making many positive changes already to lower his fat and cholesterol intake. ,PLAN:,  The patient plans to recheck his lipids through Dr. XYZ  I gave him my phone number and he is to call me if he has any further questions regarding his diet.",101,0.0,0.0,5,5,0,0
+6,Consult - History and Phy.,"Request for consultation to evaluate stomatitis, possibly methotrexate related.",608,"You visited today to evaluate sores in your mouth, which may be related to your methotrexate treatment for rheumatoid arthritis. You have been experiencing these sores for about 10-12 days. During the examination, we found superficial erosions on your lips and inside your mouth, particularly on the gums and soft palate. 
+
+The likely cause of these sores is the methotrexate, which you have been taking for many years without issues, but it can sometimes lead to mouth sores after long-term use. Although you have also been taking an NSAID and an antibiotic recently, it seems that methotrexate is the primary factor in this case.
+
+To help with your symptoms, I recommend stopping the methotrexate for now. I have prescribed a topical treatment called Lidex gel, which you can apply three times a day to help soothe the sores. Additionally, we will use prednisone and folic acid as part of your treatment plan.
+
+Please keep in mind that it may take several weeks for the sores to completely heal after stopping the methotrexate. If you have any concerns or if your symptoms worsen, please reach out for further assistance.",188,0.7,0.0,10,3,0,7,"You visited today to evaluate sores in your mouth, which have been present for the last 10-12 days. These sores are likely caused by a condition called erosive stomatitis, possibly related to your methotrexate medication, which you have been taking for your rheumatoid arthritis for many years. Although you have had no issues with methotrexate in the past, it can sometimes lead to mouth sores, especially after long-term use. 
+
+During your visit, we noted that you had some diarrhea around the time your mouth issues started, but you have not experienced any diarrhea, nausea, or vomiting recently. You were also taking an NSAID for your mouth ulcers and had been on an antibiotic for a suspected upper respiratory infection shortly before the sores developed.
+
+For treatment, we will monitor your symptoms and may adjust your medications if necessary. It’s important to keep an eye on your mouth sores and report any changes. 
+
+Please follow up with us if your symptoms worsen or if you experience any new issues. Your health is our priority, and we are here to help you manage your condition effectively.",184,0.8888888888888888,0.0,9,1,0,8,"REASON FOR CONSULTATION:, Please evaluate stomatitis, possibly methotrexate related. She has had no problems with methotrexate as far as she knows. She also took an NSAID about a month ago that was recently continued because of the ulcerations in her mouth. About two weeks ago, just about the time the stomatitis began she was placed on an antibiotic for suspected upper respiratory infection. ,IMPRESSION: , Erosive stomatitis probably secondary to methotrexate even though the medication has been used for ten years without any problems.",84,0.0,0.0,5,5,0,0
+7,Discharge Summary,A 94-year-old female from the nursing home with several days of lethargy and anorexia.  She was found to have evidence of UTI and also has renal insufficiency and digitalis toxicity.,236,"**Reason for Visit / Diagnosis:**  
+You were admitted to the hospital due to feeling very tired and not eating well. After evaluation, it was found that you had a urinary tract infection (UTI), along with some kidney issues and digitalis toxicity.
+
+**Key Findings:**  
+During your stay, tests showed that your white blood cell count was slightly elevated, and your kidney function was impaired. However, your condition improved, and your kidney function returned to normal by the time you were ready to go home.
+
+**Treatment or Procedures Performed:**  
+You received intravenous fluids and antibiotics to treat the UTI. Your digoxin medication was adjusted to a lower dose to address the toxicity. Overall, your health improved, and you were stabilized before discharge.
+
+**Follow-Up Instructions:**  
+At discharge, you were advised to engage in physical activity with assistance and follow a regular diet. Your medication regimen includes Lasix, lisinopril, digoxin, Augmentin, Nexium, Elavil, Detrol, potassium, and diclofenac. Please remember to see Dr. X in the office as scheduled for follow-up care. If you have any concerns or questions, do not hesitate to reach out.",180,0.8461538461538461,0.2307692307692307,13,2,3,8,"You visited today due to feeling very tired and not eating well for several days. During your visit, it was found that you have a urinary tract infection (UTI) and some issues with your kidneys, as well as digitalis toxicity, which is related to your heart medication.
+
+After careful evaluation, we adjusted your heart medication to a lower dose, which helped improve your condition. You are now feeling better and have been stabilized. 
+
+As a result, you will be transferred back to your assisted living facility in good condition. For follow-up, please continue to monitor your symptoms and report any changes to your healthcare provider. It is important to stay hydrated and maintain your medication as prescribed. If you have any concerns or questions, don’t hesitate to reach out for assistance.",131,0.875,0.125,8,1,1,6,"She also has renal insufficiency and digitalis toxicity. Renal insufficiency.,4. ,SECONDARY DIAGNOSES:,1. Congestive heart failure. ,COMPLICATIONS: , None.,DISCHARGE CONDITION: , Improved and stable.,DISCHARGE PLAN:  ,Physical activity:  With assistance.",28,0.2,0.2,5,4,1,0
+8,Consult - History and Phy.,"Coronary artery disease, prior bypass surgery.  The patient has history of elevated PSA and BPH.  He had a prior prostate biopsy and he recently had some procedure done, subsequently developed urinary tract infection, and presently on antibiotic.  From cardiac standpoint, the patient denies any significant symptom except for fatigue and tiredness.",302,"**Reason for Visit:** You came in for management of a fever and to discuss your history of coronary artery disease (CAD) and previous bypass surgery.
+
+**Key Findings:** During your visit, it was noted that you are experiencing fatigue and tiredness but do not have chest pain or shortness of breath. You have a history of elevated PSA levels and benign prostatic hyperplasia (BPH), and you recently developed a urinary tract infection, for which you are currently taking antibiotics. Your medical history includes hypertension, diabetes, and elevated cholesterol, with a family history of coronary artery disease.
+
+**Treatment or Procedures Performed:** A physical examination was conducted, and your vital signs were stable. You are continuing your current medications, which include Metformin, Prilosec, Folic acid, Flomax, Metoprolol, Crestor, and Claritin.
+
+**Follow-Up Instructions:** It is important to monitor your symptoms, especially any changes in your fatigue or any new symptoms. Please continue taking your antibiotics for the urinary tract infection and follow up with your primary care provider for further management of your coronary artery disease and any other health concerns. If you experience any worsening symptoms, such as chest pain or shortness of breath, seek medical attention immediately.",195,0.8461538461538461,0.2307692307692307,13,2,3,8,"You visited us today for management of your coronary artery disease (CAD) and to address a fever. You have a history of prostate issues, including elevated PSA levels and benign prostatic hyperplasia (BPH), which led to a urinary tract infection. Currently, you are on antibiotics for this infection. 
+
+From a cardiac perspective, you do not report any significant symptoms like chest pain or shortness of breath, but you do feel fatigued and tired. Your medical history includes hypertension, diabetes, and elevated cholesterol, with a family history of coronary artery disease. You have previously undergone coronary artery bypass surgery and angioplasty.
+
+During your visit, we reviewed your medications, which include Metformin, Flomax, Metoprolol, and Folic acid. 
+
+For follow-up, please continue taking your antibiotics as prescribed for the urinary tract infection. Monitor your symptoms, and if you experience any new or worsening issues, such as chest pain or shortness of breath, please seek medical attention immediately. Regular follow-ups for your heart health and prostate issues are also important.",166,0.8,0.1,10,2,1,7,",CARDIOVASCULAR: ,RESPIRATORY: Shortness of breath. ,NEUROLOGICAL: None significant.,PHYSICAL EXAMINATION:,VITAL",9,0.6666666666666666,0.6666666666666666,3,1,2,0
+9,Consult - History and Phy.,"Patient with a history of coronary artery disease, status post coronary artery bypass grafting presented to the emergency room following a syncopal episode.",493,"**Reason for Visit:**  
+You visited the emergency room after experiencing a fainting episode (syncope) while shopping. 
+
+**Key Findings:**  
+During your visit, it was noted that you have a history of heart disease and previous surgeries, including a bypass surgery. You reported feeling abdominal discomfort, nausea, and sweating before you passed out. Your daughter mentioned you have had episodes of weakness but not fainting before this incident. Your vital signs were stable, and there were no immediate concerns from your heart tests.
+
+**Treatment or Procedures Performed:**  
+No specific treatments were performed during this visit, but your medical history was reviewed thoroughly. You are currently on several medications for your heart and other health issues, including blood pressure and cholesterol management.
+
+**Follow-Up Instructions:**  
+It is important to monitor your symptoms closely. If you experience any further fainting episodes, chest pain, or worsening shortness of breath, please seek medical attention immediately. Additionally, follow up with your primary care physician, Dr. X, to discuss your recent episode and any necessary adjustments to your medications or further testing.",173,0.8461538461538461,0.3076923076923077,13,2,4,7,"You visited us today due to a fainting episode (syncope). You are a 78-year-old woman with a history of heart issues, including coronary artery disease and a previous heart surgery in 2005. While shopping, you experienced abdominal discomfort, nausea, and sweating before passing out. Fortunately, you regained consciousness quickly without confusion afterward. 
+
+During your visit, we noted that you have not had a stress test since your heart surgery. Your medical history also includes mitral regurgitation, paroxysmal atrial fibrillation, and gastroesophageal reflux disease. You are currently on blood pressure medications, and we discussed some instances of low blood pressure that you have experienced. Additionally, you have a past history of a pulmonary embolism, which presented similarly to your recent episode.
+
+For treatment, we will monitor your condition closely and may consider further tests to assess your heart health. It’s important to follow up with your primary care doctor for ongoing management of your medications and any new symptoms. Please keep track of any further episodes of weakness or fainting and report them immediately.",173,0.6363636363636364,0.1818181818181818,11,4,2,5,"She has blood pressure medications and has had some postural hypotensions, which has been managed by She also has peripheral vascular disease with stent placements. She has had no stress test done following a bypass surgery.,PAST MEDICAL HISTORY,1. Hypertension.,6. Denies any chest pains.",43,0.5,0.25,4,2,1,1
+10,Consult - History and Phy.,An example/template for a routine normal female physical exam.,265,"**Reason for Visit / Diagnosis:**  
+You came in for a routine check-up, and everything appears to be in good order.
+
+**Key Findings:**  
+During the examination, you were alert and calm, showing no signs of distress. Your vital signs were stable, and your eyes, ears, nose, throat, and neck were all normal. Your lungs and heart sounds were clear and regular. There were no issues found in your abdomen, and your external genitalia and rectal examination were also normal. Your extremities showed good circulation, and there were no signs of swelling or other concerns. Neurologically, you were functioning well, with normal strength, sensation, and coordination.
+
+**Treatment or Procedures Performed:**  
+No specific treatments or procedures were necessary during this visit, as your examination results were unremarkable.
+
+**Follow-Up Instructions:**  
+Continue to maintain your regular health routines, and schedule your next check-up as recommended. If you notice any changes in your health or have concerns before your next appointment, please reach out to your healthcare provider.",162,0.6666666666666666,0.25,12,4,3,5,"**Reason for Visit / Diagnosis:** You came in for a routine check-up.
+
+**Key Findings:** During the examination, your vital signs were stable, and you appeared alert and calm. Your eyes and heart showed no issues, and there were no signs of swelling or tenderness in your abdomen. Additionally, your breast and external genitalia examinations were normal, and there were no concerns found during the rectal exam.
+
+**Treatment or Procedures Performed:** No specific treatments or procedures were performed during this visit as everything appeared normal.
+
+**Follow-Up Instructions:** It is important to continue regular check-ups to monitor your health. If you notice any unusual symptoms or have concerns before your next appointment, please reach out to your healthcare provider.",117,0.9090909090909092,0.2727272727272727,11,1,3,7,",NECK: , Supple and pain free without bruit, JVD, adenopathy or thyroid abnormality. ,CHEST:,  Lungs are bilaterally clear to auscultation and percussion. ,BREASTS:,  In the seated and supine position unremarkable. ,ABDOMEN: , No hepatosplenomegaly, mass, tenderness, rebound, rigidity, or guarding. ,BACK:,  Normal to inspection and percussion.",46,0.0,0.0,5,5,0,0
+11,Discharge Summary,"Painful right knee status post total knee arthroplasty many years ago.   Status post poly exchange, right knee, total knee arthroplasty.",275,"**Reason for Visit / Diagnosis:**  
+You were admitted due to pain in your right knee, which had undergone total knee replacement surgery several years ago. You experienced increasing soreness and pain, and an X-ray showed significant wear in the knee components.
+
+**Key Findings:**  
+After evaluation, it was determined that you needed a revision surgery to replace the worn-out parts of your knee. You recovered well from the procedure, and with the help of physical therapy, you were able to walk with minimal assistance.
+
+**Treatment or Procedures Performed:**  
+You underwent a successful surgery to replace the patellar and tibial components of your right knee. Anesthesia provided a nerve block to help manage your pain during recovery.
+
+**Follow-Up Instructions:**  
+You will be discharged home to stay with your son, who will assist you. You should follow a regular diet and can bear weight on your right leg as tolerated. Continue with your physical therapy exercises. You will take Coumadin (4 mg daily) and Vicodin (1-2 tablets every 4-6 hours as needed for pain). Please monitor your knee for any signs of increased redness, swelling, drainage, or fever, and contact the office or go to the emergency room if you have any concerns. A follow-up appointment with Dr. ABC is scheduled for two weeks from now.",213,0.7142857142857143,0.1428571428571428,14,4,2,8,"You visited us due to pain in your right knee, which had been worsening over time. After examining your knee and reviewing an X-ray, we found that the components in your knee replacement were worn out. 
+
+During your stay, we performed a procedure to replace the worn parts of your knee. You received a nerve block to help manage pain during the procedure, and after surgery, you recovered well. You were able to walk with minimal assistance thanks to physical therapy. 
+
+Before leaving the hospital, you were given oral pain medications to help manage any discomfort. You will be going home with your son, who will assist you as you recover. You are comfortable with your therapy plan and are satisfied with the results of the procedure. 
+
+For follow-up, please ensure you continue with your physical therapy and follow any instructions given by your healthcare team. If you have any questions or concerns, do not hesitate to reach out.",159,0.7,0.1,10,3,1,6,",DISCHARGE DIAGNOSIS:,  Status post poly exchange, right knee, total knee arthroplasty. ON DISCHARGE:,  Stable.,PROCEDURES PERFORMED:,  Poly exchange total knee, right. The patient recovered well after this. The patient was discharged home. INSTRUCTIONS AND MEDICATIONS: , The patient is to be discharged home to the care of the son.",48,0.0,0.0,5,5,0,0
+12,Discharge Summary,Diffuse Large B-cell Lymphoma,823,"**Reason for Visit / Diagnosis:**  
+Ms. ABC was hospitalized for several health issues, including central nervous system lymphoma, a bacterial infection in her blood, low blood cell counts, high blood pressure, a rash, diabetes, low oxygen levels, and a recent seizure.
+
+**Key Findings:**  
+During her stay, Ms. ABC received treatments for her lymphoma and was monitored for a bacterial infection that was identified as Proteus mirabilis. She also experienced low blood counts, which may be related to her infection. Additionally, she had a worsening rash in the perianal area and was found to have high blood sugar levels.
+
+**Treatment or Procedures Performed:**  
+Ms. ABC received high-dose methotrexate and Rituxan for her lymphoma. She was treated with antibiotics for her infection and transitioned to oral medication before discharge. A wound consult was obtained for her rash, and she was prescribed topical treatments and antifungal medication. She was also started on insulin to manage her diabetes.
+
+**Follow-Up Instructions:**  
+Ms. ABC will continue her antibiotic treatment at home with the help of home health services. She should follow neutropenic precautions and monitor her temperature, calling for immediate assistance if it exceeds 100.5°F. She will have her blood counts monitored closely, and if they remain low, a repeat bone marrow test may be necessary. Additionally, she has a follow-up appointment scheduled with her doctor for further evaluation and treatment planning.",226,0.9166666666666666,0.0833333333333333,12,1,1,10,"**Reason for Visit / Diagnosis:**  
+Ms. ABC, a 60-year-old woman, was admitted for treatment of central nervous system lymphoma, a type of cancer affecting the brain and spinal cord. She has a history of this condition and was previously diagnosed in 2008.
+
+**Key Findings:**  
+During her hospital stay, it was noted that she also had gram-negative bacteremia, which is an infection in the blood, and pancytopenia, a condition where there is a low level of blood cells. Additionally, she has hypertension.
+
+**Treatment or Procedures Performed:**  
+Upon admission, Ms. ABC received Rituxan, a medication used to treat her lymphoma, which she tolerated well. She was also given hydration with a bicarbonate solution to help manage her urine pH and received a dose of methotrexate, another chemotherapy drug.
+
+**Follow-Up Instructions:**  
+After her treatment, it is important for Ms. ABC to have regular follow-up appointments to monitor her response to therapy and manage any side effects. She should also keep an eye on her blood pressure and report any new symptoms or concerns to her healthcare provider.",174,1.0,0.1111111111111111,9,0,1,8,"On day prior to discharge, she received her weekly dose of Rituxan. She was started on empiric antibiotics with cefepime and vancomycin. After being initiated on IV antibiotics, she remained afebrile for the remainder of the hospitalization. She was advised to follow neutropenic precautions and labs will be followed closely as an outpatient. Her labs will be followed closely as an outpatient.",62,0.0,0.0,5,5,0,0
+13,Discharge Summary,"Patient had some cold symptoms, was treated as bronchitis with antibiotics.",330,"**Reason for Visit / Diagnosis:** You were admitted due to breathing difficulties caused by severe bronchitis, which led to acute respiratory failure. You also had issues with kidney function and high blood pressure, both of which have improved.
+
+**Key Findings:** During your stay, you experienced shortness of breath and wheezing, but tests showed no fluid buildup in your lungs. Your oxygen levels improved after treatment, and you are currently stable with no wheezing. You also had a positive test for MRSA colonization, but no treatment is needed for that.
+
+**Treatment or Procedures Performed:** You received IV steroids and diuretics during your hospital stay, which helped improve your breathing. You are now on oral steroids for a week and have started using a nasal spray for congestion. Your heart condition is being managed with beta blockers.
+
+**Follow-Up Instructions:** You will need to follow up with your pulmonologist in one week and your cardiologist in two to three weeks. You have new medications to take at home, including prednisone and a nasal spray. We are also waiting for results from an oxygen test to see if you need home oxygen. Please take your medications as prescribed and monitor your symptoms.",198,0.8125,0.4375,16,3,7,6,"You visited us due to breathing difficulties, which were diagnosed as severe bronchitis that led to acute respiratory failure. During your stay, we found that you were experiencing shortness of breath and wheezing, but tests showed no congestion in your lungs. Your oxygen levels were low, so you needed extra oxygen support while in the Intensive Care Unit. 
+
+We also noted improvements in your kidney function and blood pressure during your treatment. Your X-ray results and heart tests were normal, indicating no issues with your heart or lungs at discharge. 
+
+As you continue to recover, it’s important to follow up with your primary care provider to monitor your breathing and overall health. Make sure to keep track of any new symptoms and report them immediately. If you have any questions or concerns, please don’t hesitate to reach out.",138,1.0,0.25,8,0,2,6,"Acute respiratory failure, resolved.,2. Not long after the patient returned from Mexico, the patient started having progressive shortness of breath, came to the emergency room with severe bilateral wheezing and crepitations. The patient however was hypoxic and required 4L nasal cannula. The patient's breathing has improved. The patient has been weaned off IV steroids and is currently on oral steroids, which she will be on for seven days.",68,0.2,0.2,5,4,1,0
+14,Consult - History and Phy.,"Patient having severe sinusitis about two to three months ago with facial discomfort, nasal congestion, eye pain, and postnasal drip symptoms.",781,"**Reason for Visit / Diagnosis:**  
+You visited today for evaluation and treatment of chronic sinusitis, which has been causing you severe symptoms, including facial discomfort, nasal congestion, eye pain, and postnasal drip for the past two to three months.
+
+**Key Findings:**  
+During the examination, it was noted that you have mild thickening of the right paranasal sinuses and some nasal obstruction due to turbinate hypertrophy and a slight deviation of the nasal septum. You also reported issues with balance and possible hearing loss, which were confirmed by an audiogram showing mild high-frequency hearing loss.
+
+**Treatment or Procedures Performed:**  
+A fiberoptic nasopharyngoscopy was performed, which confirmed the turbinate hypertrophy and nasal septum deviation. You have previously tried topical nasal corticosteroids and Allegra without much improvement.
+
+**Follow-Up Instructions:**  
+We recommend further evaluation of your dizziness with an ENG test to assess your vestibular function. Additionally, we will continue to monitor your sinus symptoms and consider treatment options for your allergic rhinitis. Please keep track of your symptoms and let us know if they worsen or if you have any new concerns.",179,0.6363636363636364,0.0909090909090909,11,4,1,6,"You visited today for evaluation and treatment of chronic sinusitis. Over the past two to three months, you have experienced severe symptoms, including facial discomfort, nasal congestion, eye pain, and postnasal drip. Despite taking antibiotics, you have not seen much improvement. A recent CT scan of your sinuses showed some mild thickening and blockage in the right sinuses, along with some enlargement of the nasal turbinates and a slight deviation of the nasal septum.
+
+During the examination, we confirmed that there are no signs of acute sinusitis, but turbinate hypertrophy was noted. You do not have a history of sinus surgery or nasal injuries, and you mentioned having some allergy symptoms. 
+
+Currently, you are not taking any medication for your sinus issues. We recommend discussing potential treatment options for your chronic sinusitis, which may include medications or other interventions. Please follow up with us to determine the best course of action for your symptoms.",154,0.4444444444444444,0.1111111111111111,9,5,1,3,"She had a CT of her paranasal sinuses identifying mild mucosal thickening of right paranasal sinuses with occlusion of the ostiomeatal complex on the right and turbinate hypertrophy was also noted when I reviewed the films and there is some minimal nasal septum deviation to the left. She currently is not taking any medication for her sinuses. She also has noted that she is having some problems with her balance and possible hearing loss or at least ear popping and fullness. The patient appears congested. In light of the patient's atypical dizziness symptoms, I cannot rule out other pathology at this time, and I informed her if there are any acute changes or problems with regards to her balance or any other acute changes, which she attributes associated with her dizziness, she most likely should pursue an emergent visit to the emergency room.",143,0.2,0.2,5,4,1,0
+15,Discharge Summary,Patient admitted after an extensive workup for peritoneal carcinomatosis from appendiceal primary.,574,"**Reason for Visit / Diagnosis:**  
+You were admitted for treatment of peritoneal carcinomatosis originating from an appendiceal tumor.
+
+**Key Findings:**  
+During your hospital stay, you underwent several procedures, including surgeries to remove parts of your colon, gallbladder, spleen, and other affected areas. You experienced some mild diarrhea, which was managed effectively. Your recovery was smooth, and you were able to start eating a regular diet by the fourth day after surgery. 
+
+**Treatment or Procedures Performed:**  
+You had a cystoscopy and the placement of ureteral stents, followed by an exploratory surgery where multiple organs were removed. You were closely monitored in the ICU and then moved to a regular hospital floor, where your pain was well managed.
+
+**Follow-Up Instructions:**  
+You are being discharged in good condition with instructions to keep an eye on your recovery. You should contact us if you experience any fevers over 101.4°F, chills, nausea, vomiting, ongoing diarrhea, or any unusual changes around your incision site. You have a follow-up appointment scheduled with Dr. XYZ in one week, where your staples will be removed. Please remember to take your prescribed medications, including pain relief and Imodium for diarrhea as needed. If you have any questions or concerns, don’t hesitate to reach out.",204,0.6923076923076923,0.1538461538461538,13,4,2,7,"You were admitted to the hospital for treatment of peritoneal carcinomatosis originating from your appendix. During your stay, we performed several procedures, including a cystoscopy, insertion of ureteral stents, and various surgeries such as a right hemicolectomy and cholecystectomy. 
+
+Throughout your hospitalization, your abdomen was soft and non-tender, and your surgical incision was clean and healing well. You experienced some mild diarrhea a few days after your surgery, which was likely due to the hemicolectomy. We tested for C. diff, and the results were negative. You were given Imodium to help manage this issue. 
+
+You are being discharged in good and stable condition, and you will go home with your staples in place. These will need to be removed at your follow-up appointment. Additionally, you received important vaccines to protect you after your spleen removal. 
+
+Please remember to monitor your recovery and reach out if you have any concerns. Your follow-up appointment will be essential for your ongoing care.",159,0.6363636363636364,0.1818181818181818,11,4,2,5,"He was then transferred to the floor where he has done exceptionally well.,On postoperative day #2, the patient passed flatus and we were able to start a clear liquid diet. His pain was well controlled throughout this hospitalization, initially with a PCA pump, which he very seldomly used. By postoperative date #2, the patient had been out of bed and ambulating in the hallways. The patient's only problem was with some mild diarrhea on postoperative days #3 and 4. His post-splenectomy vaccines including pneumococcal, HiB, and meningococcal vaccines were administered during his hospitalization.,On the day of discharge, the patient was resting comfortably in the bed without complaints.",107,0.0,0.0,5,5,0,0
+16,Discharge Summary,Hispanic male patient was admitted because of enlarged prostate and symptoms of bladder neck obstruction.,169,"**Reason for Visit / Diagnosis:**  
+You were admitted due to difficulty urinating caused by an enlarged prostate and bladder neck obstruction.
+
+**Key Findings:**  
+During your hospital stay, a physical examination showed normal heart and lung function, and your abdomen was also normal. Your blood tests indicated stable kidney function, and a chest X-ray revealed some old, non-active lung changes but was otherwise normal. 
+
+**Treatment or Procedures Performed:**  
+You underwent a cystourethroscopy and a transurethral resection of the prostate (TURP) to relieve your symptoms. The procedure went smoothly, and there were no complications. After surgery, you experienced a good urinary stream with only minimal blood in your urine.
+
+**Follow-Up Instructions:**  
+You are being discharged in satisfactory condition and will need to take Bactrim DS (an antibiotic) once a day for ten days. Please follow the standard post-surgery instructions provided. It is important to schedule a follow-up appointment in my office in one week, and also with Dr. ABC at the next available time as an outpatient. If you have any concerns or questions, please do not hesitate to reach out.",179,1.0,0.3636363636363636,11,0,4,7,"You visited us due to difficulty urinating, which was caused by an enlarged prostate and bladder neck obstruction. During your stay, we performed a cystourethroscopy and a transurethral resection of the prostate. Fortunately, there were no complications from the procedures.
+
+After the surgery, your recovery went smoothly. You were discharged in good condition, with a satisfactory urinary stream and only minimal blood in your urine. You will be taking an antibiotic called Bactrim DS once a day for ten days to help prevent infection. 
+
+For follow-up, please plan to return to my office in one week. Additionally, you will have an appointment with Dr. ABC at the next available time as an outpatient. If you have any questions or concerns before your follow-up, please don't hesitate to reach out.",129,0.7777777777777778,0.3333333333333333,9,2,3,4,",COMPLICATIONS:, None.,ADMITTING DIAGNOSIS:, Difficulty voiding. Abdomen was negative for abnormal findings. EKG was normal.  ,COURSE IN THE HOSPITAL:, The patient had a cysto and TUR of the prostate. The pathology report is pending at the time of dictation. ,DISCHARGE DIAGNOSIS: , Enlarged prostate with benign bladder neck obstruction.",48,0.0,0.0,5,5,0,0
+17,Consult - History and Phy.,"An 85-year-old female with diarrhea, vomiting, and abdominal pain.",524,"**Reason for Visit / Diagnosis:**  
+You visited today due to diarrhea, vomiting, and abdominal pain. 
+
+**Key Findings:**  
+During the examination, it was noted that you are an elderly female who appeared tired but could be easily awakened. Your vital signs were stable, but you showed signs of mild abdominal tenderness. Blood tests indicated some issues with kidney function and elevated calcium levels, which may require further attention.
+
+**Treatment or Procedures Performed:**  
+To help manage your symptoms, you received IV fluids and medications for pain and nausea. You were advised to avoid eating or drinking (NPO) for now. We also started monitoring your blood sugar levels and provided treatment for low potassium levels. 
+
+**Follow-Up Instructions:**  
+Your family is considering hospice care for you, and it’s important to discuss your ongoing care with them. We will continue to monitor your condition closely and check your kidney function and calcium levels. If necessary, we can discuss further tests for other health concerns. Please ensure your family is involved in your care decisions moving forward.",171,0.9230769230769232,0.1538461538461538,13,1,2,10,"You visited today due to diarrhea, vomiting, and abdominal pain. You were found sitting on the toilet and had just vomited, but it was difficult to gather more details about your symptoms because of hearing difficulties and your overall condition.
+
+During the examination, it was noted that you have a history of hypertension, diverticulosis, blindness, and sciatica. Your calcium levels were found to be quite high, which is concerning. 
+
+To address your symptoms and high calcium levels, you received treatment with IV fluids and a medication called Lasix. We will continue to monitor your calcium levels closely.
+
+For follow-up, please keep an eye on your symptoms. If you experience worsening abdominal pain, increased vomiting, or any new concerning symptoms, seek medical attention promptly.",123,0.75,0.0,8,2,0,6,"Upon my questioning of the patient, she can confirm that she has been sick to her stomach and has vomited. I will treat her with sliding scale insulin. Will replace volume with IV fluids and monitor her renal function. This is actually rather severe when adjusted for the patient's low albumin. For now, I will just treat her with IV fluids and Lasix, and monitor her calcium level.,9.",68,0.2,0.2,5,4,1,0
+18,Consult - History and Phy.,"For evaluation of left-sided chest pain, 5 days post abdominal surgery.",336,"**Reason for Visit:** You came in for evaluation of left-sided chest pain, which started five days after your abdominal surgery for appendicitis.
+
+**Key Findings:** During your examination, it was noted that you are recovering well from your surgery, but you have developed some left-sided chest pain. This pain does not worsen with breathing and is located near your left side. You also have some swelling in your legs and have gained weight due to fluid retention. Your overall health appears stable, and you are alert and oriented.
+
+**Treatment or Procedures Performed:** We are monitoring your recovery from the surgery and addressing your chest pain. To rule out any serious issues like a blood clot in your lungs, we will perform an ultrasound of your legs. If necessary, we may follow up with a CT scan.
+
+**Follow-Up Instructions:** Please continue to monitor your symptoms and report any changes, especially if the chest pain worsens or if you experience new symptoms. We will keep an eye on your fluid retention and overall recovery. Make sure to stay hydrated and follow any dietary recommendations from your surgeon.",184,0.6666666666666666,0.2,15,5,3,7,"You visited us for evaluation of left-sided chest pain, which started five days after your abdominal surgery. You are currently six days post-surgery from a laparoscopic appendectomy and have been experiencing some fluid retention and swelling in your legs. 
+
+During your examination, we noted that you are tolerating oral fluids and your bowel movements are normal. However, you have low oxygen levels, and we want to rule out a possible blood clot in your lungs. To do this, we will perform an ultrasound of your legs, and if necessary, we may follow up with a CT scan to get more information.
+
+You have not had any recent fever, and while you do not have a cough, the chest pain you are experiencing is located on the left side of your chest and does not worsen with breathing. 
+
+For follow-up, we will monitor your condition closely and keep you informed about the results of the ultrasound and any further steps needed. Please let us know if your symptoms change or if you have any concerns.",174,0.75,0.0,8,2,0,6,",GASTROINTESTINAL: HISTORY:  ,The patient is a nonsmoker. ,ABDOMEN:  Slightly distended. He is tolerating oral fluids and moving bowels.,2. The patient, however, has low-oxygen saturation.",24,0.25,0.0,4,3,0,1
+19,Consult - History and Phy.,The patient with an L5 compression fracture.is to come to the hospital for bilateral L5 kyphoplasty.  The patient has a history of back and buttock pain for some time.,477,"**Reason for Visit / Diagnosis:**  
+You are scheduled for a kyphoplasty procedure due to an L5 compression fracture. This fracture has been causing you significant back pain, which has not improved despite several months of conservative treatment.
+
+**Key Findings:**  
+During your evaluation, it was noted that you have ongoing back pain and tenderness in the lower back area. A recent CT scan showed some healing of the fracture, but it has not fully healed. You have a history of other medical issues, including hypothyroidism and hypertension, and you are currently taking multiple medications.
+
+**Treatment or Procedures Performed:**  
+After discussing the procedure with you and your family, we have decided to proceed with the kyphoplasty. This surgery aims to relieve your pain and stabilize the fracture. We have reviewed the potential risks associated with the surgery, including bleeding and infection, and you have indicated your understanding and desire to move forward.
+
+**Follow-Up Instructions:**  
+You will be coming to the hospital for your surgery on January 18, 2008. Please ensure you follow any pre-operative instructions provided by the medical team, and do not hesitate to reach out if you have any questions or concerns before your procedure.",195,0.8333333333333334,0.0833333333333333,12,2,1,9,"You visited the hospital for a procedure called bilateral L5 kyphoplasty due to an L5 compression fracture. At 86 years old, you have been experiencing back and buttock pain for some time, and despite conservative treatments over several months, your condition did not improve.
+
+Recent imaging showed some healing of your fracture, but it has not fully healed, and you continue to experience significant pain. You have been wearing a back brace and corset to help manage your discomfort. After discussing your situation, we believe that kyphoplasty is a suitable option for you. We reviewed the risks and benefits of the procedure, including potential complications such as bleeding, infection, and the possibility that your pain may not improve.
+
+Following the procedure, we will monitor your recovery closely. It is important to follow any post-operative care instructions provided to ensure the best possible outcome. If you have any questions or concerns after your procedure, please reach out for assistance.",158,0.6666666666666666,0.0,9,3,0,6,"She was found to have an L5 compression fracture. Unfortunately, she has continued to have significant ongoing back pain and recent CT scan has shown a sclerosis with some healing of her L5 compression fracture, but without complete healing. She also has a diagnosis of polymyalgia rheumatica. She has degenerative change at the L4-L5 level with a very slight spondylolisthesis at this level.,ASSESSMENT AND PLAN: , The patient is a woman with a history of longstanding back, buttock, and leg pain. She has a documented L5 compression fracture, which has not healed despite appropriate conservative treatments.",96,0.0,0.0,5,5,0,0
+20,Consult - History and Phy.,Thyroid mass diagnosed as papillary carcinoma.  The patient is a 16-year-old young lady with a history of thyroid mass that is now biopsy proven as papillary.  The pattern of miliary metastatic lesions in the chest is consistent with this diagnosis.,1037,"**Reason for Visit:** You were referred for evaluation and surgical recommendations regarding a mass in your thyroid, which has been diagnosed as papillary carcinoma.
+
+**Key Findings:** During the examination, a firm nodule was found in the middle of your thyroid, along with some nodularity in the right lobe. You have not experienced any symptoms like hoarseness or difficulty swallowing, and your overall health appears stable. Recent tests showed normal thyroid hormone levels, but a chest X-ray indicated a pattern that may suggest metastatic disease.
+
+**Treatment or Procedures Performed:** We discussed the next steps for your treatment, which may include surgical options to remove the thyroid mass. 
+
+**Follow-Up Instructions:** It is important to follow up with your healthcare team to discuss the surgical plan and any additional tests that may be needed. Please keep an eye on any changes in your symptoms and report them during your next visit. If you have any questions or concerns in the meantime, do not hesitate to reach out.",164,0.75,0.0833333333333333,12,3,1,8,"You visited us today regarding a mass in your thyroid that has been diagnosed as papillary carcinoma. This condition was identified after a fine needle aspiration biopsy, which confirmed the presence of cancerous cells. 
+
+During your evaluation, we reviewed your medical history and conducted imaging tests. A chest X-ray showed small nodules in both lungs, which is often seen in cases of advanced thyroid cancer. Fortunately, you have not experienced any symptoms such as hoarseness, difficulty swallowing, or significant weight changes, and there is no family history of thyroid cancer.
+
+Given the diagnosis and findings, we will discuss surgical options to address the thyroid mass and manage the cancer. It is important to monitor your condition closely, and we will guide you through the next steps in your treatment plan.
+
+For follow-up, please schedule an appointment to discuss the surgical recommendations and any additional treatments that may be necessary. If you have any questions or concerns in the meantime, do not hesitate to reach out.",165,0.7777777777777778,0.0,9,2,0,7,"The patient's parents relayed that they first noted a relatively small but noticeable mass in the middle portion of her thyroid gland about 2004. The patient has not had any hoarseness, difficulty swallowing, or any symptoms of endocrine dysfunction. Historically, she does not have a history of any prior head and neck radiation or treatment of any unusual endocrinopathy.,PAST MEDICAL HISTORY:,  Essentially unremarkable. She describes her pain level currently as zero.,FAMILY HISTORY: , There is no significant family history, although the patient's father does note that his mother had a thyroid surgery at some point in life, but it was not known whether this was for cancer, but he suspects it might have been for goiter. ,IMPRESSION/PLAN: , The patient is a 16-year-old young lady with a history of thyroid mass that is now biopsy proven as papillary.",138,0.0,0.0,5,5,0,0
+21,Consult - History and Phy.,Consult and Spinal fluid evaluation in a 15-day-old,815,"**Reason for Visit / Diagnosis:**  
+You are here because your 15-day-old daughter has been experiencing jelly-like red-brown stools, vomiting after feeds, and decreased feeding. She was transferred from another hospital for further evaluation.
+
+**Key Findings:**  
+During the examination, her vital signs were stable, but lab tests showed elevated white blood cell counts and some abnormalities in her electrolytes and liver enzymes. A barium enema was performed and came back negative, indicating no blockages in her intestines. Additionally, she has thrush, which is a common fungal infection in infants.
+
+**Treatment or Procedures Performed:**  
+While at the previous hospital, she received antibiotics (ampicillin, cefotaxime, and Rocephin) to help treat any potential infections. A spinal fluid evaluation was also performed to rule out other conditions, and the procedure went smoothly.
+
+**Follow-Up Instructions:**  
+It’s important to monitor your daughter’s feeding and stool patterns closely. If her symptoms worsen or if you notice any new concerning signs, please seek medical attention immediately. Follow up with your pediatrician for ongoing care and to discuss the results of her tests.",173,0.7692307692307693,0.3076923076923077,13,3,4,6,"**Reason for Visit / Diagnosis:**  
+You were brought to the Children's Hospital for further evaluation due to concerns about your health. You are a 15-day-old female who had jelly-like red-brown stools and vomiting after feeds.
+
+**Key Findings:**  
+During your evaluation, tests showed that your white blood cell count was elevated, and there were some concerns about your potassium levels. A spinal fluid test was performed, which showed no signs of infection. 
+
+**Treatment or Procedures Performed:**  
+A procedure was done to collect spinal fluid for testing, and you received IV fluids to help improve your condition. The fluid collected was sent to the laboratory for further evaluation. Throughout the procedure, you were well-supported by your family and tolerated it well.
+
+**Follow-Up Instructions:**  
+You will continue to receive IV fluids to support your recovery. The medical team will monitor your progress closely. If you have any questions or concerns, please feel free to ask the healthcare staff.",155,0.5833333333333334,0.0833333333333333,12,5,1,6,"The patient underwent a barium enema, which was read by the radiologist as negative. Otherwise, no past medical history. Has had decreased feeding, has had vomiting, has had diarrhea, otherwise negative on the 10 plus systems reviewed.,PHYSICAL EXAMINATION:,VITAL DECISION MAKING: , The differential entertained on this patient includes upper respiratory infection, gastroenteritis, urinary tract infection, dehydration, acidosis, and viral syndrome. The fluid was sent to laboratory for further evaluation (aunt and grandmother) were present throughout the period of time during this procedure and the procedure was tolerated well.",88,0.2,0.0,5,4,0,1
+22,Discharge Summary,"This is a 46-year-old gentleman with end-stage renal disease (ESRD) secondary to diabetes and hypertension, who had been on hemodialysis and is also status post cadaveric kidney transplant with chronic rejection.",542,"**Reason for Visit / Diagnosis:** You were admitted for end-stage renal disease (ESRD), which is a serious condition affecting your kidneys. 
+
+**Key Findings:** During your hospital stay, you had a cadaveric kidney transplant. Your kidney function improved, as indicated by a decrease in creatinine levels from 8.1 to 2.3. You also experienced some fluctuations in your blood pressure and blood sugar levels, which were managed during your stay.
+
+**Treatment or Procedures Performed:** You received a kidney transplant and were monitored closely in the surgical intensive care unit. You were given medications, including Thymoglobulin and Prograf, to support your recovery. Your diet was adjusted as you progressed, and you were able to produce urine effectively.
+
+**Follow-Up Instructions:** Before going home, you were advised to watch for any signs of complications, such as fever, chills, or decreased urine output. You should follow a low-potassium diet and can engage in activities as tolerated. You may shower but should avoid soaking in water for about two weeks. You have a follow-up appointment at the Transplant Clinic tomorrow to check your lab results and monitor your medication levels. Please seek medical attention if you have any concerns.",192,0.625,0.25,16,6,4,6,"You visited us for end-stage renal disease (ESRD), which has been a long-term condition for you, primarily due to diabetes and hypertension. You have been on hemodialysis since 1993 and previously underwent a kidney transplant in 1996, which faced chronic rejection.
+
+During your examination, you appeared alert and in no acute distress, although your blood pressure was elevated. Your overall health was assessed, and you were found to be a healthy-appearing male.
+
+As part of your treatment, you received a cadaveric kidney transplant. After the procedure, you are advised to follow a low-potassium diet and engage in activities as tolerated. You can shower, but please avoid underwater soaking for about two weeks. 
+
+For your follow-up, it is important to monitor your health closely. You should seek medical attention if you experience any fevers, chills, nausea, vomiting, or decreased urine output. You will have a follow-up appointment at the Transplant Clinic tomorrow, where your lab results, including your Prograf levels, will be checked.",162,0.4,0.0,10,6,0,4,"Initially, the patient had a decrease in hematocrit from 30 to 25. The patient was making excellent urine throughout his stay. The patient was started on Prograf by postoperative day #2.  Initial Prograf levels came back high at 18. These labs will be rechecked later today and once his blood pressure has decreased to systolic blood pressure less than 116 and his glucose has come down to a more normal level, he will be discharged to home.,DISCHARGE He is discharged on a low-potassium diet with activity as tolerated.",88,0.0,0.0,6,6,0,0
+23,Consult - History and Phy.,The patient was referred due to concerns regarding behavioral acting out as well as encopresis.,1809,"**Reason for Visit / Diagnosis:**  
+You were referred for concerns about behavioral issues, specifically acting out and encopresis (soiling). This was your initial intake appointment.
+
+**Key Findings:**  
+During the session, your mother shared that you have been oppositional since around the age of 4, especially after your brother was born. She noted that you often lose your temper, argue, and ignore her instructions. However, these behaviors seem to occur mainly with her and not with your father. Your mother also mentioned that you have been dealing with encopresis, soiling 2 to 3 times a day, and that you have been seen by specialists in the past for this issue. 
+
+**Treatment or Procedures Performed:**  
+We discussed your behaviors and the challenges your mother faces in managing them. Your mother is currently trying to help you with the encopresis by encouraging you to sit on the toilet, but she feels frustrated and hasn’t used any rewards to motivate you.
+
+**Follow-Up Instructions:**  
+It’s important to continue addressing both the behavioral issues and the encopresis. We recommend that your mother consider different strategies for managing your behavior and the encopresis, including possibly working with a specialist for further support. A follow-up appointment will be scheduled to monitor your progress and discuss additional strategies.",209,0.7142857142857143,0.1428571428571428,14,4,2,8,"You were referred for concerns about behavioral issues and encopresis, which is the involuntary loss of bowel control. During our initial meeting on October 3, 2007, your mother shared that her main worry is your oppositional behavior. 
+
+We discussed your encopresis, and your mother mentioned that you have been experiencing this issue for a long time, going 2 to 3 times a day. You are currently wearing underwear and using a pull-up, and you have been seen by specialists in the past. 
+
+As part of your treatment, I suggested involving your father in the process and provided your mother with a behavioral checklist to be filled out by both parents and your teacher. After our assessment, I diagnosed you with an adjustment disorder with conduct disturbance and encopresis without constipation. 
+
+For follow-up, please ensure that both your parents complete the behavioral checklist and bring it to our next appointment. It is also important to continue any prescribed treatments, such as MiraLax, and keep us updated on any changes in your condition.",171,0.75,0.125,8,2,1,5,"PROBLEMS: , Mother reported that her primary concern in regard to the patient had to do with his oppositionality. She reported that he does not display these behaviors with the father nor does he display them at home, but they are specific to her. The mother reported that sometimes she has a problem in interfering with his parenting, that she steps in and defends The patient. Mother reported that she and the patient are very much alike in temperament, and this has made things more difficult. Mother reported becoming fatigued in her parenting, that she lets him get away with things sometimes because she does not want to punish him all day long, sometimes ignores problems that she probably should not ignore.",122,0.0,0.0,5,5,0,0
+24,Consult - History and Phy.,"Low back pain, lumbar radiculopathy, degenerative disc disease, lumbar spinal stenosis, history of anemia, high cholesterol, and hypothyroidism.",907,"**Reason for Visit / Diagnosis:**  
+You visited today to discuss ongoing health concerns, including joint pain and stiffness, as well as to review your lumbar spine MRI results.
+
+**Key Findings:**  
+During the examination, you were alert and in no acute distress. Your blood pressure was normal, and your physical exam showed no major issues, although you do have some mild muscle spasms in your lower back. The MRI from 2007 indicated degenerative disc disease in your lumbar spine, with some bulging discs and narrowing of the spaces where nerves exit, but no nerve impingement was found.
+
+**Treatment or Procedures Performed:**  
+No specific treatments were performed during this visit. However, your current medications and supplements were reviewed, including pain management with Fiorinal, which you are taking three times a day.
+
+**Follow-Up Instructions:**  
+It is important to monitor your symptoms, especially the joint pain and any changes in your back. If you experience increased pain or new symptoms, please reach out for further evaluation. Regular follow-ups will help manage your health effectively.",170,0.8333333333333334,0.25,12,2,3,7,"You visited today to discuss ongoing health concerns, particularly related to joint pain and stiffness. During the visit, we noted that you have been experiencing increased pain, especially when moving your right leg. An MRI of your lumbar spine from 2007 showed degenerative disc disease, which may be contributing to your discomfort.
+
+Your family history includes several serious health issues, such as cancer and heart disease, which can be important for understanding your overall health. Additionally, you mentioned feeling unsupported at home, which can affect your well-being.
+
+For treatment, we will focus on managing your pain and improving your mobility. This may include physical therapy and pain management strategies. 
+
+As for follow-up, please keep track of your symptoms and let us know if they worsen or if you have any new concerns. We will schedule a follow-up appointment to reassess your condition and adjust your treatment plan as needed. Remember, it’s important to take care of your mental health as well, so don’t hesitate to reach out for support.",169,1.0,0.0,10,0,0,10,"She is right handed with joint pain, stiffness, and decreased range of motion. She is nontender to palpation of her spinous processes, SI joints, and paralumbar musculature. She is able to ambulate on her toes and her heels without any difficulty. She does not have x-rays for review. She has had hip and knee x-rays taken but does not bring them in with her.",64,0.2,0.2,5,4,1,0
+25,Consult - History and Phy.,A 3-month well-child check.,359,"**Reason for Visit:** You came in for your 5-year and 3-month well-child check-up. 
+
+**Key Findings:** Overall, you are doing well! You have a balanced diet, get along with your peers and adults, and are excited to start kindergarten soon. Your growth and development are on track, and you passed all developmental milestones. Your vital signs were normal, and there were no concerns with your hearing or vision. 
+
+**Treatment or Procedures Performed:** During this visit, you received important vaccinations, including MMR, DTaP, and IPV. We also completed a school pre-participation physical and conducted vision and hearing screenings, which were reviewed with your family. A handout with information about your well-child check was provided to your mom.
+
+**Follow-Up Instructions:** You should follow up in one year for your next well-child check-up, or sooner if you have any health concerns. Keep up the great work with your healthy habits and enjoy your upcoming school year!",152,0.7857142857142857,0.3571428571428571,14,3,5,6,"**Reason for Visit / Diagnosis:**  
+You came in for your 5-year and 3-month well-child check. 
+
+**Key Findings:**  
+During the visit, your parents reported that you have been doing well overall since your last check-up. You are eating a balanced diet with plenty of milk, fruits, vegetables, proteins, and grains, and you are having very little junk food. There are no behavioral concerns, and you get along well with both your peers and adults. We also completed your vision and hearing screenings, which were part of the check-up.
+
+**Treatment or Procedures Performed:**  
+We discussed the results of your screenings and provided your mom with a handout about the well-child check. Additionally, we completed the school pre-participation physical, and a copy of that is in your chart.
+
+**Follow-Up Instructions:**  
+You should plan to come back for your next well-child check in one year, or sooner if you need care for any acute issues.",151,0.7,0.1,10,3,1,6,"Atraumatic, normocephalic. Supple, no lymphadenopathy. No cyanosis, clubbing or edema. Warm, dry and pink without lesions. ,Neurological:  Alert.",18,0.4,0.4,5,3,2,0
+26,Consult - History and Phy.,Normal newborn infant physical exam.  A well-developed infant in no acute respiratory distress.,117,"**Reason for Visit / Diagnosis:**  
+You visited today for a routine check-up for your infant. 
+
+**Key Findings:**  
+During the examination, your baby appeared healthy and was not in any distress. Vital signs were stable, and your baby's weight, length, and head circumference were measured. The head shape was normal, and the soft spot on the head was open and not bulging. Both eyes responded well, although the eardrums were not fully visible due to some wax. The neck was normal, and the lungs sounded clear. The heart was beating regularly without any unusual sounds. The abdomen felt soft, and there were no signs of any masses. The genital area and limbs looked normal, and your baby showed good reflexes.
+
+**Treatment or Procedures Performed:**  
+No specific treatments or procedures were performed during this visit, as your baby is healthy.
+
+**Follow-Up Instructions:**  
+Continue to monitor your baby's growth and development at home. If you notice any changes in behavior, feeding, or health, please reach out to your healthcare provider. Schedule your next check-up as recommended to ensure your baby continues to thrive.",180,0.9333333333333332,0.5333333333333333,15,1,8,6,"**Reason for Visit / Diagnosis:** You brought your infant in for a routine check-up, and everything appears to be going well.
+
+**Key Findings:** During the examination, your baby showed no signs of respiratory distress and was well-developed. Vital signs were stable, and the head, eyes, and ears looked normal. The abdomen was soft with normal bowel sounds, and there were no issues with the genitalia or extremities. Your infant displayed good reflexes, and the skin was warm and dry without any rashes.
+
+**Treatment or Procedures Performed:** No specific treatments were needed during this visit, as your baby is healthy and developing normally.
+
+**Follow-Up Instructions:** Continue to monitor your baby's growth and development at home. If you notice any changes in behavior, feeding, or health, please reach out to your healthcare provider. Regular check-ups are important to ensure your infant stays on track with their growth milestones.",146,1.0,0.5,12,0,6,6,",HEENT:  ,Head is normocephalic with anterior fontanelle open, soft, and non-bulging. ,NECK: , Supple without clavicular fracture. ,LUNGS:,  Clear to auscultation. ,HEART:,  Regular rate without murmur, click, or gallop present. ,GENITALIA: , Normal.,EXTREMITIES: , Without evidence of hip defects.",39,0.2,0.2,5,4,1,0
+27,Consult - History and Phy.,Patient has prostate cancer with metastatic disease to his bladder.  The patient has had problems with hematuria in the past.  The patient was encouraged to drink extra water and was given discharge instructions on hematuria.,1354,"**Reason for Visit / Diagnosis:**  
+You visited today due to experiencing blood in your urine, a condition known as hematuria. You have a history of prostate cancer that has spread to your bladder and bones.
+
+**Key Findings:**  
+During your visit, you reported that the bleeding started yesterday and has increased, with mostly blood being passed. You mentioned that you are still able to urinate, and there are no signs of fever, abdominal pain, or changes in bowel habits. Your chronic lower back pain remains unchanged, and you do not have any issues with incontinence.
+
+**Treatment or Procedures Performed:**  
+Your current treatment includes radiation therapy aimed at relieving pain in your bones. You have completed chemotherapy and are not currently receiving curative treatment for your cancer. Your medications include morphine and other pain relievers.
+
+**Follow-Up Instructions:**  
+It is important to monitor your symptoms closely. If the bleeding worsens, or if you experience any new symptoms such as severe pain or changes in your ability to urinate, please contact your healthcare provider immediately. Continue to focus on comfort and manage your pain as needed.",182,0.5,0.1428571428571428,14,7,2,5,"You visited today due to blood in your urine, a condition known as hematuria. You have a history of prostate cancer that has spread to your bladder and bones. Recently, you experienced an episode where you were passing mostly blood with very little urine. During your visit, it was noted that you have significant anemia and urinary obstruction, but your overall condition has improved.
+
+While in the emergency room, you developed a blockage caused by clotted blood in your bladder. To help relieve this, a Foley catheter was placed, which allowed for the drainage of blood and eased the discomfort of a full bladder. You were provided with a leg bag for convenience, and the catheter will remain in place for now.
+
+For follow-up, it is important to monitor your symptoms and keep in touch with your healthcare provider. Make sure to reach out if you notice any changes or have concerns about your condition. You will be going home with your son for support.",165,0.5,0.0,10,5,0,5,"The patient has not had any fever. The patient is well nourished, well developed. The patient appears to be pale, but otherwise looks well. The patient has normal use of the extremities. The patient appears to be pale, but otherwise the skin is normal.",44,0.0,0.0,5,5,0,0
+28,Consult - History and Phy.,"Abnormal echocardiogram findings and followup.  Shortness of breath, congestive heart failure, and valvular insufficiency.   The patient complains of shortness of breath, which is worsening.  The patient underwent an echocardiogram, which shows severe mitral regurgitation and also large pleural effusion.",482,"**Reason for Visit:** You were seen for follow-up on abnormal echocardiogram findings, which showed severe mitral regurgitation and a large pleural effusion. You have been experiencing shortness of breath, which has been worsening.
+
+**Key Findings:** During your hospital stay, it was noted that you have a history of colitis and diverticulitis. Your echocardiogram indicated that your heart is functioning normally, but there are concerns about the valves and fluid around your lungs. You also have a history of a heart murmur and hypertension.
+
+**Treatment:** After discussing your condition, we have decided on a conservative treatment approach. You will be treated with medications, including ACE inhibitors and diuretics, to help manage your symptoms. You have chosen not to undergo further testing, such as a transesophageal echocardiogram, due to your age and limited activity level.
+
+**Follow-Up Instructions:** It is important to monitor your symptoms and follow up with your healthcare provider regularly. If you experience any significant changes in your breathing or overall health, please seek medical attention promptly.",167,0.7857142857142857,0.3571428571428571,14,3,5,6,"You visited us today for an evaluation of your heart condition, specifically due to findings from your echocardiogram that showed severe mitral regurgitation and a large pleural effusion. You have been experiencing shortness of breath for many years, and your activity level is limited. 
+
+During your consultation, we confirmed that you have normal left ventricular function but noted some enlargement of the left atrium, along with the severe mitral and tricuspid regurgitation. We discussed the possibility of further testing, such as a transesophageal echocardiogram, but given your age and limited activity, you decided not to pursue this option.
+
+As a treatment plan, we will manage your condition conservatively with medications, specifically ACE inhibitors and diuretics, to help alleviate your symptoms. 
+
+For follow-up, we will monitor how you respond to the medication and adjust as needed. Please keep track of any changes in your symptoms and let us know if you experience any worsening of your shortness of breath or other concerns.",161,0.8571428571428571,0.1428571428571428,7,1,1,5,"Shortness of breath, congestive heart failure, and valvular insufficiency.,HISTORY No history of recreational drug use.,PAST MEDICAL HISTORY:  ,Basically GI pathology with diverticulitis, colitis, hypothyroidism, arthritis, questionable hypertension, no prior history of coronary artery disease, and heart murmur.,REVIEW OF SYSTEMS,CONSTITUTIONAL:  Weakness, fatigue, and tiredness. ,CARDIOVASCULAR: Shortness of breath and heart murmur. Shortness of breath.",53,0.0,0.0,4,4,0,0
+29,Consult - History and Phy.,"Normal Physical Exam Template.  Well developed, well nourished, alert, in no acute distress.",307,"**Reason for Visit / Diagnosis:**  
+You came in for a routine check-up, and overall, you are in good health.
+
+**Key Findings:**  
+During the examination, you appeared well-nourished and alert, showing no signs of distress. Your vital signs were stable, and your respiratory and cardiovascular systems were functioning normally. Your eyes, ears, nose, and throat were clear, with no abnormalities noted. The examination of your neck showed no issues, and your abdomen was soft with no tenderness. Your musculoskeletal system was normal, with good strength and range of motion. Additionally, your neurological assessment was intact, and your mental health evaluation showed no concerns.
+
+**Treatment or Procedures Performed:**  
+No specific treatments or procedures were performed during this visit, as your examination results were normal.
+
+**Follow-Up Instructions:**  
+Continue to maintain a healthy lifestyle, and schedule your next routine check-up as recommended. If you experience any new symptoms or concerns before your next appointment, please reach out to your healthcare provider.",157,1.0,0.4166666666666667,12,0,5,7,"**Reason for Visit / Diagnosis:** You came in for a routine check-up, and overall, you are in good health.
+
+**Key Findings:** During the examination, you appeared well-nourished and alert, showing no signs of distress. Your vital signs were stable, and your eyes, ears, nose, and throat were all normal. There were no issues found with your vision or hearing, and your musculoskeletal system showed no problems. You had a normal gait and full movement in your extremities.
+
+**Treatment or Procedures Performed:** No specific treatments or procedures were necessary during this visit, as everything appeared normal.
+
+**Follow-Up Instructions:** Continue to maintain a healthy lifestyle, and if you have any concerns or notice any changes in your health, please schedule a follow-up appointment. Regular check-ups are important for monitoring your health.",129,1.0,0.4545454545454545,11,0,5,6,"No lesions. Full range of motion without pain. No peripheral edema. ,GASTROINTESTINAL:  ,No tenderness or mass. Abdomen is nondistended.",19,0.0,0.0,5,5,0,0
+30,Consult - History and Phy.,Consult for laparoscopic gastric bypass.,350,"**Reason for Visit / Diagnosis:**  
+You visited today to discuss various health concerns, including difficulty with physical activities like climbing stairs and walking, as well as issues with snoring and joint pain.
+
+**Key Findings:**  
+During the evaluation, it was noted that you experience muscle and joint pains, particularly in your knees, back, and feet. You also have gastroesophageal reflux disease. Your current weight is 312 pounds, which is 142 pounds above your ideal body weight of 170 pounds. You are not currently taking any medications and have a history of smoking, but you have significantly reduced your cigarette intake.
+
+**Treatment or Procedures Performed:**  
+No specific treatments or procedures were performed during this visit. However, we discussed your participation in support groups and your dietary preferences, which include a dislike for sweets and a preference for larger portions and carbohydrates.
+
+**Follow-Up Instructions:**  
+It is important to continue your exercise routine and consider strategies to manage your weight. You may benefit from further support in your weight loss journey. Please keep attending your support group and reach out if you have any new concerns or questions. Regular follow-ups will help monitor your progress and address any ongoing issues.",196,1.0,0.2857142857142857,14,0,4,10,"**Reason for Visit / Diagnosis:**  
+You visited for an evaluation of your overall health, particularly related to your difficulty with physical activities, joint and muscle pain, and gastroesophageal reflux disease.
+
+**Key Findings:**  
+During the assessment, it was noted that you have challenges with climbing stairs, walking long distances, and performing daily activities like tying your shoes. You are currently 142 pounds overweight, and your ideal body weight is 170 pounds. You also reported having muscle and joint pain, particularly in your knees, back, and feet, along with some difficulty with snoring.
+
+**Treatment or Procedures Performed:**  
+No specific treatments or procedures were performed during this visit, but we discussed the importance of weight management and regular exercise to help alleviate some of your symptoms.
+
+**Follow-Up Instructions:**  
+It is recommended that you continue exercising three times a week and focus on a balanced diet to help with weight loss. If you have any worsening symptoms or new concerns, please reach out for further evaluation. Regular follow-ups will be important to monitor your progress and adjust your care plan as needed.",178,1.0,0.3636363636363636,11,0,4,7,"PAST MEDICAL HISTORY:, He has difficulty climbing stairs, difficulty with airline seats, tying shoes, used to public seating, and lifting objects off the floor. He exercises three times a week at home and does cardio. He has gastroesophageal reflux disease. He currently weighs 312 pounds. He is 142 pounds overweight.",50,0.0,0.0,5,5,0,0
+31,Consult - History and Phy.,An example/template for a routine normal male physical exam.,559,"**Reason for Visit:** You came in for a routine check-up, and everything appears to be in good order.
+
+**Key Findings:** During the examination, you were alert and in no distress. Your head, ears, nose, and throat showed no signs of infection or abnormalities. Your lungs were clear, and your heart had a regular rhythm. Your abdomen was soft and non-tender, with no signs of issues. Your extremities were normal, with strong pulses and good range of motion. Neurologically, you showed intact strength and coordination, and your mood and memory were appropriate.
+
+**Treatment or Procedures Performed:** No specific treatments or procedures were performed during this visit, as your examination results were normal.
+
+**Follow-up Instructions:** It is recommended to continue with regular check-ups as needed. If you experience any new symptoms or concerns, please reach out to your healthcare provider. Otherwise, maintain your current health routine and lifestyle.",146,0.8,0.2666666666666666,15,3,4,8,"**Reason for Visit / Diagnosis:** You came in for a check-up, and during the examination, no significant issues were found.
+
+**Key Findings:** You were awake and alert, showing no signs of distress. Your physical examination showed that your head and extremities were normal, with no tenderness or abnormalities. Your abdomen was also examined, and there were no signs of pain or discomfort. All your vital signs, including pulse strength, were normal.
+
+**Treatment or Procedures Performed:** No specific treatments were needed during this visit, as your examination results were normal.
+
+**Follow-Up Instructions:** Continue to monitor your health and maintain regular check-ups. If you experience any new symptoms or concerns, please reach out to your healthcare provider.",115,0.8181818181818182,0.1818181818181818,11,2,2,7,"The pharynx is without exudate or erythema. No stridor is heard.  ,NECK: , No signs of meningismus. No deformity or signs of trauma. No atrophy or contractures are noted. No erythema or nodules noted.",34,0.0,0.0,5,5,0,0
+32,Consult - History and Phy.,"Bipolar disorder, apparently stable on medications.  Mild organic brain syndrome, presumably secondary to her chronic inhalant, paint, abuse.",654,"**Reason for Visit / Diagnosis:**  
+You visited today due to chest pain, and evaluations showed that you have severe aortic stenosis, a condition affecting your heart valve. 
+
+**Key Findings:**  
+During your examination, it was noted that you are an obese woman who appeared somewhat restless. Your vital signs were stable, and you did not show signs of psychosis or suicidal thoughts. You have a history of bipolar disorder and substance abuse, but you are currently stable on your medications.
+
+**Treatment or Procedures Performed:**  
+You have expressed a desire not to undergo heart surgery or aortic valve replacement, even though it may be necessary. Your medical team understands your concerns and acknowledges the risks associated with surgery, especially given your mental health history.
+
+**Follow-Up Instructions:**  
+It is recommended that your regular healthcare providers at the ABC Hotel discuss your situation further to provide support and encouragement regarding your heart condition. You have the ability to make your own medical decisions, and it’s important to continue your mental health care. If you have any questions or need further assistance, please reach out to your care team.",184,0.9090909090909092,0.3636363636363636,11,1,4,6,"**Reason for Visit / Diagnosis:**  
+You visited because of chest pain, and it was found that you have severe aortic stenosis, which is a narrowing of the heart valve. 
+
+**Key Findings:**  
+During your evaluation, you expressed that the chest pain has gone away and you do not feel that your condition is serious enough to require surgery. You have a history of bipolar disorder and have been diagnosed with schizophrenia at times. You are currently taking medications for your mental health and have been receiving care at the ABC Hotel.
+
+**Treatment or Procedures Performed:**  
+Although surgery, such as aortic valve replacement, may be necessary, you have refused this option. It is important for your treating physicians to discuss your situation with the healthcare team at the ABC Hotel to provide you with support and encouragement regarding your care options.
+
+**Follow-Up Instructions:**  
+You have indicated a desire to leave the hospital. It is recommended that your care providers continue to support you and discuss your treatment options with you. If you have any questions or need further assistance, please feel free to reach out to your healthcare team.",187,0.7272727272727273,0.2727272727272727,11,3,3,5,"She has a history of bipolar disorder and has been diagnosed at times with schizophrenia. She denies hallucinations, psychosis, paranoia, and suicidal ideation at this time. She is not suicidal on formal testing. Mild organic brain syndrome, presumably secondary to her chronic inhalant, paint, abuse.,3. Given this lady's underlying mental problems, I would recommend that her treating physicians discuss her circumstances with physicians who round on her at the ABC Hotel.",71,0.0,0.0,5,5,0,0
+33,Consult - History and Phy.,"Caudate Nuclei atrophy, bilaterally, in patient with Huntington Disease.",405,"**Reason for Visit / Diagnosis:**  
+You came in due to concerns about slowing motor skills and cognitive function. Over the past three years, you have experienced a gradual decline in your ability to perform daily tasks and maintain employment.
+
+**Key Findings:**  
+During your visit, it was noted that you have difficulty with speech and balance, and you have shown signs of mood changes, including a lack of interest in social activities. Your family history is significant for Huntington Disease, which has affected multiple family members. A neurological examination revealed some involuntary movements in your hands and feet, but your strength and muscle tone were normal.
+
+**Treatment or Procedures Performed:**  
+You were prescribed Elavil (25 mg) to help with your symptoms. A neuropsychological assessment indicated mild memory loss. Genetic testing later confirmed a diagnosis of Huntington Disease.
+
+**Follow-Up Instructions:**  
+It is important to monitor your symptoms closely, as they may progress over time. Regular follow-up appointments will be necessary to manage your condition and adjust treatments as needed. Please reach out if you have any concerns or if your symptoms worsen.",180,0.8571428571428571,0.2142857142857142,14,2,3,9,"You visited today due to concerns about the slowing of your motor skills and cognitive function. Your history shows that over the past three years, you have experienced a gradual decline in both areas, which has affected your ability to maintain employment. 
+
+Key findings from your previous evaluations indicate that you have early signs of Huntington Disease, confirmed by genetic testing and MRI results showing changes in your brain. You have also experienced worsening chorea, which is characterized by involuntary movements, and some memory difficulties.
+
+As part of your treatment plan, you were prescribed Elavil 25mg to help manage your symptoms. It's important to monitor how you respond to this medication and any changes in your condition.
+
+For follow-up, please keep track of any changes in your symptoms and report them during your next appointment. Regular check-ins will help us adjust your treatment as needed and provide you with the support you require.",153,1.0,0.0,8,0,0,8,",HX: ,This 42 y/o LHM presented on 3/16/93 with gradually progressive deterioration of motor and cognitive skills over 3 years. He became anhedonic and disinterested in social activities, and had difficulty sleeping for frequent waking and restlessness. His wife noticed ""fidgety movements"" of his hand and feet.,He was placed on trials of Sertraline and Fluoxetine for depression 6 months prior to presentation by his local physician. ,COURSE:, He was thought to have early manifestations of Huntington Disease. He developed motor impersistence and more prominent slowed saccadic eye movements.",88,0.0,0.0,5,5,0,0
+34,Consult - History and Phy.,Patient referred for evaluation of tracheostomy tube placement and treatment recommendations.,763,"**Reason for Visit / Diagnosis:**  
+You came in for an evaluation regarding your tracheostomy tube, which was placed about three months ago due to severe COPD and difficulty breathing. 
+
+**Key Findings:**  
+During the examination, it was noted that you have been living in an extended care facility and have not needed to use the tracheostomy tube since your admission. You reported some tenderness around the tube and difficulty swallowing, but you have not experienced any breathing problems or issues while sleeping. Your overall health includes a history of COPD, heart disease, and liver cirrhosis.
+
+**Treatment or Procedures Performed:**  
+We performed a limited bronchoscopy and fiberoptic laryngoscopy, which showed that your vocal cords are functioning well, and there are no signs of airway obstruction.
+
+**Follow-Up Instructions:**  
+After our discussion, we believe you can safely have the tracheostomy tube removed. This will be monitored closely by the nursing staff at your facility. Please keep them informed of any changes in your breathing or discomfort. If you have any questions or concerns, don’t hesitate to reach out.",174,0.75,0.1666666666666666,12,3,2,7,"You visited today for an evaluation regarding your tracheostomy tube placement. You have end-stage COPD, which led to the need for a tracheostomy tube about three months ago due to breathing difficulties. Currently, you live in an extended care facility and have not needed to use the tracheostomy tube since your admission. You mentioned experiencing tenderness around the tube and difficulty swallowing, and you expressed a desire to have the tube removed.
+
+During your visit, we performed a limited bronchoscopy and fiberoptic laryngoscopy. The results showed that your vocal cords are functioning well, and there are no signs of airway obstruction. Based on these findings, I believe you can safely have the tracheostomy tube removed, with close monitoring by the nursing staff at your facility.
+
+However, I want to make you aware that you may experience future breathing issues that could require airway support again, which might lead to the need for a tracheostomy in the future. We discussed alternative options for managing your airway.
+
+For follow-up, please ensure that the nursing staff monitors your condition closely after the tube is removed. If you experience any breathing difficulties, seek immediate medical attention.",192,0.6363636363636364,0.0909090909090909,11,4,1,6,"He now resides in an extended care facility with a capped tracheostomy tube, and he unfortunately states he has had not had to use the tracheostomy tube since his discharge and admission to the extended care facility. He requires constant oxygen administration and has been having no problems with shortness of breath, worsening, requiring opening the tracheostomy tube site. He states there has been some tenderness associated with the tracheostomy tube and difficulty with swallowing and he wishes to have it removed. No oropharyngeal masses or lesions noted. His vocal cords moved well, and I do not see any signs of granuloma or airway obstruction either in the supraglottic or subglottic region, and I felt he would tolerate the tube being removed with close monitoring by nursing at his extended care facility.",132,0.2,0.2,5,4,1,0
+35,Consult - History and Phy.,Right-sided facial droop and right-sided weakness.  Recent cerebrovascular accident.  he CT scan of the head did not show any acute events with the impression of a new-onset cerebrovascular accident.,639,"**Reason for Visit / Diagnosis:**  
+You were brought to the emergency room due to a right-sided facial droop and weakness. This is likely related to a recent stroke, which is a condition that affects blood flow to the brain.
+
+**Key Findings:**  
+During your evaluation, it was noted that you have weakness on your right side and a slight droop in your facial muscles on that side. A CT scan of your head did not show any new acute issues, but it confirmed some brain atrophy. Additionally, you have a urinary tract infection that is resistant to most medications.
+
+**Treatment or Procedures Performed:**  
+You will be monitored closely in the hospital. You will receive IV medications to manage your blood pressure and treat the urinary infection. A swallowing evaluation will be done before you can eat or drink. Other medications will include those for managing your blood pressure and dementia.
+
+**Follow-up Instructions:**  
+You will be observed for the next 24 hours, with regular checks on your neurological status. It’s important to monitor your blood pressure and ensure you are stable. Your healthcare team will update you on your progress and any further steps needed for your treatment.",196,0.5714285714285714,0.0,14,6,0,8,"You visited today due to a right-sided facial droop and weakness. You are an 83-year-old lady with a history of stroke and dementia. During your evaluation, it was noted that you have weakness on your right side and a droop in your facial muscles. A CT scan of your head did not show any new issues, but there is concern about a possible new stroke. Additionally, you have a urinary tract infection that is not responding to oral medications.
+
+During the examination, it was observed that you have some difficulty moving your right side, but you can still move both arms. You are currently wheelchair-bound and have some issues with incontinence. 
+
+You will be admitted to the hospital for observation and treatment. It is important to monitor your condition closely. After your stay, follow-up care will be arranged to ensure you receive the support you need. If you have any questions or concerns, please feel free to ask the healthcare team.",161,0.5454545454545454,0.1818181818181818,11,5,2,4,"OF PRESENT ILLNESS: , The patient is an 83-year-old lady, a resident of a skilled nursing facility, with past medical history of a stroke and dementia with expressive aphasia, was found today with a right-sided facial droop, and was transferred to the emergency room for further evaluation. While in the emergency room, she was found to having the right-sided upper extremity weakness and right-sided facial droop. No cervical adenopathy. ,NEUROLOGIC:  There is right-sided slight facial droop. She has withdrawal of both lower extremities by touching her sole of the feet.",90,0.2,0.2,5,4,1,0
+36,Consult - History and Phy.,"Refractory anemia that is transfusion dependent.  At this time, he has been admitted for anemia with hemoglobin of 7.1 and requiring transfusion.",576,"**Reason for Visit / Diagnosis:**  
+You came in for a blood transfusion due to refractory anemia, which means your body is not producing enough red blood cells and you need regular transfusions to manage it.
+
+**Key Findings:**  
+During your evaluation, your hemoglobin level was low at 7.1, and you have been experiencing fatigue and some shortness of breath. You have a history of diabetes but no complications related to it. You recently had a blood transfusion about two months ago and another one a few weeks before that. There are no signs of bleeding, and recent tests, including an endoscopy, did not show any issues.
+
+**Treatment or Procedures Performed:**  
+You are currently on medications including B12, oral iron, folic acid, and Procrit to help with your anemia. We recommend further tests to better understand the cause of your anemia, including blood tests and a bone marrow biopsy, which you have agreed to.
+
+**Follow-Up Instructions:**  
+We will also schedule an ultrasound of your abdomen to check for any issues with your spleen. After these tests, we will follow up with you to discuss the results and any further treatment options. Thank you for allowing us to be part of your care.",200,0.75,0.1666666666666666,12,3,2,7,"You visited us today due to your ongoing issue with anemia, which requires regular blood transfusions. During your visit, we found that your hemoglobin level is quite low at 7.1, indicating that you need a transfusion. You have a history of diabetes but no other significant health problems.
+
+Currently, you are being treated with vitamin B12, iron supplements, folic acid, and Procrit to help manage your anemia. We have ruled out any signs of bleeding, and a recent examination of your digestive system showed no issues. However, we suspect that your anemia may be linked to an underlying condition affecting your bone marrow.
+
+For your treatment, you received a blood transfusion today, and we will continue to monitor your condition closely. It’s important to keep track of your symptoms, especially any fatigue or shortness of breath you may experience.
+
+As for follow-up, please make sure to attend your scheduled appointments so we can evaluate your progress and adjust your treatment as necessary. If you notice any new symptoms or have concerns before your next visit, don’t hesitate to reach out.",180,1.0,0.2,10,0,2,8,"At this time, he has been admitted for anemia with hemoglobin of 7.1 and requiring transfusion. At this time, we are asked to evaluate him for further causes and treatment for his anemia. My impression at this time is that he probably has an underlying myelodysplastic syndrome or bone marrow failure. His creatinine on this hospitalization was up slightly to 1.6 and this may contribute to his anemia. I have discussed the risks, benefits, and successes of that treatment and usefulness of the bone marrow and predicting his cause of refractory anemia and further therapeutic interventions, which might be beneficial to him.",102,0.0,0.0,5,5,0,0
+37,Consult - History and Phy.,"The patient is a 17-year-old female, who presents to the emergency room with foreign body and airway compromise and was taken to the operating room.  She was intubated and fishbone.",261,"**Reason for Visit / Diagnosis:**  
+You came to the emergency room because you had a fishbone lodged in your airway, which was causing difficulty breathing.
+
+**Key Findings:**  
+After examining you, the medical team found that the fishbone was quite large and needed to be removed. You were intubated to help you breathe during this process. Fortunately, after the removal of the fishbone and some observation, your airway improved.
+
+**Treatment or Procedures Performed:**  
+You underwent surgery to remove the fishbone, and during your stay, you received IV antibiotics and support for your breathing. After monitoring your condition, the medical team was able to extubate you, meaning you no longer needed the breathing tube.
+
+**Follow-Up Instructions:**  
+You are doing well now and are being prepared for discharge. Before you leave, Dr. X will check on you to ensure everything is okay. You will need to return for a follow-up appointment with Dr. Y in one week. If you have any concerns or feel unwell before your follow-up, please seek medical attention.",169,0.5454545454545454,0.0909090909090909,11,5,1,5,"You visited the emergency room because of a fishbone lodged in your airway, which was causing difficulty breathing. After being intubated, the fishbone was successfully removed during surgery. 
+
+Throughout your hospital stay, you received treatment with IV antibiotics and support for your breathing. Fortunately, your airway improved, and you were able to be extubated, meaning you no longer needed the breathing tube. You have been doing well since then, with a good appetite and voice.
+
+Before you go home, Dr. X will check to ensure everything is okay. It is recommended that you return for a follow-up appointment with Dr. Y in one week to monitor your recovery.",108,0.8571428571428571,0.0,7,1,0,6,"HISTORY OF PRESENT ILLNESS:,  The patient is a 17-year-old female, who presents to the emergency room with foreign body and airway compromise and was taken to the operating room. She was intubated and fishbone.,PAST MEDICAL HISTORY: , Significant for diabetes, hypertension, asthma, cholecystectomy, and total hysterectomy and cataract. ,HOSPITAL COURSE: , The patient was taken to the operating room by Dr. X who is covering for ENT and noted that she had airway compromise and a rather large fishbone noted and that was removed. The patient was intubated and it was felt that she should be observed to see if the airway would improve upon which she could be extubated. The patient was treated with IV antibiotics and ventilatory support and at the time of this dictation, she has recently been taken to the operating room where it was felt that the airway sufficient and she was extubated.",148,0.0,0.0,5,5,0,0
+38,Consult - History and Phy.,"Patient felt dizzy, had some cold sweats, mild shortness of breath, no chest pain, no nausea or vomiting, but mild diarrhea, and sat down and lost consciousness for a few seconds.",345,"**Reason for Visit:** You were admitted to the hospital due to a fainting episode that occurred while you were shopping. This was the first time you experienced such an event.
+
+**Key Findings:** During your visit, you reported feeling dizzy and having cold sweats, along with mild shortness of breath. You have a history of pulmonary embolism and other health issues, including heart disease and high blood pressure. Currently, you feel fine but experience mild shortness of breath when exerting yourself, which has been your usual for several years.
+
+**Treatment or Procedures Performed:** You were evaluated by the medical team, and your vital signs were stable. Your lungs were clear upon examination, and you did not show signs of acute distress.
+
+**Follow-Up Instructions:** It is important to monitor your symptoms closely. If you experience any further episodes of dizziness, shortness of breath, or any new symptoms, please seek medical attention. Continue taking your prescribed medications and follow up with your primary care physician to manage your ongoing health conditions.",168,0.7857142857142857,0.2857142857142857,14,3,4,7,"You visited today due to a recent episode where you fainted while shopping. This was the first time you experienced such an event, and it was accompanied by dizziness, cold sweats, and mild shortness of breath, but no chest pain or nausea. 
+
+During your visit, it was noted that you currently feel fine, although you do experience mild shortness of breath when exerting yourself, which has been your usual for several years. You mentioned having difficulty climbing stairs and feeling short of breath when taking a shower. 
+
+Your medical history includes a pulmonary embolism diagnosed a year ago, for which you had an IVC filter placed due to a significant gastrointestinal bleed. You also have a history of atrial fibrillation and coronary artery disease, but you are not on anticoagulation therapy due to your past GI issues. 
+
+For follow-up, it is important to monitor your symptoms and report any changes, especially if you experience chest pain or further episodes of fainting. Please ensure to keep your scheduled follow-up appointments to manage your health effectively.",174,0.875,0.25,8,1,2,5,"The patient currently feels fine, has mild shortness of breath upon exertion, but this is her usual for the last several years. She does not have any chest pain, no fever or syncopal episodes.,PAST MEDICAL HISTORY,1. At that time, she has had an IVC filter placed due to massive GI bleed from diverticulosis and gastric ulcers. Hypertension.,6. Renal stent.,8.",59,0.4,0.4,5,3,2,0
+39,Consult - History and Phy.,"Patient presented with significant muscle tremor, constant headaches, excessive nervousness, poor concentration, and poor ability to focus.",1235,"**Reason for Visit / Diagnosis:**  
+Mr. T, a 45-year-old man, came in due to significant muscle tremors, constant headaches, excessive nervousness, and difficulty concentrating. He has been experiencing low energy, motivation, and self-esteem, along with feelings of hopelessness and crying spells. These symptoms began about two months ago, following a stressful incident at work that resulted in his termination.
+
+**Key Findings:**  
+During the evaluation, Mr. T displayed a tense demeanor and some involuntary movements resembling a tremor. He has a history of low confidence and has had thoughts of self-harm, although these are currently not active. He has been undergoing psychotherapy since April 2003 and was recently prescribed Lexapro by his family doctor.
+
+**Treatment or Procedures Performed:**  
+Mr. T is currently receiving psychotherapy and has been started on Lexapro to help manage his symptoms. 
+
+**Follow-Up Instructions:**  
+It is important for Mr. T to continue his psychotherapy sessions and to monitor his response to the medication. He should reach out to his healthcare provider if his symptoms worsen or if he experiences any side effects from the medication. Regular follow-ups will be necessary to assess his progress and make any needed adjustments to his treatment plan.",195,0.9166666666666666,0.0833333333333333,12,1,1,10,"Mr. T is a 45-year-old man who came in for help with several troubling symptoms, including significant muscle tremors, constant headaches, excessive nervousness, and difficulty concentrating. He has been feeling low in confidence and self-esteem, with very little energy or motivation, and has experienced thoughts of self-harm, although these thoughts are currently not active.
+
+During the visit, it was noted that Mr. T appeared tense and showed some involuntary movements, but his memory was intact. He has been struggling with a poor appetite and fatigue, and he is particularly concerned about his headaches. While he has some difficulties in judgment regarding finances and relationships, he is aware of his challenges and is motivated to improve his situation.
+
+Mr. T is open to treatment and is following the recommendations provided. For follow-up, it is important for him to continue engaging with the treatment plan and to monitor his symptoms closely. Regular check-ins will help ensure he is on the right path to feeling better.",163,1.0,0.0,8,0,0,8,"Mr. T furthermore stated that his family psychiatric history is unremarkable.,SUBSTANCE He stated his parents moved a lot, and because this many times he was picked on in his new environments, Mr. T stated he was, at times, a rebellious teenager, but he denied any significant inability to socialize, and denied any learning disabilities or the need for special education.,Mr. T stated his stepfather was somewhat verbally abusive, and that he committed suicide when Mr. T was 18 years old. His attitude was overly negative and his mood was significant for moderate depression, anxiety, anhedonia and loneliness, and mild evidence of anger. As Mr. T placed his entire identity and sense of survival on his work, this was a deafening blow to his psychological functioning.",125,0.0,0.0,5,5,0,0
+40,Consult - History and Phy.,"This is a 69-year-old white woman with Huntington disease, who presents with the third suicide attempt in the past two months.",1250,"**Reason for Visit / Diagnosis:**  
+You were admitted to the hospital after an overdose involving Haldol and Tylenol. This was your third suicide attempt in the last two months, and you have a history of Huntington disease, which has been worsening your symptoms and contributing to feelings of depression and anxiety.
+
+**Key Findings:**  
+During your stay, it was noted that you have been feeling increasingly withdrawn and have experienced short-term memory loss. Your husband mentioned that you have been less social and more anxious lately. You also expressed concerns about your family, particularly regarding your sons and the possibility of them being tested for the Huntington gene.
+
+**Treatment or Procedures Performed:**  
+You have been monitored in the hospital and were recently transferred to the psychiatric floor for further care. Your medications include alprazolam for anxiety, Haldol for chorea, and nortriptyline for depression. Your husband has been involved in your care and has been following instructions from your doctor regarding your medication adjustments.
+
+**Follow-Up Instructions:**  
+It is important to continue your psychiatric care with Dr. X, who you see regularly. You also have an upcoming appointment with your neurologist. Please keep your support system close and communicate openly about your feelings. If you have any thoughts of self-harm, reach out to your healthcare team immediately.",214,0.7857142857142857,0.1428571428571428,14,3,2,9,"You visited the hospital due to a serious situation involving an overdose of medications, including Haldol and Tylenol, and you have a history of Huntington disease. This was your third suicide attempt in the past two months, and you have been feeling suicidal for a couple of weeks. 
+
+During your stay, tests showed that you had some elevated levels of certain substances in your system, but you are now medically stable. Thankfully, you are currently not experiencing any suicidal thoughts. 
+
+You have been transferred to the psychiatric floor for further support and care. It is important to continue monitoring your mental health closely. 
+
+For follow-up, please ensure you attend all scheduled appointments with your healthcare providers and reach out for help if you ever feel overwhelmed or have thoughts of harming yourself again. Your safety and well-being are the top priority, and there are resources available to support you.",149,0.875,0.25,8,1,2,5,"She has been on the medical floor for monitoring and is medically stable and was transferred to the psychiatric floor today. The patient states she had been thinking about suicide for a couple of weeks. The patient notes that she has had depressive symptoms of quitting social life, the patient being withdrawn for the past few months and excessive worry about her Huntington disease. PSYCHIATRIC HISTORY: , As per the HPI, this is her third suicide attempt in the last two months and started seeing Dr. X. She has an upcoming appointment with the Neurologist.",95,0.25,0.0,4,3,0,1
+41,Discharge Summary,"Hypothermia.  Rule out sepsis, was negative as blood cultures, sputum cultures, and urine cultures were negative.  Organic brain syndrome.  Seizure disorder.  Adrenal insufficiency.  Hypothyroidism.  Anemia of chronic disease.",341,"**Reason for Visit / Diagnosis:**  
+You were admitted to the hospital due to hypothermia and were evaluated for several other conditions, including possible infections and issues related to your brain and hormone levels.
+
+**Key Findings:**  
+During your stay, tests showed that you had low body temperature, and while we ruled out infections, you were diagnosed with several other conditions, including organic brain syndrome, a seizure disorder, adrenal insufficiency, hypothyroidism, and anemia. Your blood work indicated stable hemoglobin and platelet levels, but some protein levels were low.
+
+**Treatment or Procedures Performed:**  
+You received treatment in the Intensive Care Unit, which included warming your body, administering antibiotics, and adjusting your hormone medications. We started you on medications for your thyroid and adrenal issues, and you were given support for your nutrition through tube feeds, although you had some difficulty tolerating them.
+
+**Follow-Up Instructions:**  
+You will be transported to a nursing home in Albuquerque, as requested by your legal guardian. The discharge planners are working to arrange this. Please note that your overall health outlook is concerning, and ongoing care will be essential.",180,0.9,0.3,10,1,3,6,"You were admitted to the hospital due to hypothermia and were closely monitored in the Intensive Care Unit. During your stay, we also looked into other potential issues, including sepsis, but tests for infections came back negative. Additionally, we noted some other health concerns, including organic brain syndrome, a seizure disorder, adrenal insufficiency, hypothyroidism, and anemia of chronic disease.
+
+Your blood tests showed stable hemoglobin and platelet levels, and your thyroid function tests indicated secondary hypothyroidism. Based on these findings, your doctor recommended starting Synthroid, a medication to help manage your thyroid condition.
+
+For follow-up, please ensure you keep your scheduled appointments to monitor your thyroid levels and overall health. If you have any new symptoms or concerns, do not hesitate to reach out to your healthcare provider.",128,0.8571428571428571,0.1428571428571428,7,1,1,5,"Hypothermia.,2. He was admitted to the Intensive Care Unit. The patient was empirically placed on Synthroid and hydrocortisone by Dr. X.  Blood work consisted of a chemistry panel that was unremarkable, except for decreased proteins. Dr. X felt because of his hypothyroidism and his hypothermia that he had secondary adrenal insufficiency and recommended hydrocortisone and Florinef. The patient was started back on his tube feeds.",65,0.0,0.0,5,5,0,0
+42,Discharge Summary,"Cerebrovascular accident (CVA) with right arm weakness and MRI indicating acute/subacute infarct involving the left posterior parietal lobe without mass effect.  2.  Old coronary infarct, anterior aspect of the right external capsule.  Acute bronchitis with reactive airway disease.",382,"**Reason for Visit / Diagnosis:**  
+You were admitted due to a stroke (cerebrovascular accident) that caused weakness in your right arm, along with bronchitis and other cardiovascular concerns.
+
+**Key Findings:**  
+During your hospital stay, an MRI showed an area of damage in the left side of your brain, which is related to the stroke. You also had a history of heart issues and low platelet counts, which improved during your treatment. Your cough and breathing difficulties were addressed, and a chest X-ray showed no serious problems in your lungs.
+
+**Treatment or Procedures Performed:**  
+You received medications including Plavix and baby aspirin for your stroke, as well as Zithromax for your bronchitis. You also had treatments to help with your breathing. Physical therapy was started, and you showed significant improvement in your right arm strength.
+
+**Follow-Up Instructions:**  
+You will follow up in one week at my office. You should start outpatient physical and occupational therapy. Avoid driving for now, and please notify us if you experience any new symptoms. You have two more doses of Zithromax to complete at home. Your overall prognosis is good.",184,0.7333333333333333,0.0666666666666666,15,4,1,10,"You visited us due to a stroke, which caused weakness in your right arm, along with bronchitis and other heart-related issues. 
+
+During your stay, we found that you had an acute stroke affecting a specific area of your brain, and there were signs of an older heart issue. Your right arm weakness has improved significantly, and your lung condition is stable with only occasional wheezing. 
+
+For treatment, we switched you to a metered dose inhaler with albuterol to help with your breathing. An echocardiogram showed some changes in your heart, but overall, the function is normal. 
+
+As you prepare to go home, please continue to monitor your symptoms and follow any prescribed medication plans. If you notice any worsening of your condition or have concerns, don't hesitate to reach out to your healthcare provider.",134,1.0,0.4285714285714285,7,0,3,4,He was kept on oral Zithromax for his cough. Dr. X saw him in consultation and recommended CT angiogram. The patient was begun on PT and improved. His lung examination has just occasional rhonchi. He was changed to a metered dose inhaler with albuterol.,44,0.0,0.0,5,5,0,0
+43,Consult - History and Phy.,Patient complaining of cough and blood mixed with sputum production with a past medical history significant for asbestos exposure.,326,"**Reason for Visit / Diagnosis:**  
+You came in today due to coughing up blood (hemoptysis), worsening shortness of breath, and constipation. Your medical history includes exposure to asbestos and several heart conditions.
+
+**Key Findings:**  
+During the examination, you were alert and in no acute distress. Your vital signs showed a slight fever and stable blood pressure. There were some abnormal sounds in your lungs, and you exhibited signs of cyanosis, which means there was a slight bluish tint to your extremities. Lab tests indicated some issues with your blood clotting, and a chest X-ray suggested a possible fluid buildup in your left lung.
+
+**Treatment or Procedures Performed:**  
+You have been diagnosed with hemoptysis, acute bronchitis, and a left pleural effusion. To address these issues, you will be started on antibiotics.
+
+**Follow-Up Instructions:**  
+It is important to monitor your symptoms closely. If you experience increased shortness of breath, chest pain, or any other concerning symptoms, please seek medical attention immediately. We will schedule follow-up visits to monitor your progress and adjust your treatment as necessary.",174,0.9230769230769232,0.2307692307692307,13,1,3,9,"You visited us today due to concerns about coughing up blood, known as hemoptysis, along with worsening shortness of breath and constipation. You have a history of asbestos exposure and significant heart issues, which we have noted in your medical records.
+
+During your visit, we found that you have acute bronchitis and a left pleural effusion, which is fluid buildup in the space around your lungs. These findings help explain your symptoms of cough and shortness of breath.
+
+To address your condition, we will provide treatment for your bronchitis and manage the pleural effusion. This may include medications to help relieve your symptoms and improve your breathing.
+
+For follow-up, please monitor your symptoms closely. If you notice any worsening of your cough, increased shortness of breath, or any new symptoms, please reach out to us immediately. We will schedule a follow-up appointment to reassess your condition and ensure you are on the right path to recovery.",156,1.0,0.0,9,0,0,9,",MEDICATIONS,1. ,ALLERGIES,1. DARVOCET.,2. CLONIDINE.,PHYSICAL EXAMINATION,GENERAL: Hemoptysis.,2. Coagulopathy.,4.",7,0.3333333333333333,0.0,3,2,0,1
+44,Consult - History and Phy.,Complaint of left otalgia (serous otitis) and headache.  History of atopic dermatitis.,259,"**Reason for Visit / Diagnosis:**  
+You visited the clinic due to pain in your left ear (otalgia) and headaches. You have a history of atopic dermatitis and have experienced some sinus pressure and jaw pain. 
+
+**Key Findings:**  
+During the examination, it was noted that you had fluid in your left ear, but your right ear was clear. Your overall health appeared good, and there were no signs of fever or other concerning symptoms. You also have some skin irritation related to your atopic dermatitis.
+
+**Treatment or Procedures Performed:**  
+To help with your symptoms, we have prescribed Nasacort AQ nasal spray to use daily, and Duraphen II to take twice a day. Additionally, you will receive a refill for Cutivate cream to apply to the affected areas of your skin twice a day.
+
+**Follow-Up Instructions:**  
+Please monitor your symptoms and return for a follow-up appointment as needed. If your ear pain, headaches, or skin issues do not improve, or if you have any new concerns, do not hesitate to reach out to the clinic.",173,0.8181818181818182,0.3636363636363636,11,2,4,5,"You visited the clinic today due to left ear pain and headaches that started about three weeks ago. You also mentioned some pressure in your left sinus and jaw pain, although your hearing has improved. You have a history of atopic dermatitis and have previously used Cutivate cream successfully, so you requested a refill for that. 
+
+During the examination, your ears were checked and found to be normal, with no tenderness. Your nasal passages appeared healthy, and there were no signs of infection in your throat or neck. 
+
+For treatment, we will continue with the Cutivate cream for your skin condition. Since you have a history of sinus issues, we recommend monitoring your symptoms closely. If your ear pain or headaches worsen or if you develop a fever, please reach out for further evaluation. 
+
+As a follow-up, please keep track of your symptoms and schedule another appointment if necessary. Remember to take ibuprofen as needed for pain relief.",158,0.9,0.2,10,1,2,7,"She continues to have some left-sided jaw pain. Denies any headache, fever, cough, or sore throat. ,Ears:  Left TM with some effusion. No tonsillar hypertrophy or exudate. Serous otitis.,2.",29,0.0,0.0,5,5,0,0
+45,Consult - History and Phy.,A white female presents for exam and Pap.,483,"**Reason for Visit / Diagnosis:**  
+You came in for your annual exam and Pap smear. Your last Pap was normal, and you are feeling well overall.
+
+**Key Findings:**  
+During the exam, your vital signs were stable, and you have lost 2 pounds since your last visit. You reported some allergy symptoms at night, including congestion and sneezing, which have improved recently. Additionally, you have a small area of irritation on your right finger that appears to be dermatitis. Your gynecological exam was normal.
+
+**Treatment or Procedures Performed:**  
+A Pap smear was conducted during your visit. For your allergy symptoms, I suggested using Ayr Nasal saline gel and provided a sample of Nasonex, a nasal spray, to help manage your symptoms. For the dermatitis on your finger, I recommended applying hydrocortisone cream to the affected area. 
+
+**Follow-Up Instructions:**  
+Continue to have your Pap smear annually. I also encouraged you to improve your nutrition by aiming for at least five servings of fruits and vegetables daily, limiting dairy to no more than three servings, and engaging in regular exercise at least three times a week. If your allergy symptoms or dermatitis do not improve, please schedule a follow-up appointment.",197,0.9285714285714286,0.2142857142857142,14,1,3,10,"You visited today for a routine exam and Pap smear. Your last Pap was normal, and your menstrual cycles are usually regular. 
+
+During the examination, your weight was noted to be 154 pounds, which is a slight decrease of 2 pounds. Your blood pressure was measured at 104/66, and you appeared to be in good health, showing no signs of distress. The examination of your reproductive organs showed that everything is normal in size and shape, and there were no issues found. However, there was a small area of skin irritation on your right finger, which is likely eczema.
+
+Today, we performed a Pap smear to check for any changes in your cervical health. 
+
+For follow-up, we will inform you of the Pap smear results once they are available. If you have any concerns or notice any changes in your health, please feel free to reach out.",147,1.0,0.1111111111111111,9,0,1,8,"She had a mammogram which was normal recently. She is current on her tetanus update.,REVIEW OF SYSTEMS:,HEENT:  She feels as though she may have some allergies at night. Most of her symptoms occur then, not during the day. Currently, she uses Tylenol Sinus. Today, her symptoms are much better.",49,0.0,0.0,5,5,0,0
+46,Consult - History and Phy.,Template for History and Physical for a newborn.,365,"**Reason for Visit / Diagnosis:**  
+You visited today for the delivery of your baby, who is a full-term infant. 
+
+**Key Findings:**  
+Your baby was delivered at ** weeks gestational age and was in a vertex position. The amniotic fluid was clear, and the baby received appropriate care immediately after birth, including drying, stimulation, and suctioning. The Apgar scores, which assess your baby's health right after birth, were ** at one minute and ** at five minutes. The baby appears alert and active, with normal vital signs and physical examination results.
+
+**Treatment or Procedures Performed:**  
+During the visit, routine newborn care was provided. Your baby received anticipatory guidance for care at home and will receive the Hepatitis B immunization before discharge.
+
+**Follow-Up Instructions:**  
+You will continue routine care for your newborn at home. Please monitor your baby's feeding, sleeping, and general behavior. If you have any concerns or notice any changes in your baby's health, do not hesitate to reach out to your healthcare provider.",164,1.0,0.3076923076923077,13,0,4,9,"You visited today for the delivery of your baby, who is a full-term infant. The baby was born at ** weeks gestational age and was delivered safely. The amniotic fluid was clear, and the baby was in a head-down position at birth. After delivery, your baby was dried, stimulated, and had some suctioning to clear the airways.
+
+During the examination, your baby showed normal reflexes and was moving all limbs equally, indicating good health. The Apgar scores, which assess the baby's condition right after birth, were ** at one minute and ** at five minutes, which are positive indicators.
+
+For treatment, your baby will receive routine newborn care, including guidance on what to expect in the coming days. Before you leave the hospital, your baby will also receive the Hepatitis B immunization.
+
+As for follow-up, please ensure to keep up with regular pediatric appointments to monitor your baby's growth and development. If you have any questions or concerns, do not hesitate to reach out to your healthcare provider. Congratulations on your new arrival!",173,1.0,0.2727272727272727,11,0,3,8,"HISTORY OF PRESENT ILLNESS: , This is a ** week gestational age ** delivered by ** at ** on **. ** rupture of membranes occurred ** prior to delivery and amniotic fluid was clear. **Alert, active, nondysmorphic-appearing infant in no acute distress. ,RESPIRATORY;  Clear to auscultation bilaterally. Moves all extremities equally.,DIAGNOSTIC STUDIES,LABORATORY DATA:,  **,ASSESSMENT: , Full term, appropriate for gestational age **.,PLAN:,1.",62,0.2,0.2,5,4,1,0
+47,Consult - History and Phy.,The patient has been suffering from intractable back and leg pain.,262,"**Reason for Visit / Diagnosis:**  
+You came in today for evaluation of your axial back pain, which has improved but is not completely gone. The diagnosis includes multilevel lumbar internal disc disruption and some lumbar facet joint syndrome.
+
+**Key Findings:**  
+Your back pain has improved significantly since your last visit. The procedure you had six months ago to denervate your lumbar facet joints has helped reduce your pain by about 40% when standing and 70% during certain movements. You are now able to swing a golf club, which was difficult before the procedure. Additionally, your leg symptoms have resolved since your last treatment.
+
+**Treatment or Procedures Performed:**  
+During this visit, we discussed fitting you with a low-profile back brace to provide additional support. We are also starting you on a new medication, diclofenac 75 mg, to help manage your pain.
+
+**Follow-Up Instructions:**  
+Please follow up with us in one month to assess your progress and make any necessary adjustments to your treatment plan. If you have any concerns or experience any new symptoms before then, do not hesitate to reach out.",181,0.9166666666666666,0.0,12,1,0,11,"You visited today to discuss your ongoing back pain. While your axial back pain has greatly improved, it is not completely gone. Currently, surgery is not an option for your condition, which is related to lumbar internal disc disruption.
+
+During your examination, we noted that you are experiencing multilevel lumbar internal disc disruption and some lumbar facet joint syndrome. The denervation procedure you had about six months ago has helped reduce your pain significantly—about 40% when standing and 70% with certain movements. You mentioned that you can now swing a golf club, which is a positive sign of improvement. Additionally, your leg symptoms have resolved since your last injection.
+
+For your treatment, we will fit you with a low-profile back brace to provide support. I am also prescribing diclofenac, which you will take twice a day to help manage your pain.
+
+Please follow up with us as needed to monitor your progress and adjust your treatment plan. If you have any questions or concerns, don’t hesitate to reach out.",169,0.7272727272727273,0.0909090909090909,11,3,1,7,"Her axial back pain is greatly improved, but not completely eradicated. There is absolutely no surgery at this point in time that would be beneficial for her axial back pain due to her lumbar internal disc disruption.,PAST MEDICAL HISTORY:,  Significant for anxiety disorder.,PAST Her lumbar facet joints were denervated approximately 6 months ago. The denervation procedure helped her axial back pain approximately 40% when standing. With extension and rotation it helped her axial back pain approximately 70%.",77,0.0,0.0,5,5,0,0
+48,Discharge Summary,Gastroenteritis and autism.  She developed constipation one week prior to admission and mother gave her MiraLax and her constipation improved.,454,"**Reason for Visit / Diagnosis:**  
+You visited due to symptoms of gastroenteritis, which included vomiting and concerns about significant weight loss. You also have a diagnosis of autism.
+
+**Key Findings:**  
+During your visit, it was noted that you had lost about 10 pounds recently, weighing 124 pounds at the time of admission. You had been experiencing vomiting for three days but did not have diarrhea. Your physical examination was mostly normal, except for signs related to autism. Laboratory tests showed that your overall health indicators were stable, but further evaluation is needed for your unexplained weight loss.
+
+**Treatment or Procedures Performed:**  
+While in the hospital, you were given IV fluids and gradually moved to a clear liquid diet, then to a regular diet as tolerated. You seemed comfortable and happy by the time of discharge.
+
+**Follow-Up Instructions:**  
+You are advised to follow up with Dr. X at the ABC Office in 1 to 2 weeks. During this visit, we will continue to investigate the reasons behind your weight loss and monitor your health. Your current medications, Adderall and clonidine, will continue as prescribed.",183,0.5714285714285714,0.1428571428571428,14,6,2,6,"**Reason for Visit / Diagnosis:**  
+You visited the office due to persistent vomiting and concerns about weight loss. After evaluation, you were diagnosed with gastroenteritis.
+
+**Key Findings:**  
+During your visit, it was noted that you weigh 124 pounds, which is about 10 pounds less than your previous weights. Although your physical examination was mostly normal, there were signs of autism spectrum disorder. Your laboratory tests showed normal results for most measures, and imaging studies of your chest and abdomen did not reveal any issues.
+
+**Treatment or Procedures Performed:**  
+You were treated for your symptoms and will continue taking your medications, Adderall and clonidine, for attention deficit hyperactivity disorder. 
+
+**Follow-Up Instructions:**  
+It is important to follow up with Dr. X at the ABC Office in 1 to 2 weeks to monitor your progress and address any ongoing concerns. You can resume normal activities as tolerated.",144,0.8,0.3,10,2,3,5,"She developed constipation one week prior to admission and mother gave her MiraLax and her constipation improved. She developed vomiting 3 days prior to admission, but did not have diarrhea. She was admitted because of the persistent vomiting, but there was concern about the weight loss. In the hospital, her weight was 124 pounds, her height 58 inches, temperature 98.0 degree F., pulse 123, respirations 18, blood pressure 148/94. She has been taking the Adderall for at least a year, and the mother does not think the Adderall is the cause of the weight loss.",95,0.0,0.0,5,5,0,0
+49,Consult - History and Phy.,"Atrial fibrillation and shortness of breath.  The patient is an 81-year-old gentleman with shortness of breath, progressively worsening, of recent onset. History of hypertension, no history of diabetes mellitus, ex-smoker, cholesterol status elevated, no history of established coronary artery disease, and family history positive.",339,"**Reason for Visit:** You came to the Emergency Room due to worsening shortness of breath and a history of atrial fibrillation. 
+
+**Key Findings:** During your visit, it was noted that you have been experiencing increased shortness of breath, weakness, and fatigue over the past few days. Your vital signs showed a blood pressure of 159/49 and a pulse of 67. A chest X-ray and EKG were performed, which confirmed atrial fibrillation and showed no significant issues with your heart structure. Your laboratory tests indicated stable hemoglobin and hematocrit levels, but your BNP level was elevated.
+
+**Treatment or Procedures Performed:** You were evaluated for your symptoms, and your medications were reviewed. You are currently taking several medications, including anticoagulants for your atrial fibrillation.
+
+**Follow-Up Instructions:** It is important to monitor your symptoms closely. Please keep track of any changes in your shortness of breath or overall health. Follow up with your primary care provider to discuss your atrial fibrillation management and any adjustments to your medications. If you experience severe symptoms or have concerns, do not hesitate to return to the Emergency Room.",182,0.8666666666666667,0.2,15,2,3,10,"You visited us due to concerns about atrial fibrillation and shortness of breath. Over the past few days, you experienced worsening shortness of breath, especially when lying down, which prompted your visit to the Emergency Room. 
+
+During your evaluation, an X-ray showed normal results, but an EKG confirmed that you have atrial fibrillation, along with some nonspecific changes in your heart's electrical activity. Your medical history includes hypertension and high cholesterol, and you are currently taking several medications, including blood thinners.
+
+For treatment, we will continue to monitor your condition and manage your medications to help control your heart rhythm and alleviate your symptoms. 
+
+As for follow-up, please keep an eye on your symptoms and reach out if you experience any significant changes, such as increased shortness of breath or weakness. Regular check-ups will be important to ensure your heart health is managed effectively.",144,1.0,0.0,7,0,0,7,"He also has shortness of breath, weakness, and tiredness. ,CARDIOVASCULAR: Arrhythmia, congestive heart failure, no coronary artery disease. Shortness of breath. Some frequency, urgency, no hematuria.",26,0.5,0.5,4,2,2,0
