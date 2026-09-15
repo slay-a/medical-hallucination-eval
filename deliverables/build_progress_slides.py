@@ -52,11 +52,11 @@ def slides(R: Results):
         "RQ1: how often are GPT-4o-mini summary statements unsupported by or contradicting the note (claim-level NLI judge)?",
         "RQ2: which statements are unsupported, and how does the judge itself err against medical experts?",
         "RQ3: does document-grounded RAG reduce unsupported and contradicted statements, versus an extractive bound, and at what coverage cost?",
-        "Three approaches compared on 50 MTSamples notes: E0 zero-context LLM, E1 RAG (excerpts only), E2 centroid extractive",
+        "Five conditions compared on 50 MTSamples notes: E0 zero-context LLM, E1 RAG (excerpts only), E1b RAG (note + excerpts), E3 RAG + Chain-of-Verification, E2 centroid extractive",
         "Judge: spaCy claims, all-MiniLM-L6-v2 retrieval (top-3), cross-encoder/nli-MiniLM2-L6-H768; metrics UFR and CR per summary"]))
     S.append(dict(kind="image", title="Pipeline (identical judge for every condition)", image=RES / "fig_pipeline.png", caption="Every summary is scored by the same claim-level NLI judge; evidence is retrieved from the same note."))
     S.append(dict(kind="bullets", title="Data status", bullets=[
-        f"MTSamples (public): {R.total_rows:,} transcriptions, {R.n_eligible} eligible consult and discharge notes, {R.n_docs} sampled (seed 42); {R.n_claims_total:,} claims labelled",
+        f"MTSamples (public): {R.total_rows:,} transcriptions, {R.n_eligible} eligible consult and discharge notes, {R.n_docs} sampled (seed 42); {R.n_claims_total:,} claims labeled",
         "MIMIC-IV-Note v2.2 (PhysioNet, credentialed): downloaded May 14, 2026, integrity verified; staged for a future local-model re-run, not sent to any API",
         "ann-pt-summ v1.0.1 (PhysioNet, DUA signed): 210 expert-annotated patient summaries, 423 unsupported-fact spans; used to validate the judge with local models",
         "The PhysioNet archive download was incomplete (934 MB of >3.4 GB); the 14 annotation files were extracted and verified against the SHA-256 manifest",
@@ -68,15 +68,21 @@ def slides(R: Results):
                         ["'48 percentage-point' median CR drop; Xie et al. mis-citation; APA/IEEE mix", "Arithmetic fixed; citation replaced (Asgari 2025); IEEE with DOIs", "64-entry reference list"],
                         ["requirements.txt missing 4 packages; 'bootstrap CIs' claimed but absent", "Packages added; bootstrap CIs, effect sizes, Holm adjustment implemented", "bash run.sh --offline reproduces every number"]],
                   widths=[3.6, 4.6, 3.9]))
-    S.append(dict(kind="table", title=f"Main results (n = {R.n_docs} documents, header lines excluded)",
-                  columns=["Metric", "E0 zero-context", "E1 RAG", "E2 extractive", "E1 vs E0", "E2 vs E0"],
-                  rows=[["UFR mean", f3(R.mean('E0','UFR')), f3(R.mean('E1','UFR')), f3(R.mean('E2','UFR')), f"{t10u.delta_mean:+.3f}, {fp(t10u.p)}", f"{t20u.delta_mean:+.3f}, {fp(t20u.p)}"],
-                        ["CR mean", f3(R.mean('E0','CR')), f3(R.mean('E1','CR')), f3(R.mean('E2','CR')), f"{t10c.delta_mean:+.3f} ({abs(t10c.rel_change_mean):.0f}% rel.), {fp(t10c.p)}, Holm {fp(t10c.p_holm)}", f"{t20c.delta_mean:+.3f}, {fp(t20c.p)}"],
-                        ["Documents improved (CR)", "—", f"{t10c.pct_improved:.0f}%", f"{t20c.pct_improved:.0f}%", f"d(z) = {f2(t10c.d_z)}", f"d(z) = {f2(t20c.d_z)}"],
-                        ["Words per summary", f"{R.words['E0'].mean():.0f}", f"{R.words['E1'].mean():.0f}", f"{R.words['E2'].mean():.0f}", "", ""],
-                        ["Coverage of source sentences (cos ≥ 0.6)", pct(cov.loc['E0','coverage_at_0_6']), pct(cov.loc['E1','coverage_at_0_6']), pct(cov.loc['E2','coverage_at_0_6']), fp(cov.loc['E0','p_cov06_E1_vs_E0']), fp(cov.loc['E0','p_cov06_E2_vs_E0'])]],
-                  widths=[2.6, 1.6, 1.4, 1.6, 2.9, 2.0],
-                  note="RAG lowers the judge's contradiction rate modestly and leaves the unsupported-fact rate unchanged; the extractive bound has a non-zero error floor."))
+    t1b0u, t30u, t30c, t31u = R.test("UFR", "E0", "E1b"), R.test("UFR", "E0", "E3"), R.test("CR", "E0", "E3"), R.test("UFR", "E1", "E3")
+    conds = [c for c in ["E0", "E1", "E1b", "E3", "E2"] if c in R.conds]
+    S.append(dict(kind="table", title=f"Main results (n = {R.n_docs} documents; header lines and abstentions excluded)",
+                  columns=["Metric"] + [{"E0": "E0 zero-context", "E1": "E1 RAG excerpts", "E1b": "E1b RAG + note", "E3": "E3 RAG + CoVe", "E2": "E2 extractive"}[c] for c in conds],
+                  rows=[["UFR mean"] + [f3(R.mean(c, "UFR")) for c in conds],
+                        ["CR mean"] + [f3(R.mean(c, "CR")) for c in conds],
+                        ["Supported share of claims"] + [pct0((R.label_counts.loc[c, "Supported"] / R.label_counts.loc[c].sum())) for c in conds],
+                        ["Claims per summary"] + [f"{R.claims_per[c]:.1f}" for c in conds],
+                        ["Words per summary"] + [f"{R.words[c].mean():.0f}" for c in conds],
+                        ["Coverage of source sentences (cos ≥ 0.6)"] + [pct(cov.loc[c, "coverage_at_0_6"]) for c in conds]],
+                  widths=[3.0] + [1.85] * len(conds),
+                  note=(f"Paired Wilcoxon versus E0: E1 CR {fp(t10c.p)} (−{abs(t10c.rel_change_mean):.0f}%), E1 UFR {fp(t10u.p)}; "
+                        f"E1b UFR {fp(t1b0u.p)}; E3 UFR {fp(t30u.p)} (−{abs(t30u.rel_change_mean):.0f}%; versus E1 {fp(t31u.p)}), E3 CR {fp(t30c.p)}; "
+                        f"E2 UFR {fp(t20u.p)}. Verification lowers unsupported facts the most, by deleting claims and abstaining; retrieval alone lowers contradictions modestly; "
+                        f"the extractive bound has a non-zero judge error floor.")))
     S.append(dict(kind="image2", title="Contradiction rate: distributions and per-document pairs", images=[RES / "fig_cr_boxplot.png", RES / "fig_cr_scatter.png"]))
     S.append(dict(kind="table", title="Headline finding: the judge disagrees with medical experts",
                   columns=["Group", "Sentences", "Expert-flagged", "Judge-flagged (UFR)", "Precision", "Recall", "Kappa", "AUROC"],
@@ -91,12 +97,12 @@ def slides(R: Results):
     S.append(dict(kind="bullets", title="Thesis writing status", bullets=[
         f"Complete draft generated from the result files: {pages} pages in CSUN format (1-inch margins, 12-pt Times New Roman, double-spaced, roman-numbered preliminary pages, arabic body)",
         "Chapters: 1 Introduction, 2 Literature Review, 3 Data and Preprocessing, 4 Methodology, 5 Results, 6 Discussion, 7 Conclusion and Future Work; 64 IEEE references with DOIs; Appendices A to E (prompts, per-document results, worked examples, repository, threshold sweep)",
-        "New content since May: header-filter correction, judge validation against expert annotations, five aggregation variants, threshold/top-k/cleaned-evidence ablations, coverage proxy, negation analysis, error taxonomy, ethics and governance section",
+        "New content since May: two new conditions (E1b, E3), header-filter correction, judge validation against expert annotations, five aggregation variants, threshold/top-k/cleaned-evidence ablations, coverage proxy, negation analysis, error taxonomy, ethics and governance section",
         "Open items: committee member names on the signature page; advisor review; title alignment with the ETD planning form (question answering removed from scope)",
         "Every table and figure is regenerated by one command; the document rebuilds in about two minutes"]))
     S.append(dict(kind="table", title="Plan to the defense (aligned with CSUN ETD deadlines)", columns=["By", "Milestone"],
                   rows=[["Sep 19, 2026", "Advisor review of this complete draft; committee names confirmed"],
-                        ["Sep 30, 2026", "Run E1b and E3 (API access), re-run recomputation and rebuild; optional MIMIC re-run with a local open-weight generator"],
+                        ["Sep 30, 2026", "Sampling-variance runs (several generations per note) if API budget allows; optional MIMIC re-run with a local open-weight generator"],
                         ["Oct 9, 2026", "ETD Planning Form filed (title without question answering)"],
                         ["Oct 16, 2026", "Revised draft to advisor for approval; Canvas upload and Turnitin check after approval"],
                         ["Oct 30, 2026", "Draft to committee (two-week review); Doodle poll with 1-hour slots over 3 to 4 weeks"],
@@ -106,7 +112,6 @@ def slides(R: Results):
                   note="The December 12 defense date in the May report is after the December 4 ETD deadline and has been moved."))
     S.append(dict(kind="bullets", title="Risks and requests", bullets=[
         "Judge validity: the central instrument agrees with experts at chance level; the thesis reports this as its main methodological finding and proposes stronger judges as future work",
-        "API access for E1b and E3: about 550 GPT-4o-mini calls (under one dollar); needs an OPENAI_API_KEY on the build machine",
         "MIMIC generation: requires a zero-data-retention agreement or a local open-weight model; kept optional",
         "Schedule: two weeks of committee review plus advisor approval must precede the Nov 6 format review",
         "Request to advisor: confirm committee members, review the complete draft, and advise on the title change"]))

@@ -6,7 +6,7 @@ Runs offline.  Every figure is written to results/fig_*.png at 200 dpi.  Figures
 inputs are missing (e.g. ablations not yet run) are skipped with a message.
 
 Also writes:
-  results/examples_fixed_by_rag.csv   E0 claims labelled Contradicted whose closest E1 claim is Supported
+  results/examples_fixed_by_rag.csv   E0 claims labeled Contradicted whose closest E1 claim is Supported
   results/examples_persistent.csv     claims unsupported in both E0 and E1 (closest pairs)
 """
 import re
@@ -52,38 +52,39 @@ def conds_in(df):
 
 # ───────────────────────── 1. pipeline diagram ─────────────────────────
 def fig_pipeline():
-    fig, ax = plt.subplots(figsize=(9.5, 5.2))
-    ax.set_xlim(0, 10); ax.set_ylim(0, 5.4); ax.axis("off")
+    fig, ax = plt.subplots(figsize=(9.8, 6.4))
+    ax.set_xlim(0, 10); ax.set_ylim(0, 6.6); ax.axis("off")
 
-    def box(x, y, w, h, text, fc="#F4F4F4", ec="#444444", fs=9.5, bold=False):
+    def box(x, y, w, h, text, fc="#F4F4F4", ec="#444444", fs=9.2, bold=False):
         ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.02,rounding_size=0.08", fc=fc, ec=ec, lw=1.2))
-        ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=fs, fontweight="bold" if bold else "normal", wrap=True)
+        ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=fs, fontweight="bold" if bold else "normal")
 
-    def arrow(x1, y1, x2, y2):
-        ax.add_patch(FancyArrowPatch((x1, y1), (x2, y2), arrowstyle="-|>", mutation_scale=14, lw=1.2, color="#333333"))
+    def arrow(x1, y1, x2, y2, **kw):
+        ax.add_patch(FancyArrowPatch((x1, y1), (x2, y2), arrowstyle="-|>", mutation_scale=13, lw=1.1, color=kw.get("color", "#333333"),
+                                     linestyle=kw.get("ls", "-"), connectionstyle=kw.get("cs", "arc3,rad=0")))
 
-    box(0.2, 2.2, 1.6, 1.0, "Source clinical\nnote (MTSamples)", fc="#FFFFFF", bold=True)
-    # three generators
-    box(2.4, 3.9, 2.3, 0.95, "E0  GPT-4o-mini\nfull note, no retrieval", fc="#F9E1D6")
-    box(2.4, 2.25, 2.3, 0.95, "E1  GPT-4o-mini\ntop-3 retrieved chunks only", fc="#DCE8F2")
-    box(2.4, 0.6, 2.3, 0.95, "E2  Extractive\ncentroid top-5 sentences", fc="#DDF1E0")
-    for y in (4.37, 2.72, 1.07):
-        arrow(1.8, 2.7, 2.4, y)
-    box(5.2, 2.25, 1.5, 0.95, "Summary\n(claims)", fc="#FFFFFF")
-    for y in (4.37, 2.72, 1.07):
-        arrow(4.7, y, 5.2, 2.72)
-    # judge
-    box(7.1, 3.55, 2.7, 0.85, "Claim segmentation (spaCy)\nheader lines removed", fc="#F4F4F4")
-    box(7.1, 2.45, 2.7, 0.85, "Evidence retrieval\nall-MiniLM-L6-v2, top-3 sentences", fc="#F4F4F4")
-    box(7.1, 1.35, 2.7, 0.85, "NLI cross-encoder\nnli-MiniLM2-L6-H768", fc="#F4F4F4")
-    box(7.1, 0.25, 2.7, 0.85, "Labels -> UFR, CR per summary\nWilcoxon, bootstrap CI", fc="#FFF6CC", bold=True)
-    arrow(6.7, 2.72, 7.1, 3.97)
-    arrow(8.45, 3.55, 8.45, 3.3); arrow(8.45, 2.45, 8.45, 2.2); arrow(8.45, 1.35, 8.45, 1.1)
-    ax.text(8.45, 4.75, "Claim-level NLI judge (identical for every condition)", ha="center", fontsize=10, fontweight="bold")
-    ax.plot([0.2, 1.8], [2.05, 2.05], color="none")
-    ax.text(1.0, 1.55, "evidence sentences\nretrieved from the same note", ha="center", fontsize=8.5, style="italic", color="#555555")
-    ax.add_patch(FancyArrowPatch((1.0, 2.2), (7.1, 2.87), arrowstyle="-|>", mutation_scale=12, lw=1.0, color="#777777",
-                                 linestyle="--", connectionstyle="arc3,rad=0.35"))
+    box(0.2, 2.9, 1.6, 1.0, "Source clinical\nnote (MTSamples)", fc="#FFFFFF", bold=True)
+    gens = [(5.4, "E0  GPT-4o-mini\nfull note, no retrieval", "#F9E1D6"),
+            (4.2, "E1  GPT-4o-mini\ntop-3 retrieved chunks only", "#DCE8F2"),
+            (3.0, "E1b  GPT-4o-mini\nfull note + retrieved chunks", "#E6DDF2"),
+            (1.8, "E3  E1 draft -> per-claim verification\nagainst the note -> revision", "#F1EBCF"),
+            (0.6, "E2  Extractive\ncentroid top-5 sentences", "#DDF1E0")]
+    for y, text, fc in gens:
+        box(2.4, y, 2.5, 0.95, text, fc=fc, fs=8.8)
+        arrow(1.8, 3.4, 2.4, y + 0.47)
+    box(5.5, 2.9, 1.4, 1.0, "Summary\n(claims)", fc="#FFFFFF")
+    for y, _, _ in gens:
+        arrow(4.9, y + 0.47, 5.5, 3.4)
+    box(7.3, 4.6, 2.5, 0.85, "Claim segmentation (spaCy)\nheader lines removed", fc="#F4F4F4")
+    box(7.3, 3.45, 2.5, 0.85, "Evidence retrieval\nall-MiniLM-L6-v2, top-3 sentences", fc="#F4F4F4")
+    box(7.3, 2.3, 2.5, 0.85, "NLI cross-encoder\nnli-MiniLM2-L6-H768", fc="#F4F4F4")
+    box(7.3, 1.15, 2.5, 0.85, "Labels -> UFR, CR per summary\nWilcoxon, bootstrap CI", fc="#FFF6CC", bold=True)
+    arrow(6.9, 3.4, 7.3, 5.02)
+    for y in (4.6, 3.45, 2.3):
+        arrow(8.55, y, 8.55, y - 0.3)
+    ax.text(8.55, 5.85, "Claim-level NLI judge (identical for every condition)", ha="center", fontsize=10, fontweight="bold")
+    ax.text(1.0, 2.35, "evidence sentences\nretrieved from the same note", ha="center", fontsize=8.5, style="italic", color="#555555")
+    arrow(1.0, 2.9, 7.3, 3.87, color="#777777", ls="--", cs="arc3,rad=0.25")
     save(fig, "fig_pipeline.png")
 
 
@@ -106,12 +107,16 @@ def fig_boxplots(cmp):
 
 
 def fig_scatter(cmp):
-    pairs = [(a, b) for a, b in (("E0", "E1"), ("E0", "E2")) if a in conds_in(cmp) and b in conds_in(cmp)]
-    fig, axes = plt.subplots(1, len(pairs), figsize=(4.6 * len(pairs), 4.4), squeeze=False)
-    for ax, (a, b) in zip(axes[0], pairs):
+    pairs = [("E0", b) for b in conds_in(cmp) if b != "E0"]
+    ncol = 2 if len(pairs) > 2 else len(pairs); nrow = (len(pairs) + ncol - 1) // ncol
+    fig, axes = plt.subplots(nrow, ncol, figsize=(4.6 * ncol, 4.4 * nrow), squeeze=False)
+    axes_flat = axes.flatten()
+    for ax in axes_flat[len(pairs):]:
+        ax.axis("off")
+    for ax, (a, b) in zip(axes_flat, pairs):
         x, y = cmp[f"{a}_CR"], cmp[f"{b}_CR"]
         ax.fill_between([0, 1], [0, 1], [0, 0], color=COL[b], alpha=0.08)
-        ax.plot([0, 1], [0, 1], "--", color="grey", lw=1)
+        ax.plot([0, 1], [0, 1], "--", color="gray", lw=1)
         ax.scatter(x, y, s=28, color=COL[b], alpha=0.75, edgecolor="black", lw=0.4)
         below = int((y < x).sum()); ax.text(0.03, 0.92, f"{below}/{len(cmp)} below diagonal\n({b} lower CR)", transform=ax.transAxes, fontsize=9)
         lim = max(0.05, float(max(x.max(), y.max())) * 1.1)
@@ -122,9 +127,10 @@ def fig_scatter(cmp):
 
 
 def fig_pct_improved(tests):
-    t = tests[tests.comparison.isin(["E1 vs E0", "E2 vs E0", "E2 vs E1"])]
+    keep = [c for c in tests.comparison.unique() if c.endswith("vs E0") or c in ("E2 vs E1", "E3 vs E1", "E1b vs E1")]
+    t = tests[tests.comparison.isin(keep)]
     comps = list(dict.fromkeys(t.comparison))
-    fig, axes = plt.subplots(1, 2, figsize=(8.5, 3.8), sharey=True)
+    fig, axes = plt.subplots(1, 2, figsize=(max(8.5, 1.6 * len(comps) + 3), 3.8), sharey=True)
     for ax, metric in zip(axes, ("UFR", "CR")):
         sub = t[t.metric == metric].set_index("comparison").loc[comps]
         bottom = np.zeros(len(sub))
@@ -134,13 +140,13 @@ def fig_pct_improved(tests):
                 if v >= 8:
                     ax.text(i, b + v / 2, f"{v:.0f}%", ha="center", va="center", fontsize=9)
             bottom += sub[col].values
-        ax.set_xticks(range(len(sub))); ax.set_xticklabels(comps); ax.set_title(f"{metric}: share of documents"); ax.set_ylim(0, 100)
+        ax.set_xticks(range(len(sub))); ax.set_xticklabels(comps, fontsize=8.5, rotation=20); ax.set_title(f"{metric}: share of documents"); ax.set_ylim(0, 100)
     axes[0].set_ylabel("Percent of documents"); axes[1].legend(loc="upper center", bbox_to_anchor=(-0.1, -0.15), ncol=3, frameon=False)
     save(fig, "fig_pct_improved.png")
 
 
 def fig_label_distribution(claims):
-    c = claims[~claims.is_header]
+    c = claims[~claims.is_header & ~claims.get('is_abstention', False)]
     conds = [x for x in ["E0", "E1", "E1b", "E2", "E3"] if x in set(c.condition)]
     ct = pd.crosstab(c.condition, c.label, normalize="index").loc[conds]
     ct = ct[[l for l in ["Supported", "Not-Supported", "Contradicted"] if l in ct.columns]]
@@ -209,7 +215,7 @@ def fig_header_effect(eff):
 
 def fig_thresholds(tau):
     fig, axes = plt.subplots(1, 2, figsize=(9, 3.8))
-    conds = [c for c in ["E0", "E1", "E2"] if f"{c}_UFR_mean" in tau.columns]
+    conds = [c for c in ["E0", "E1", "E1b", "E2", "E3"] if f"{c}_UFR_mean" in tau.columns]
     for ax, metric in zip(axes, ("UFR", "CR")):
         for c in conds:
             ax.plot(tau.tau, tau[f"{c}_{metric}_mean"], marker="o", color=COL[c], label=NAME[c])
@@ -221,7 +227,7 @@ def fig_thresholds(tau):
 
 
 def fig_topk(topk):
-    conds = [c for c in ["E0", "E1", "E2"] if f"{c}_UFR_mean" in topk.columns]
+    conds = [c for c in ["E0", "E1", "E1b", "E2", "E3"] if f"{c}_UFR_mean" in topk.columns]
     fig, axes = plt.subplots(1, 2, figsize=(9, 3.8))
     for ax, metric in zip(axes, ("UFR", "CR")):
         x = np.arange(len(topk)); w = 0.8 / len(conds)
@@ -234,12 +240,12 @@ def fig_topk(topk):
 
 
 def fig_e2_probs(claims):
-    e2 = claims[(claims.condition == "E2") & (~claims.is_header)]
+    e2 = claims[(claims.condition == "E2") & (~claims.is_header) & (~claims.get('is_abstention', False))]
     fig, ax = plt.subplots(figsize=(5.6, 4.6))
     colors = {"Supported": "#5DBF6E", "Not-Supported": "#999999", "Contradicted": "#E07B54"}
     for lab, d in e2.groupby("label"):
         ax.scatter(d.p_entailment, d.p_contradiction, s=26, color=colors.get(lab, "black"), label=f"{lab} (n = {len(d)})", alpha=0.8, edgecolor="black", lw=0.3)
-    ax.plot([0, 1], [0, 1], "--", color="grey", lw=1); ax.axvline(0.5, color="grey", lw=0.7, ls=":"); ax.axhline(0.5, color="grey", lw=0.7, ls=":")
+    ax.plot([0, 1], [0, 1], "--", color="gray", lw=1); ax.axvline(0.5, color="gray", lw=0.7, ls=":"); ax.axhline(0.5, color="gray", lw=0.7, ls=":")
     ax.set_xlabel("max entailment probability over evidence"); ax.set_ylabel("max contradiction probability over evidence")
     ax.set_title("E2 verbatim source sentences: judge probabilities"); ax.legend(frameon=False, fontsize=8.5, loc="lower left")
     save(fig, "fig_e2_probs.png")
@@ -288,13 +294,13 @@ def fig_variants(var):
     for g, colr in (("generated", "#4C8BB5"), ("doctor_written", "#E07B54")):
         s = var[var.group == g].set_index("variant").loc[order]
         ax.plot(range(len(order)), s.summary_spearman, marker="o", color=colr, label=f"{g}")
-    ax.set_xticks(range(len(order))); ax.set_xticklabels([names[k] for k in order], fontsize=9); ax.axhline(0, color="grey", lw=0.8)
+    ax.set_xticks(range(len(order))); ax.set_xticklabels([names[k] for k in order], fontsize=9); ax.axhline(0, color="gray", lw=0.8)
     ax.set_ylabel("Spearman ρ, judge UFR vs expert share"); ax.set_title("Summary-level rank agreement"); ax.legend(frameon=False, fontsize=8.5); ax.grid(True, ls="--", alpha=0.35)
     save(fig, "fig_variants.png")
 
 
 def fig_coverage(cov_ps):
-    conds = [c for c in ["E0", "E1", "E2"] if c in set(cov_ps.condition)]
+    conds = [c for c in ["E0", "E1", "E1b", "E2", "E3"] if c in set(cov_ps.condition)]
     fig, axes = plt.subplots(1, 2, figsize=(9, 3.8))
     for ax, (col, lab) in zip(axes, (("coverage_at_0_6", "Source sentences covered (cos ≥ 0.6)"), ("mean_best_similarity", "Mean best similarity of source sentences"))):
         data = [cov_ps.loc[cov_ps.condition == c, col].values for c in conds]
@@ -311,10 +317,12 @@ def fig_taxonomy(tc):
     t = t.loc[t.sum(axis=1).sort_values().index]
     fig, ax = plt.subplots(figsize=(8, 4.2))
     y = np.arange(len(t)); w = 0.38
-    for i, c in enumerate([x for x in ["E0", "E1"] if x in t.columns]):
-        ax.barh(y + (i - 0.5) * w, t[c], w, color=COL[c], label=NAME[c], edgecolor="black", lw=0.4)
+    gens = [x for x in ["E0", "E1", "E1b", "E3"] if x in t.columns]; w = 0.8 / len(gens)
+    for i, c in enumerate(gens):
+        ax.barh(y + (i - (len(gens) - 1) / 2) * w, t[c], w, color=COL[c], label=NAME[c], edgecolor="black", lw=0.4)
     ax.set_yticks(y); ax.set_yticklabels(t.index, fontsize=9.5); ax.set_xlabel("Unsupported or contradicted claims"); ax.legend(frameon=False)
     ax.set_title("Keyword-assisted categories of claims not supported by the note"); ax.xaxis.grid(True, ls="--", alpha=0.35); ax.set_axisbelow(True)
+    fig.set_size_inches(8, 4.2 + 0.6 * max(0, len(gens) - 2))
     save(fig, "fig_taxonomy.png")
 
 
@@ -324,7 +332,7 @@ def _tok(s):
 
 
 def examples(claims):
-    c = claims[~claims.is_header]
+    c = claims[~claims.is_header & ~claims.get('is_abstention', False)]
     fixed, persistent = [], []
     for doc_id, d in c.groupby("doc_id"):
         e0 = d[d.condition == "E0"]; e1 = d[d.condition == "E1"]

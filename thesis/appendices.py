@@ -21,19 +21,23 @@ def blocks(R: Results) -> list:
                   "All calls use GPT-4o-mini with a maximum of 450 output tokens; temperature is 0.3 for generation and 0 for the E3 verifier."),
           ("h2", "A.1 E0: Zero-Context Summarization"), ("pni", "System prompt:"), ("code", he.BASELINE_SYSTEM), ("pni", "User prompt:"), ("code", he.BASELINE_USER),
           ("h2", "A.2 E1: Retrieval-Augmented Generation (Excerpts Only)"), ("pni", "System prompt:"), ("code", he.RAG_SYSTEM), ("pni", "User prompt:"), ("code", he.RAG_USER),
-          ("h2", "A.3 E1b: Retrieval-Augmented Generation with the Full Note (Implemented, Not Run)"), ("pni", "System prompt:"), ("code", e1b.E1B_SYSTEM), ("pni", "User prompt:"), ("code", e1b.E1B_USER),
-          ("h2", "A.4 E3: Chain-of-Verification (Implemented, Not Run)"), ("pni", "Verifier system prompt:"), ("code", e3.VERIFY_SYSTEM), ("pni", "Verifier user prompt (one call per claim):"), ("code", e3.VERIFY_USER),
+          ("h2", "A.3 E1b: Retrieval-Augmented Generation with the Full Note"), ("pni", "System prompt:"), ("code", e1b.E1B_SYSTEM), ("pni", "User prompt:"), ("code", e1b.E1B_USER),
+          ("h2", "A.4 E3: Retrieval-Augmented Generation with Chain-of-Verification"), ("pni", "Verifier system prompt:"), ("code", e3.VERIFY_SYSTEM), ("pni", "Verifier user prompt (one call per claim):"), ("code", e3.VERIFY_USER),
           ("pni", "Revision system prompt:"), ("code", e3.REVISE_SYSTEM), ("pni", "Revision user prompt:"), ("code", e3.REVISE_USER)]
     # ── Appendix B: per-document results
     rows = []
     for _, r in R.cmp.sort_values("doc_id").iterrows():
-        rows.append([str(int(r.doc_id)), "Consult" if r.specialty.startswith("Consult") else "Discharge", str(int(r.source_word_count)),
-                     f3(r.E0_UFR), f3(r.E0_CR), f3(r.E1_UFR), f3(r.E1_CR), f3(r.E2_UFR), f3(r.E2_CR), str(int(r.E0_n_claims)), str(int(r.E1_n_claims)), str(int(r.E2_n_claims))])
+        row = [str(int(r.doc_id)), "C" if r.specialty.startswith("Consult") else "D", str(int(r.source_word_count))]
+        for c in R.conds:
+            row += [f3(r[f"{c}_UFR"]), f3(r[f"{c}_CR"])]
+        row += [str(int(r[f"{c}_n_claims"])) for c in R.conds]
+        rows.append(row)
+    ncond = len(R.conds)
     b += [("h1", "Appendix B: Per-Document Results"),
-          ("pni", "UFR and CR per document and condition (header lines excluded), with the number of claims. Document identifiers are the row indices of the sampled MTSamples subset."),
+          ("pni", "UFR and CR per document and condition (header lines excluded), with the number of claims (n). Type C is a consultation note and D a discharge summary; document identifiers are the row indices of the sampled MTSamples subset."),
           ("table", dict(caption="Per-document Unsupported Fact Rate, Contradiction Rate and claim counts under each condition.",
-                         columns=["Doc", "Type", "Words", "E0 UFR", "E0 CR", "E1 UFR", "E1 CR", "E2 UFR", "E2 CR", "E0 n", "E1 n", "E2 n"],
-                         widths=[0.4, 0.75, 0.55, 0.55, 0.55, 0.55, 0.55, 0.55, 0.55, 0.45, 0.45, 0.45], font=8, rows=rows))]
+                         columns=["Doc", "Type", "Words"] + [f"{c} {m}" for c in R.conds for m in ("UFR", "CR")] + [f"{c} n" for c in R.conds],
+                         widths=[0.32, 0.3, 0.42] + [0.4] * (2 * ncond) + [0.3] * ncond, font=7.5, rows=rows))]
     # ── Appendix C: worked examples
     b += [("h1", "Appendix C: Worked Examples"),
           ("pni", "Two documents are shown with their summaries under every condition and the judge's label and probabilities for each claim "
@@ -59,7 +63,7 @@ def blocks(R: Results) -> list:
           ("table", dict(caption="Scripts in the repository and their roles.", columns=["Script", "Role"], widths=[2.2, 4.3], font=9, align=["left", "left"],
                          rows=[["hallucination_eval.py", "E0 and E1 generation on the 50 sampled notes and NLI evaluation (requires OPENAI_API_KEY)"],
                                ["e2_extractive_eval.py", "E2 extractive baseline and evaluation (no API)"],
-                               ["e1b_fullnote_rag_eval.py, e3_cove_eval.py", "Implemented extensions E1b and E3 (require OPENAI_API_KEY; not run in this thesis)"],
+                               ["e1b_fullnote_rag_eval.py, e3_cove_eval.py", "E1b (RAG with the full note) and E3 (RAG with Chain-of-Verification) generation and evaluation (require OPENAI_API_KEY)"],
                                ["preprocessing.py", "Header filter and MTSamples line-break repair"],
                                ["recompute_metrics.py", "Per-document metrics, paired Wilcoxon tests, bootstrap CIs, effect sizes, header-filter tables"],
                                ["ablations.py", "Threshold, top-k and cleaned-evidence ablations; coverage proxy; negation analysis; error taxonomy"],

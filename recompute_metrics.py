@@ -23,7 +23,7 @@ import pandas as pd
 from scipy.stats import wilcoxon
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from preprocessing import is_markdown_header  # noqa: E402
+from preprocessing import is_markdown_header, is_abstention  # noqa: E402
 
 RESULTS = Path(__file__).resolve().parent / "results"
 CONDITION_ORDER = ["E0", "E1", "E1b", "E2", "E3"]
@@ -98,12 +98,13 @@ def pairwise_table(ps: pd.DataFrame, conds) -> pd.DataFrame:
 def main() -> None:
     claims = pd.read_csv(RESULTS / "claims_all.csv")
     claims["is_header"] = claims["claim"].astype(str).map(is_markdown_header)
+    claims["is_abstention"] = claims["claim"].astype(str).map(is_abstention)
     claims.to_csv(RESULTS / "claims_all.csv", index=False)
 
     conds = order_conditions(claims["condition"].unique())
     doc_ids = sorted(claims["doc_id"].unique())
     before = per_sample_metrics(claims, doc_ids, conds)
-    after = per_sample_metrics(claims[~claims["is_header"]], doc_ids, conds)
+    after = per_sample_metrics(claims[~claims["is_header"] & ~claims["is_abstention"]], doc_ids, conds)
 
     # ── summaries.csv: refresh metric columns ─────────────────────────────────
     summ = pd.read_csv(RESULTS / "summaries.csv")
@@ -192,6 +193,7 @@ def main() -> None:
     print("Conditions:", conds, "| documents:", len(doc_ids))
     print(f"Header lines removed: {int(claims.is_header.sum())} of {len(claims)} claim rows "
           f"({claims[claims.is_header].groupby('condition').size().to_dict()})")
+    print(f"Abstention lines excluded: {int(claims.is_abstention.sum())} ({claims[claims.is_abstention].groupby('condition').size().to_dict()})")
     print("\nPer-sample means AFTER header filter:")
     print(after.groupby("condition")[["UFR", "CR", "n_claims"]].mean().round(4))
     print("\nPairwise tests (Wilcoxon signed-rank, two-sided):")

@@ -30,7 +30,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from preprocessing import is_markdown_header
+from preprocessing import is_markdown_header, is_abstention
 
 warnings.filterwarnings("ignore")
 logging.basicConfig(
@@ -327,7 +327,7 @@ def evaluate_summary(
     source_sents = sentencize(source_text)
     claims       = sentencize(summary)
     # Section headers such as "**Key Findings:**" carry no verifiable proposition.
-    claims       = [c for c in claims if not is_markdown_header(c)]
+    claims       = [c for c in claims if not is_markdown_header(c) and not is_abstention(c)]
 
     records = []
     labels  = []

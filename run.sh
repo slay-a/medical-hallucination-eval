@@ -13,9 +13,8 @@ if [ "${1:-}" != "--offline" ]; then
   [ -n "${OPENAI_API_KEY:-}" ] || { echo "ERROR: export OPENAI_API_KEY='sk-...' (or use --offline)"; exit 1; }
   python hallucination_eval.py          # E0 baseline + E1 RAG generation and NLI evaluation (50 docs)
   python e2_extractive_eval.py          # E2 extractive baseline (no API calls)
-  # Optional additional conditions (uncomment to run; each needs the API key):
-  # python e1b_fullnote_rag_eval.py     # E1b: full note + excerpts
-  # python e3_cove_eval.py              # E3: RAG + Chain-of-Verification
+  python e1b_fullnote_rag_eval.py       # E1b: full note + excerpts (50 calls)
+  python e3_cove_eval.py                # E3: RAG + Chain-of-Verification (about 500 calls; checkpointed)
 fi
 python recompute_metrics.py             # header filter, per-sample metrics, paired tests
 python ablations.py                     # thresholds, top-k, cleaned evidence, coverage, taxonomy (local models only)

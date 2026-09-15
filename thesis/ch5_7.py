@@ -6,7 +6,7 @@ from scipy.stats import spearmanr
 from results_loader import Results, f3, f2, pct, pct0, fp, fpn, signed, COND_NAME
 
 FIG = "results"
-NAME = {"E0": "E0 zero-context LLM", "E1": "E1 RAG (excerpts only)", "E2": "E2 extractive"}
+NAME = {"E0": "E0 zero-context LLM", "E1": "E1 RAG (excerpts only)", "E1b": "E1b RAG (note + excerpts)", "E3": "E3 RAG + CoVe", "E2": "E2 extractive"}
 VNAME = {"max3": "Maximum over top-3 sentences (pipeline)", "concat3": "Top-3 sentences concatenated", "concat5": "Top-5 sentences concatenated",
          "maxall": "Maximum over all source sentences", "concat_ctx": "Whole hospital course as premise"}
 
@@ -57,27 +57,56 @@ def blocks(R: Results) -> list:
     # taxonomy
     cats = ["Follow-up or scheduling", "Findings, exam, labs or imaging", "Generic advice or patient education", "History, symptoms or timeline",
             "Procedure or treatment", "Medication or dosage", "Diagnosis or assessment", "Other or unclassified"]
+    GEN = [c for c in C if c != "E2"]
     tax_rows = []
     for cat in cats:
         row = [cat]
-        for c in ("E0", "E1"):
+        for c in GEN:
             tc = R.tax_counts[(R.tax_counts.condition == c) & (R.tax_counts.category == cat)]
             allc = int(tc[tc.label == "All unsupported"]["count"].sum()); con = int(tc[tc.label == "Contradicted"]["count"].sum())
             row += [str(allc), str(con)]
         tax_rows.append(row)
-    uns_total = {c: int(R.tax_counts[(R.tax_counts.condition == c) & (R.tax_counts.label == "All unsupported")]["count"].sum()) for c in ("E0", "E1")}
+    uns_total = {c: int(R.tax_counts[(R.tax_counts.condition == c) & (R.tax_counts.label == "All unsupported")]["count"].sum()) for c in GEN}
+    OTHERS = [c for c in C if c != "E0"]
     n_fixed = len(R.ex_fixed) if R.ex_fixed is not None else 0
+    has_ext = {"E1b", "E3"} <= set(C)
+    t1b0u, t1b0c = R.test("UFR", "E0", "E1b"), R.test("CR", "E0", "E1b")
+    t30u, t30c = R.test("UFR", "E0", "E3"), R.test("CR", "E0", "E3")
+    t1b1u, t1b1c = R.test("UFR", "E1", "E1b"), R.test("CR", "E1", "E1b")
+    t31u, t31c = R.test("UFR", "E1", "E3"), R.test("CR", "E1", "E3")
+    t31bu, t31bc = R.test("UFR", "E1b", "E3"), R.test("CR", "E1b", "E3")
+    n_abst = int(R.claims.is_abstention.sum()) if "is_abstention" in R.claims.columns else 0
+    abst = R.claims[R.claims.is_abstention] if n_abst else R.claims.iloc[0:0]
+    n_abst_docs = int(abst.doc_id.nunique()) if n_abst else 0
+    n_abst_contra = int((abst.label == "Contradicted").sum()) if n_abst else 0
+    try:
+        verif = pd.read_csv("results/e3_verification.csv")
+    except Exception:  # noqa: BLE001
+        verif = None
+    n_verif = len(verif) if verif is not None else 0
+    n_verif_unsup = int((verif.verdict != "SUPPORTED").sum()) if verif is not None else 0
+    fewer_e3 = int((R.cmp.E3_n_claims < R.cmp.E1_n_claims).sum()) if has_ext else 0
+    def covv(c):
+        return cov.loc[c, "coverage_at_0_6"] if c in cov.index else float("nan")
+    def covp(a, b):
+        col = f"p_cov06_{b}_vs_{a}"
+        return cov.loc["E0", col] if col in cov.columns else float("nan")
 
     # ══════════════════════════════════ CHAPTER 5 ══════════════════════════════════
-    b += [H1("Chapter 5: Results"), H2("5.1 Descriptive Statistics of the Generated Summaries")]
-    b += [P(f"[[tab:desc]] summarizes the summaries produced under the three conditions for the {R.n_docs} documents, and "
+    b += [H1("Chapter 5 Results"), H2("5.1 Descriptive Statistics of the Generated Summaries")]
+    b += [P(f"[[tab:desc]] summarizes the summaries produced under the five conditions for the {R.n_docs} documents, and "
             f"[[fig:lengths]] shows their distributions. Zero-context summaries were the longest (mean "
-            f"{R.words['E0'].mean():.0f} words), RAG summaries were shorter (mean {R.words['E1'].mean():.0f} words) although "
-            f"both prompts requested 150 to 250 words, and extractive summaries of five sentences averaged "
+            f"{R.words['E0'].mean():.0f} words); excerpt-only RAG summaries were shorter (mean {R.words['E1'].mean():.0f} words) "
+            f"although both prompts requested 150 to 250 words, and giving the model the full note as well (E1b) restored the "
+            f"length of the baseline (mean {R.words['E1b'].mean():.0f} words). Verified summaries (E3) were shorter still (mean "
+            f"{R.words['E3'].mean():.0f} words) because the revision step deleted claims that the verifier could not support and "
+            f"wrote an abstention where a section had no supported content; extractive summaries of five sentences averaged "
             f"{R.words['E2'].mean():.0f} words with a wide spread that follows the sentence length of each note. After removal "
-            f"of header lines, E0 summaries yielded {R.claims_per['E0']:.1f} claims per document, E1 summaries "
-            f"{R.claims_per['E1']:.1f} and E2 summaries {R.claims_per['E2']:.1f}. In total {R.n_claims_total:,} claims were "
-            f"labelled by the judge."),
+            f"of header lines and abstentions, E0 summaries yielded {R.claims_per['E0']:.1f} claims per document, E1 "
+            f"{R.claims_per['E1']:.1f}, E1b {R.claims_per['E1b']:.1f}, E3 {R.claims_per['E3']:.1f} and E2 {R.claims_per['E2']:.1f}. "
+            f"E3 produced {n_abst} abstention lines in {n_abst_docs} of the {R.n_docs} summaries, and its summaries contained fewer "
+            f"claims than the E1 drafts they were revised from in {fewer_e3} of {R.n_docs} documents. In total {R.n_claims_total:,} "
+            f"claims were labeled by the judge."),
           ("table", dict(label="desc", caption="Length, number of claims and distribution of judge labels per condition (header lines excluded). Shares are of all claims in the condition.",
                          columns=["Condition", "Words per summary, mean (SD)", "Claims per summary", "Total claims", "Supported", "Not-Supported", "Contradicted"],
                          widths=[1.3, 1.2, 0.85, 0.75, 0.9, 0.9, 0.9], font=9.5,
@@ -85,14 +114,16 @@ def blocks(R: Results) -> list:
                                 f"{int(lc.loc[c,'Supported'])} ({pct0(share[(c,'Supported')])})", f"{int(lc.loc[c,'Not-Supported'])} ({pct0(share[(c,'Not-Supported')])})",
                                 f"{int(lc.loc[c,'Contradicted'])} ({pct0(share[(c,'Contradicted')])})"] for c in C])),
           ("figure", dict(label="lengths", path=f"{FIG}/fig_length_claims.png", width=6.3, caption="Words per summary and claims per summary (header lines excluded) under the three conditions.")),
-          P(f"The label distributions in [[fig:labels]] already show the shape of the main result. Under both LLM conditions "
-            f"the judge labelled only about one claim in five as Supported ({pct0(share[('E0','Supported')])} for E0 and "
-            f"{pct0(share[('E1','Supported')])} for E1), most claims as Not-Supported, and "
-            f"{pct0(share[('E0','Contradicted')])} versus {pct0(share[('E1','Contradicted')])} as Contradicted. For the "
-            f"extractive condition, whose claims are verbatim source sentences, {pct0(share[('E2','Supported')])} were labelled "
+          P(f"The label distributions in [[fig:labels]] already show the shape of the main result. Under the two retrieval "
+            f"conditions and the baseline the judge labeled only about one claim in five as Supported ({pct0(share[('E0','Supported')])} for E0, "
+            f"{pct0(share[('E1','Supported')])} for E1 and {pct0(share[('E1b','Supported')])} for E1b), most claims as Not-Supported, and "
+            f"{pct0(share[('E0','Contradicted')])}, {pct0(share[('E1','Contradicted')])} and {pct0(share[('E1b','Contradicted')])} as "
+            f"Contradicted. The verified condition had the highest Supported share of any LLM condition ({pct0(share[('E3','Supported')])}) "
+            f"and a Contradicted share of {pct0(share[('E3','Contradicted')])}. For the "
+            f"extractive condition, whose claims are verbatim source sentences, {pct0(share[('E2','Supported')])} were labeled "
             f"Supported, {e2_ns} claims Not-Supported and {e2c_total} Contradicted; those {e2c_total + e2_ns} labels are judge "
-            f"errors by construction and are analysed in Section 5.5.4."),
-          ("figure", dict(label="labels", path=f"{FIG}/fig_label_distribution.png", width=6.3, caption="Share of claims labelled Supported, Not-Supported and Contradicted by the NLI judge under each condition."))]
+            f"errors by construction and are analyzed in Section 5.5.4."),
+          ("figure", dict(label="labels", path=f"{FIG}/fig_label_distribution.png", width=6.3, caption="Share of claims labeled Supported, Not-Supported and Contradicted by the NLI judge under each condition."))]
     b += [H2("5.2 Primary Comparison of the Three Approaches")]
     b += [P(f"[[tab:agg]] reports the per-document means, standard deviations and medians of UFR and CR, and [[tab:tests]] the "
             f"paired comparisons. The Unsupported Fact Rate did not differ between the zero-context and RAG conditions: mean "
@@ -112,10 +143,30 @@ def blocks(R: Results) -> list:
             f"the UFR distributions of E0 and E1 overlap almost completely, while E2 sits near zero; the CR distribution of E1 is "
             f"shifted below E0, but the E2 distribution has a heavy right tail produced by the judge's errors on verbatim "
             f"negations."),
+          P(f"Showing the model the full note together with the excerpts (E1b) moved the metrics in the direction of fewer "
+            f"unsupported claims without a clear effect on contradictions. E1b lowered UFR relative to E0 (mean {f3(t1b0u.mean_a)} "
+            f"versus {f3(t1b0u.mean_b)}, {signed(t1b0u.delta_mean)}, 95 percent interval {signed(t1b0u.ci95_low)} to "
+            f"{signed(t1b0u.ci95_high)}, {fp(t1b0u.p)}, d(z) = {f2(t1b0u.d_z)}), but the difference from E1 did not reach "
+            f"significance ({signed(t1b1u.delta_mean)}, {fp(t1b1u.p)}). Its CR ({f3(t1b0c.mean_b)}) was statistically "
+            f"indistinguishable from both E0 ({fp(t1b0c.p)}) and E1 ({fp(t1b1c.p)}). E1b therefore recovered the length and "
+            f"breadth of the baseline while keeping a small advantage in supported content, which suggests that the excerpts "
+            f"focus the model's attention even when the whole note is available."),
+          P(f"Verification produced the largest change of any LLM condition on the unsupported fact rate. E3 lowered UFR from "
+            f"{f3(t30u.mean_a)} (E0) to {f3(t30u.mean_b)} ({signed(t30u.delta_mean)}, 95 percent interval {signed(t30u.ci95_low)} to "
+            f"{signed(t30u.ci95_high)}, {fp(t30u.p)}, Holm-adjusted {fp(t30u.p_holm)}, d(z) = {f2(t30u.d_z)}, improvement in "
+            f"{t30u.pct_improved:.0f} percent of documents), and relative to its own E1 drafts from {f3(t31u.mean_a)} to "
+            f"{f3(t31u.mean_b)} ({fp(t31u.p)}, d(z) = {f2(t31u.d_z)}); it also improved on E1b ({fp(t31bu.p)}). Its contradiction "
+            f"rate ({f3(t30c.mean_b)}) did not differ from E0 ({fp(t30c.p)}) and was not significantly higher than E1 "
+            f"({signed(t31c.delta_mean)}, {fp(t31c.p)}). The mechanism is visible in the verification log: the verifier examined "
+            f"{n_verif} draft claims, judged {n_verif_unsup} of them ({pct0(n_verif_unsup / max(1, n_verif))}) unsupported by the "
+            f"retrieved sentences, and the revision deleted or replaced those claims and wrote \"Not stated in the note\" for "
+            f"{n_abst} sections. E3 thus reduced unsupported content mainly by saying less, and Section 5.6 shows what that cost in "
+            f"coverage. Because the same judge scores all conditions, the E3 versus E1 comparison isolates the effect of the "
+            f"verification and revision step alone."),
           ("table", dict(label="agg", caption=f"Per-document Unsupported Fact Rate and Contradiction Rate under each condition (n = {R.n_docs} documents; header lines excluded).",
                          columns=["Metric", "Condition", "Mean", "SD", "Median"], widths=[1.0, 2.4, 1.0, 1.0, 1.1], font=10,
                          rows=[[m if i == 0 else "", NAME[c], f3(R.mean(c, m)), f3(R.sd(c, m)), f3(R.median(c, m))] for m in ("UFR", "CR") for i, c in enumerate(C)])),
-          ("table", dict(label="tests", caption="Paired comparisons between conditions. Delta is the mean of per-document differences (second condition minus first); negative values favour the second condition. CI is the 95 percent percentile bootstrap interval (10,000 resamples). p is the two-sided Wilcoxon signed-rank p-value and p(Holm) its adjustment over the six tests. d(z) is the standardized mean difference and r the matched-pairs rank-biserial correlation (positive = improvement).",
+          ("table", dict(label="tests", caption="Paired comparisons between conditions. Delta is the mean of per-document differences (second condition minus first); negative values favor the second condition. CI is the 95 percent percentile bootstrap interval (10,000 resamples). p is the two-sided Wilcoxon signed-rank p-value and p(Holm) its adjustment over the six tests. d(z) is the standardized mean difference and r the matched-pairs rank-biserial correlation (positive = improvement).",
                          columns=["Comparison", "Metric", "Delta", "95% CI", "Median delta", "p", "p (Holm)", "d(z)", "r", "Improved / same / worse"],
                          widths=[0.85, 0.55, 0.65, 1.0, 0.6, 0.6, 0.6, 0.5, 0.5, 0.95], font=8.5,
                          rows=[[t.comparison, t.metric, signed(t.delta_mean), f"[{t.ci95_low:+.3f}, {t.ci95_high:+.3f}]", signed(t.delta_median), fpn(t.p), fpn(t.p_holm),
@@ -214,12 +265,19 @@ def blocks(R: Results) -> list:
             f"{fp(tau.loc[0.8,'p_E1_vs_E0_CR'])}, {fp(tau.loc[0.9,'p_E1_vs_E0_CR'])}). The E2 advantage in UFR is significant at every "
             f"threshold, while its CR advantage over E0 also weakens above τ = 0.6. The RAG effect on contradictions therefore "
             f"depends on counting claims for which the model's contradiction probability lies between 0.5 and 0.7, exactly the "
-            f"region in which the validation study found the model least trustworthy."),
-          ("table", dict(label="tau", caption="Mean UFR and CR per condition, and paired E1 versus E0 and E2 versus E0 p-values, as a function of the decision threshold τ applied to the stored probabilities.",
-                         columns=["τ", "E0 UFR", "E1 UFR", "E2 UFR", "p UFR E1 vs E0", "E0 CR", "E1 CR", "E2 CR", "p CR E1 vs E0", "p CR E2 vs E0"],
-                         widths=[0.4, 0.6, 0.6, 0.6, 0.9, 0.6, 0.6, 0.6, 0.9, 0.9], font=9,
-                         rows=[[f"{t:.1f}", f3(r.E0_UFR_mean), f3(r.E1_UFR_mean), f3(r.E2_UFR_mean), fpn(r.p_E1_vs_E0_UFR), f3(r.E0_CR_mean), f3(r.E1_CR_mean), f3(r.E2_CR_mean), fpn(r.p_E1_vs_E0_CR), fpn(r.p_E2_vs_E0_CR)]
-                               for t, r in tau.iterrows()])),
+            f"region in which the validation study found the model least trustworthy. The new conditions behave differently: "
+            f"E1b and E3 never differed from E0 in CR at any threshold, whereas the UFR advantage of E3 over E0 was significant at "
+            f"{int((tau['p_E3_vs_E0_UFR'] < 0.05).sum())} of the {len(tau)} thresholds and that of E1b at "
+            f"{int((tau['p_E1b_vs_E0_UFR'] < 0.05).sum())} of {len(tau)} ([[tab:tauufr]]). The verification effect is therefore the "
+            f"most robust effect in the study to the judge's decision threshold."),
+          ("table", dict(label="tau", caption="Mean CR per condition and paired p-values against E0 as a function of the decision threshold τ applied to the stored probabilities.",
+                         columns=["τ"] + [f"{c} CR" for c in C] + [f"p {c} vs E0" for c in OTHERS],
+                         widths=[0.4] + [0.55] * len(C) + [0.72] * len(OTHERS), font=9,
+                         rows=[[f"{t:.1f}"] + [f3(r[f"{c}_CR_mean"]) for c in C] + [fpn(r[f"p_{c}_vs_E0_CR"]) for c in OTHERS] for t, r in tau.iterrows()])),
+          ("table", dict(label="tauufr", caption="Mean UFR per condition and paired p-values against E0 as a function of the decision threshold τ.",
+                         columns=["τ"] + [f"{c} UFR" for c in C] + [f"p {c} vs E0" for c in OTHERS],
+                         widths=[0.4] + [0.55] * len(C) + [0.72] * len(OTHERS), font=9,
+                         rows=[[f"{t:.1f}"] + [f3(r[f"{c}_UFR_mean"]) for c in C] + [fpn(r[f"p_{c}_vs_E0_UFR"]) for c in OTHERS] for t, r in tau.iterrows()])),
           ("figure", dict(label="tau", path=f"{FIG}/fig_threshold_ablation.png", width=6.3, caption="Mean UFR (left) and CR (right) per condition as the decision threshold varies (solid lines, left axes) and the paired E1 versus E0 p-value (dotted line, right axes, log scale; the red line marks 0.05)."))]
     b += [H3("5.5.2 Number of Evidence Sentences")]
     b += [P(f"Re-running retrieval and classification with k = 3 reproduced every stored label exactly (agreement "
@@ -232,11 +290,10 @@ def blocks(R: Results) -> list:
             f"retrieved sentence gives the maximum-over-evidence rule another chance to find a sentence that the model calls a "
             f"contradiction, so the contradiction score of the pipeline measures, in part, how many loosely related sentences a "
             f"claim is compared with."),
-          ("table", dict(label="topk", caption="Mean UFR and CR per condition when k = 1, 3 or 5 source sentences are retrieved per claim, with paired p-values. k = 3 is the pipeline setting.",
-                         columns=["k", "E0 UFR", "E1 UFR", "E2 UFR", "p UFR E1 vs E0", "E0 CR", "E1 CR", "E2 CR", "p CR E1 vs E0", "p CR E2 vs E0"],
-                         widths=[0.4, 0.6, 0.6, 0.6, 0.9, 0.6, 0.6, 0.6, 0.9, 0.9], font=9,
-                         rows=[[str(int(k)), f3(r.E0_UFR_mean), f3(r.E1_UFR_mean), f3(r.E2_UFR_mean), fpn(r.p_E1_vs_E0_UFR), f3(r.E0_CR_mean), f3(r.E1_CR_mean), f3(r.E2_CR_mean), fpn(r.p_E1_vs_E0_CR), fpn(r.p_E2_vs_E0_CR)]
-                               for k, r in topk.iterrows()])),
+          ("table", dict(label="topk", caption="Mean UFR and CR per condition when k = 1, 3 or 5 source sentences are retrieved per claim, with paired CR p-values against E0. k = 3 is the pipeline setting.",
+                         columns=["k"] + [f"{c} UFR" for c in C] + [f"{c} CR" for c in C] + [f"p CR {c} vs E0" for c in OTHERS],
+                         widths=[0.3] + [0.5] * (2 * len(C)) + [0.62] * len(OTHERS), font=8,
+                         rows=[[str(int(k))] + [f3(r[f"{c}_UFR_mean"]) for c in C] + [f3(r[f"{c}_CR_mean"]) for c in C] + [fpn(r[f"p_{c}_vs_E0_CR"]) for c in OTHERS] for k, r in topk.iterrows()])),
           ("figure", dict(label="topk", path=f"{FIG}/fig_topk_ablation.png", width=6.3, caption="Mean UFR (left) and CR (right) per condition as a function of the number of evidence sentences retrieved per claim."))]
     b += [H3("5.5.3 Repaired Evidence Text")]
     b += [P(f"Repairing the comma-encoded line breaks of MTSamples on the evidence side ([[tab:clean]]) changed few labels: of the "
@@ -251,7 +308,7 @@ def blocks(R: Results) -> list:
                          columns=["Condition", "Claims", "Contradicted", "Not-Supported", "Mean UFR", "Median UFR", "Mean CR", "Median CR"],
                          widths=[1.6, 0.6, 0.85, 0.9, 0.7, 0.75, 0.7, 0.75], font=9.5,
                          rows=[[NAME[c], str(int(r.n_claims)), str(int(r.n_contradicted)), str(int(r.n_not_supported)), f3(r.UFR_mean), f3(r.UFR_median), f3(r.CR_mean), f3(r.CR_median)] for c, r in clean.iterrows()],
-                         note=f"Paired tests with repaired evidence: UFR E1 vs E0 {fp(clean.loc['E0','p_E1_vs_E0_UFR'])}; CR E1 vs E0 {fp(clean.loc['E0','p_E1_vs_E0_CR'])}; CR E2 vs E0 {fp(clean.loc['E0','p_E2_vs_E0_CR'])}."))]
+                         note="Paired tests with repaired evidence, CR versus E0: " + "; ".join(f"{c} {fp(clean.loc['E0', f'p_{c}_vs_E0_CR'])}" for c in OTHERS) + ". UFR E1 vs E0 " + fp(clean.loc['E0','p_E1_vs_E0_UFR']) + "."))]
     b += [H3("5.5.4 Judge Errors on Verbatim Sentences and the Role of Negation")]
     neg = R.e2err[R.e2err.has_negation.isin([True, False, "True", "False"])].copy()
     neg["has_negation"] = neg.has_negation.astype(str)
@@ -260,7 +317,7 @@ def blocks(R: Results) -> list:
         return int(v.iloc[0]) if len(v) else 0
     e2_neg_total = negcount("E2", "True", "Contradicted") + negcount("E2", "True", "Supported") + negcount("E2", "True", "Not-Supported")
     e2_pos_total = negcount("E2", "False", "Contradicted") + negcount("E2", "False", "Supported") + negcount("E2", "False", "Not-Supported")
-    b += [P(f"[[fig:e2probs]] plots the judge's two scores for every E2 claim. For the {e2c_total} verbatim sentences labelled "
+    b += [P(f"[[fig:e2probs]] plots the judge's two scores for every E2 claim. For the {e2c_total} verbatim sentences labeled "
             f"Contradicted, the mean contradiction probability was {f2(R.e2err_value('Contradicted_mean_p_contra'))} but the mean "
             f"entailment probability was also {f2(R.e2err_value('Contradicted_mean_p_entail'))}, and {e2c_both} of the "
             f"{e2c_total} had both probabilities above 0.9. The model is not uncertain about these sentences; it assigns near-"
@@ -273,27 +330,44 @@ def blocks(R: Results) -> list:
             f"different context, reads to the model like a contradiction. Negation cues raise the contradiction rate of the LLM "
             f"conditions as well ({negcount('E0','True','Contradicted')} of {negcount('E0','True','Contradicted')+negcount('E0','True','Supported')+negcount('E0','True','Not-Supported')} "
             f"E0 claims with a cue versus {negcount('E0','False','Contradicted')} of {negcount('E0','False','Contradicted')+negcount('E0','False','Supported')+negcount('E0','False','Not-Supported')} without)."),
+          P(f"A related artifact appeared in the verified condition. Of the {n_abst} abstention lines that E3 wrote "
+            f"(\"Not stated in the note.\"), the judge labeled {n_abst_contra} as Contradicted before they were excluded from the "
+            f"claim set. An abstention is a negated existential statement about the note itself; paired with any retrieved "
+            f"sentence that does state something, the cross-encoder reads it as a contradiction. Had abstentions been counted as "
+            f"claims, the E3 contradiction rate would have risen from {f3(R.mean('E3','CR'))} to about 0.27 and reversed the "
+            f"conclusion about verification, which is why Section 3.5 treats abstentions as a separate category. Among the "
+            f"remaining E3 claims labeled Contradicted, {negcount('E3','True','Contradicted')} of "
+            f"{negcount('E3','True','Contradicted') + negcount('E3','False','Contradicted')} contain a negation cue, the same pattern as "
+            f"in the other conditions."),
           ("table", dict(label="neg", caption="Judge labels by the presence of a negation cue in the claim (no, not, denies, without, negative, unremarkable, absent and similar), per condition.",
                          columns=["Condition", "Negation cue", "Supported", "Not-Supported", "Contradicted", "Share Contradicted"],
                          widths=[1.6, 1.0, 0.9, 1.0, 1.0, 1.0], font=10,
                          rows=[[NAME[c], "yes" if h == "True" else "no", str(negcount(c, h, "Supported")), str(negcount(c, h, "Not-Supported")), str(negcount(c, h, "Contradicted")),
                                 pct(negcount(c, h, "Contradicted") / max(1, negcount(c, h, "Supported") + negcount(c, h, "Not-Supported") + negcount(c, h, "Contradicted")))]
                                for c in C for h in ("True", "False")])),
-          ("figure", dict(label="e2probs", path=f"{FIG}/fig_e2_probs.png", width=4.8, caption="Maximum entailment and maximum contradiction probability of every E2 claim. Every E2 claim is a verbatim source sentence, so every point not labelled Supported is a judge error."))]
+          ("figure", dict(label="e2probs", path=f"{FIG}/fig_e2_probs.png", width=4.8, caption="Maximum entailment and maximum contradiction probability of every E2 claim. Every E2 claim is a verbatim source sentence, so every point not labeled Supported is a judge error."))]
     b += [H2("5.6 The Coverage Cost of Retrieval")]
-    b += [P(f"[[tab:cov]] and [[fig:cov]] report the coverage proxy. Zero-context summaries touched {pct(cov.loc['E0','coverage_at_0_6'])} "
-            f"of source sentences at the 0.6 similarity threshold, RAG summaries {pct(cov.loc['E1','coverage_at_0_6'])} "
-            f"({fp(cov.loc['E0','p_cov06_E1_vs_E0'])} for the paired difference), and five-sentence extractive summaries "
-            f"{pct(cov.loc['E2','coverage_at_0_6'])} ({fp(cov.loc['E0','p_cov06_E2_vs_E0'])} versus E0; "
-            f"{fp(cov.loc['E0','p_cov06_E2_vs_E1'])} versus E1). The ordering is the same at thresholds of 0.5 and 0.7 and for the mean "
-            f"best similarity. Showing the model only three retrieved chunks therefore reduced the breadth of the summary, as "
-            f"anticipated in the thesis proposal, and the extractive summaries, despite containing far fewer words, covered the "
-            f"note at least as broadly as the zero-context LLM because their sentences are the note's most central ones."),
+    b += [P(f"[[tab:cov]] and [[fig:cov]] report the coverage proxy. Zero-context summaries touched {pct(covv('E0'))} "
+            f"of source sentences at the 0.6 similarity threshold, excerpt-only RAG summaries {pct(covv('E1'))} "
+            f"({fp(covp('E0','E1'))} for the paired difference), RAG summaries with the full note {pct(covv('E1b'))} "
+            f"({fp(covp('E0','E1b'))} versus E0; {fp(covp('E1','E1b'))} versus E1), verified summaries {pct(covv('E3'))} "
+            f"({fp(covp('E0','E3'))} versus E0; {fp(covp('E1','E3'))} versus E1), and five-sentence extractive summaries "
+            f"{pct(covv('E2'))} ({fp(covp('E0','E2'))} versus E0; {fp(covp('E1','E2'))} versus E1). The ordering is the same at "
+            f"thresholds of 0.5 and 0.7 for E1 and E1b. Showing the model only three retrieved chunks therefore reduced the "
+            f"breadth of the summary, as anticipated in the thesis proposal, and restoring the note (E1b) more than restored it. "
+            f"Verification is the surprising case: although E3 summaries are the shortest LLM summaries, their coverage at the "
+            f"primary threshold did not fall below the baseline and exceeded that of the E1 drafts they were revised from, because "
+            f"the verifier's corrections draw on sentences retrieved from the full note rather than from the three excerpts. At "
+            f"the looser 0.5 threshold E3 does cover less than E0 ({pct(cov.loc['E3','coverage_at_0_5'])} versus "
+            f"{pct(cov.loc['E0','coverage_at_0_5'])}), so some breadth is lost, but the loss is smaller than the one produced by "
+            f"excerpt-only retrieval. The extractive summaries, despite containing far fewer words, covered the note at least as "
+            f"broadly as the zero-context LLM because their sentences are the note's most central ones. Among the LLM conditions, "
+            f"only excerpt-only retrieval paid for its faithfulness gain with a clear loss of coverage."),
           ("table", dict(label="cov", caption="Coverage proxy per condition: mean share of source sentences whose best cosine similarity to any claim reaches the threshold, and mean best similarity.",
                          columns=["Condition", "Coverage at 0.5", "Coverage at 0.6", "Coverage at 0.7", "Mean best similarity", "Claims per summary"],
                          widths=[1.7, 0.95, 0.95, 0.95, 1.05, 0.9], font=10,
                          rows=[[NAME[c], pct(r.coverage_at_0_5), pct(r.coverage_at_0_6), pct(r.coverage_at_0_7), f3(r.mean_best_similarity), f"{r.n_claims:.1f}"] for c, r in cov.iterrows()],
-                         note=f"Paired tests on coverage at 0.6: E1 vs E0 {fp(cov.loc['E0','p_cov06_E1_vs_E0'])}; E2 vs E0 {fp(cov.loc['E0','p_cov06_E2_vs_E0'])}; E2 vs E1 {fp(cov.loc['E0','p_cov06_E2_vs_E1'])}.")),
+                         note="Paired tests on coverage at 0.6: " + "; ".join(f"{col[8:].replace('_vs_', ' vs ')} {fp(cov.loc['E0', col])}" for col in cov.columns if col.startswith("p_cov06_")) + ".")),
           ("figure", dict(label="cov", path=f"{FIG}/fig_coverage.png", width=6.3, caption="Coverage proxy at the 0.6 threshold (left) and mean best similarity of source sentences to any claim (right), per condition."))]
     b += [H2("5.7 What Remains Unsupported: Taxonomy and Examples")]
     fixed_rows = []
@@ -310,9 +384,10 @@ def blocks(R: Results) -> list:
             seen.add(key); pers_rows.append([str(int(r.doc_id)), str(r.e0_claim).replace("**", "").replace("\n", " ").strip(), r.e0_label, r.e1_label])
             if len(pers_rows) >= 8:
                 break
-    b += [P(f"[[tab:tax]] and [[fig:tax]] categorize the {uns_total['E0']} E0 and {uns_total['E1']} E1 claims that the judge did not "
-            f"label Supported. Follow-up and scheduling statements are the largest category under both conditions and the only "
-            f"one that grows under RAG ({R.tax_total('E0','Follow-up or scheduling')} to {R.tax_total('E1','Follow-up or scheduling')}); "
+    b += [P(f"[[tab:tax]] and [[fig:tax]] categorize the claims that the judge did not label Supported: {uns_total['E0']} for E0, "
+            f"{uns_total['E1']} for E1, {uns_total.get('E1b', 0)} for E1b and {uns_total.get('E3', 0)} for E3. Follow-up and "
+            f"scheduling statements are the largest category under every LLM condition and the only one that grows under "
+            f"excerpt-only RAG ({R.tax_total('E0','Follow-up or scheduling')} to {R.tax_total('E1','Follow-up or scheduling')}); "
             f"they are also almost never contradicted, because the note usually says nothing about them at all. RAG reduced the "
             f"number of unsupported claims about generic advice ({R.tax_total('E0','Generic advice or patient education')} to "
             f"{R.tax_total('E1','Generic advice or patient education')}), procedures ({R.tax_total('E0','Procedure or treatment')} to "
@@ -320,13 +395,17 @@ def blocks(R: Results) -> list:
             f"{R.tax_total('E1','Findings, exam, labs or imaging')}) and medications ({R.tax_total('E0','Medication or dosage')} to "
             f"{R.tax_total('E1','Medication or dosage')}), which are the categories in which specific, retrievable facts occur. This "
             f"is consistent with the mechanism proposed in Section 2.6: excerpts constrain what the model says about the note's "
-            f"content, but not what it adds from its parametric knowledge of how patient instructions usually end."),
-          ("table", dict(label="tax", caption="Keyword-assisted categories of claims that the judge did not label Supported, for the two LLM conditions. Contradicted counts are the subset labelled Contradicted.",
-                         columns=["Category", "E0 unsupported", "E0 contradicted", "E1 unsupported", "E1 contradicted"], widths=[2.5, 1.0, 1.0, 1.0, 1.0], font=10, rows=tax_rows)),
-          ("figure", dict(label="tax", path=f"{FIG}/fig_taxonomy.png", width=6.0, caption="Number of claims not labelled Supported, by keyword-assisted category, for the zero-context and RAG conditions.")),
+            f"content, but not what it adds from its parametric knowledge of how patient instructions usually end. Verification "
+            f"is the only condition that cut the follow-up category substantially ({R.tax_total('E0','Follow-up or scheduling')} for E0 to "
+            f"{R.tax_total('E3','Follow-up or scheduling')} for E3) and the generic-advice category ({R.tax_total('E0','Generic advice or patient education')} "
+            f"to {R.tax_total('E3','Generic advice or patient education')}), because a verifier that checks each sentence against the "
+            f"note removes exactly the sentences that no passage supports, whereas retrieval only changes what the generator sees."),
+          ("table", dict(label="tax", caption="Keyword-assisted categories of claims that the judge did not label Supported, for the LLM conditions. Contradicted counts are the subset labeled Contradicted.",
+                         columns=["Category"] + [f"{c} {k}" for c in GEN for k in ("unsupp.", "contra.")], widths=[1.9] + [0.575] * (2 * len(GEN)), font=9, rows=tax_rows)),
+          ("figure", dict(label="tax", path=f"{FIG}/fig_taxonomy.png", width=6.0, caption="Number of claims not labeled Supported, by keyword-assisted category, for the zero-context and RAG conditions.")),
           P(f"Qualitative inspection of paired claims illustrates both the promise and the fragility of the metric. "
-            f"[[tab:exfixed]] lists E0 claims labelled Contradicted for which the most similar E1 claim in the same document was "
-            f"labelled Supported (there were {n_fixed} such pairs). Some are genuine corrections: in document 16 the note states "
+            f"[[tab:exfixed]] lists E0 claims labeled Contradicted for which the most similar E1 claim in the same document was "
+            f"labeled Supported (there were {n_fixed} such pairs). Some are genuine corrections: in document 16 the note states "
             f"\"COMPLICATIONS: None\" and \"Postoperative course was uncomplicated\", the E0 phrasing \"The procedure went smoothly, "
             f"and there were no complications\" was called Contradicted, and the E1 phrasing \"there were no complications from the "
             f"procedures\" Supported; the two claims say the same thing, and the difference lies in the judge, not in the summaries. "
@@ -334,9 +413,9 @@ def blocks(R: Results) -> list:
             f"opening sentences that restate the reason for the visit in patient-facing language, standard closing advice, and "
             f"summaries of the patient's history. Several of these are faithful paraphrases of the note that the NLI model "
             f"cannot match to any single sentence, which is the failure mode that the validation study quantified."),
-          ("table", dict(label="exfixed", caption="Examples of E0 claims labelled Contradicted whose closest E1 claim in the same document was labelled Supported, with the evidence retrieved for the E0 claim.",
+          ("table", dict(label="exfixed", caption="Examples of E0 claims labeled Contradicted whose closest E1 claim in the same document was labeled Supported, with the evidence retrieved for the E0 claim.",
                          columns=["Doc", "E0 claim (Contradicted)", "E1 claim (Supported)", "Evidence retrieved for the E0 claim"], widths=[0.4, 1.9, 1.9, 2.3], font=8.5, align=["center", "left", "left", "left"], rows=fixed_rows)),
-          ("table", dict(label="expersist", caption="Examples of claims that appear in nearly identical form under E0 and E1 and are not labelled Supported under either condition.",
+          ("table", dict(label="expersist", caption="Examples of claims that appear in nearly identical form under E0 and E1 and are not labeled Supported under either condition.",
                          columns=["Doc", "Claim", "E0 label", "E1 label"], widths=[0.4, 4.3, 0.9, 0.9], font=9, align=["center", "left", "center", "center"], rows=pers_rows))]
     b += [H2("5.8 Summary of Findings")]
     b += [("bullets", [
@@ -345,21 +424,28 @@ def blocks(R: Results) -> list:
         f"{f3(R.mean('E0','CR'))}. But against medical-expert annotations the same judge reaches a kappa of {f2(cal_all.any_kappa)} "
         f"and an AUROC of {f2(cal_all.auroc_1_minus_p_entail)}, flags four sentences in five, and ranks systems in nearly the "
         f"reverse order of the experts. Its absolute rates cannot be read as hallucination rates.",
-        f"**H2 (retrieval grounding)** is supported for contradictions and rejected for unsupported facts. Excerpt-only RAG reduced the "
-        f"judge's CR by {rel(t10c)} (Holm-adjusted {fp(t10c.p_holm)}) with a small effect size, left UFR unchanged, and the effect "
-        f"held only at the default threshold and with three or more evidence sentences. RAG also reduced coverage of the note "
-        f"({fp(cov.loc['E0','p_cov06_E1_vs_E0'])}).",
+        f"**H2 (retrieval grounding)** is supported for contradictions and largely rejected for unsupported facts. Excerpt-only RAG "
+        f"reduced the judge's CR by {rel(t10c)} (Holm-adjusted {fp(t10c.p_holm)}) with a small effect size, left UFR unchanged, and "
+        f"the effect held only at the default threshold and with three or more evidence sentences; it also reduced coverage of the "
+        f"note ({fp(covp('E0','E1'))}). Adding the full note to the excerpts (E1b) lowered UFR modestly ({fp(t1b0u.p)}) without "
+        f"changing CR and without the coverage loss.",
+        f"**H3 (verification)** is supported for unsupported facts and not for contradictions. Chain-of-Verification on top of RAG "
+        f"lowered UFR from {f3(t30u.mean_a)} to {f3(t30u.mean_b)} ({fp(t30u.p)}, d(z) = {f2(t30u.d_z)}), the largest effect among "
+        f"the LLM conditions, and improved on its own E1 drafts ({fp(t31u.p)}); CR was unchanged. The gain came from deleting "
+        f"unsupported claims and abstaining: E3 summaries are the shortest LLM summaries, yet their coverage of the note at the "
+        f"primary threshold matched the baseline ({fp(covp('E0','E3'))}) because corrected claims draw on the full note.",
         f"**The extractive bound** shows that the judge's floor is not zero: verbatim sentences received {pct(share[('E2','Contradicted')])} "
         f"Contradicted labels, two thirds of them on negated sentences and one third attributable to malformed sentence fragments in the "
         f"public corpus.",
         f"**Header lines** in LLM output had inflated the previously reported RAG effect from a {rel(t10c)} to a 32 percent relative "
         f"reduction in CR; correcting the claim set is a prerequisite for any comparison of this kind.",
-        "**H3 (verification)** remains untested; the E3 implementation is ready to run."])]
+        f"**The judge mislabels abstentions.** {n_abst_contra} of the {n_abst} \"Not stated in the note\" lines written by E3 were "
+        f"labeled Contradicted; had they been counted as claims, verification would have appeared to increase contradictions."])]
 
     # ══════════════════════════════════ CHAPTER 6 ══════════════════════════════════
-    b += [H1("Chapter 6: Discussion"), H2("6.1 Answers to the Research Questions")]
+    b += [H1("Chapter 6 Discussion"), H2("6.1 Answers to the Research Questions")]
     b += [P(f"**RQ1.** Measured by the claim-level NLI judge, {pct0(R.mean('E0','UFR'))} of the sentences in zero-context "
-            f"GPT-4o-mini summaries could not be verified against the note and {pct0(R.mean('E0','CR'))} were labelled as "
+            f"GPT-4o-mini summaries could not be verified against the note and {pct0(R.mean('E0','CR'))} were labeled as "
             f"contradicting it. The validation study shows that these numbers overstate the problem several-fold: on summaries "
             f"where medical experts flagged 5 to 9 percent of sentences, the same judge flagged 86 to 87 percent. The honest answer "
             f"to RQ1 is therefore twofold: the summaries do contain unsupported statements, in every note and in identifiable "
@@ -369,17 +455,22 @@ def blocks(R: Results) -> list:
             "restatements of history and paraphrased findings. Two of these categories, follow-up and advice, are largely "
             "extrinsic: the note says nothing about them, the model supplies them from its knowledge of what patient instructions "
             "contain, and retrieval cannot remove them because they are not generated from the retrieved text. The judge itself "
-            "errs in three characteristic ways: it cannot match a patient-facing paraphrase that aggregates several sentences of "
+            "errs in three characteriztic ways: it cannot match a patient-facing paraphrase that aggregates several sentences of "
             "the note to any single sentence and therefore calls it Not-Supported; it treats negated symptom lists compared with "
             "loosely related sentences as contradictions; and it inherits sentence fragments from the corpus's line-break "
             "artifact. The first error dominates, and no aggregation of evidence corrects it."),
           P(f"**RQ3.** Under the judge, excerpt-only RAG reduced contradictions by about a quarter and unsupported facts not at "
-            f"all, while covering {pct(cov.loc['E1','coverage_at_0_6'])} instead of {pct(cov.loc['E0','coverage_at_0_6'])} of the "
-            f"note's sentences and producing summaries about {R.words['E0'].mean() - R.words['E1'].mean():.0f} words shorter. The "
-            f"extractive summarizer reached the lowest rates on both metrics and the highest coverage, at the cost of readability. "
-            f"Given the judge's weak validity, the safest statement is that retrieval changed the model's output in the direction "
-            f"predicted, most visibly for medication, procedure and finding statements, but that the size of the true "
-            f"improvement is unknown and the coverage cost is real.")]
+            f"all, while covering {pct(covv('E1'))} instead of {pct(covv('E0'))} of the note's sentences and producing summaries "
+            f"about {R.words['E0'].mean() - R.words['E1'].mean():.0f} words shorter. Retrieval with the full note (E1b) kept the "
+            f"baseline's length and coverage and lowered the unsupported fact rate by about {abs(t1b0u.rel_change_mean):.0f} percent "
+            f"relative to E0. Verification on top of retrieval (E3) lowered the unsupported fact rate by about "
+            f"{abs(t30u.rel_change_mean):.0f} percent relative to E0 and {abs(t31u.rel_change_mean):.0f} percent relative to E1, left "
+            f"contradictions unchanged, and covered {pct(covv('E3'))} of the note. The extractive summarizer reached the lowest rates "
+            f"on both metrics and the highest coverage per word, at the cost of readability. Given the judge's weak validity, the "
+            f"safest statement is that retrieval and verification changed the model's output in the directions predicted, most "
+            f"visibly for medication, procedure and finding statements and for extrinsic follow-up advice respectively, but that "
+            f"the size of the true improvement is unknown, and that the coverage cost is real for excerpt-only retrieval but not for "
+            f"retrieval with the full note or for verification at the primary threshold.")]
     b += [H2("6.2 Why the Judge Disagrees with the Experts")]
     b += [P("Four causes, in decreasing order of importance, explain the disagreement. The first is a *granularity mismatch*. A "
             "patient-facing sentence such as \"You came in because of stomach pain after meals and foul-smelling urine, and you "
@@ -406,7 +497,7 @@ def blocks(R: Results) -> list:
             "off-the-shelf NLI models could not rank summaries by correctness [[cite:falke2019]]; the present study shows that "
             "the warning still applies to small models in the clinical domain six years later, even after the retrieval and "
             "aggregation improvements that made SummaC and AlignScore successful on news data [[cite:laban2022,zha2023]].")]
-    b += [H2("6.3 Interpreting the Effect of Retrieval")]
+    b += [H2("6.3 Interpreting the Effects of Retrieval and Verification")]
     b += [P(f"The RAG effect must be read in the light of Sections 5.4 and 5.5. It is modest (a {rel(t10c)} relative reduction of "
             f"CR, d(z) = {f2(t10c.d_z)}), it disappears when the judge is made more conservative, and part of the change it "
             f"measures is a change in *how* the model writes rather than in *what* it asserts: RAG summaries are shorter, contain "
@@ -419,27 +510,51 @@ def blocks(R: Results) -> list:
             f"note and removes what it cannot support (E3) or an abstention rule (\"Not stated in the note\") is the natural remedy. "
             f"The coverage result is the clearest cost of excerpt-only RAG: what the retriever does not return, the summary "
             f"cannot contain, and the query used here (the document description and the opening lines) is a weak proxy for the "
-            f"four sections the summary must cover. E1b, which shows the model the excerpts and the note, is the direct test of "
-            f"whether focus can be gained without losing coverage.")]
+            f"four sections the summary must cover. E1b, which shows the model the excerpts and the note, tests whether focus can "
+            f"be gained without losing coverage, and the answer is a qualified yes: E1b matched the baseline's coverage and "
+            f"length and produced a modest reduction in unsupported claims, but no reduction in contradictions. Focusing "
+            f"attention helps; withholding content is what reduced contradictions in E1, and it did so partly by producing fewer "
+            f"and shorter sentences."),
+          P(f"Verification behaves differently from retrieval because it acts after generation on individual sentences. The E3 "
+            f"verifier judged about a quarter of the draft claims unsupported by the retrieved evidence, and the revision removed or "
+            f"replaced them and abstained where a section was left empty. The result is the largest reduction in unsupported "
+            f"claims among the LLM conditions and the only reduction in the extrinsic categories, follow-up instructions and generic "
+            f"advice, that retrieval could not touch. Two costs follow. Verified summaries are shorter, cover less of the note at the "
+            f"looser similarity threshold, and their abstentions, while honest, are themselves a form of omission; at the primary "
+            f"threshold, however, their coverage matched the baseline because the verifier's corrections import content from the "
+            f"full note. Verification also did not lower the judge's "
+            f"contradiction rate, which is consistent with two readings that the present data cannot separate: the verifier, which "
+            f"is the same LLM, shares the judge's difficulty with negated findings and near-verbatim clinical statements, or the "
+            f"judge's contradiction label is too noisy to register a change of the size that verification could plausibly produce. "
+            f"The validation study favors the second reading. Finally, verification depends on the same retrieval as the judge, so "
+            f"a claim whose support lies in an unretrieved sentence is deleted rather than confirmed; the {fewer_e3} of {R.n_docs} documents in "
+            f"which E3 has fewer claims than its draft include such losses.")]
     b += [H2("6.4 Comparison of the Three Approaches")]
-    b += [P("[[tab:compare]] summarizes the strengths, weaknesses and appropriate uses of the three approaches in the light of "
+    b += [P("[[tab:compare]] summarizes the strengths, weaknesses and appropriate uses of the five conditions in the light of "
             "all results. No approach dominates. The zero-context LLM is the most readable and complete but adds the most "
-            "extrinsic content. Excerpt-only RAG reduces contradictions modestly, shortens summaries and loses coverage. The "
+            "extrinsic content. Excerpt-only RAG reduces contradictions modestly, shortens summaries and loses coverage; RAG with "
+            "the full note keeps coverage and gains a little in supported content. Verification removes the most unsupported "
+            "content, including the extrinsic advice that retrieval cannot reach, but does so by deleting and abstaining. The "
             "extractive summarizer is faithful by construction and covers the note broadly but produces text that no patient "
-            "should be handed unedited: fragments, abbreviations and clinician-facing phrasing. The ordering of the three "
-            "approaches by the judge's metrics is consistent with their designs, which is some reassurance that the judge "
-            "responds to real differences between systems when those differences are large; what it cannot do is quantify "
-            "them."),
-          ("table", dict(label="compare", caption="Comparison of the three approaches. Metric values are per-document means under the NLI judge; coverage is the share of source sentences matched at cosine 0.6.",
+            "should be handed unedited: fragments, abbreviations and clinician-facing phrasing. The ordering of the conditions by "
+            "the judge's metrics is consistent with their designs, which is some reassurance that the judge responds to real "
+            "differences between systems when those differences are large; what it cannot do is quantify them."),
+          ("table", dict(label="compare", caption="Comparison of the five conditions. Metric values are per-document means under the NLI judge; coverage is the share of source sentences matched at cosine 0.6.",
                          columns=["Approach", "Judge UFR / CR", "Coverage", "Words", "Strengths", "Weaknesses", "Appropriate use"],
                          widths=[0.9, 0.75, 0.6, 0.5, 1.3, 1.3, 1.15], font=8.5, align=["left", "center", "center", "center", "left", "left", "left"],
-                         rows=[["E0 zero-context LLM", f"{f3(R.mean('E0','UFR'))} / {f3(R.mean('E0','CR'))}", pct0(cov.loc['E0','coverage_at_0_6']), f"{R.words['E0'].mean():.0f}",
+                         rows=[["E0 zero-context LLM", f"{f3(R.mean('E0','UFR'))} / {f3(R.mean('E0','CR'))}", pct0(covv('E0')), f"{R.words['E0'].mean():.0f}",
                                 "Fluent, patient-friendly, complete structure; simplest to deploy", "Most extrinsic content; generic advice and follow-up invented from priors; highest CR",
                                 "Drafts reviewed and edited by a clinician; low-stakes communication"],
-                               ["E1 RAG, excerpts only", f"{f3(R.mean('E1','UFR'))} / {f3(R.mean('E1','CR'))}", pct0(cov.loc['E1','coverage_at_0_6']), f"{R.words['E1'].mean():.0f}",
-                                f"Fewer contradictions ({rel(t10c)} relative); fewer generic statements; shorter", "Lowest coverage; effect small and threshold-dependent; retrieval query crude",
+                               ["E1 RAG, excerpts only", f"{f3(R.mean('E1','UFR'))} / {f3(R.mean('E1','CR'))}", pct0(covv('E1')), f"{R.words['E1'].mean():.0f}",
+                                f"Fewer contradictions ({rel(t10c)} relative); fewer generic statements; shorter", "Low coverage; effect small and threshold-dependent; retrieval query crude",
                                 "Focused summaries of long notes when omission is acceptable and a reviewer checks completeness"],
-                               ["E2 extractive", f"{f3(R.mean('E2','UFR'))} / {f3(R.mean('E2','CR'))}", pct0(cov.loc['E2','coverage_at_0_6']), f"{R.words['E2'].mean():.0f}",
+                               ["E1b RAG, note + excerpts", f"{f3(R.mean('E1b','UFR'))} / {f3(R.mean('E1b','CR'))}", pct0(covv('E1b')), f"{R.words['E1b'].mean():.0f}",
+                                "Baseline length and coverage; modestly fewer unsupported claims", "No reduction in contradictions; still adds extrinsic advice",
+                                "Drop-in replacement for zero-context prompting when the note fits the context window"],
+                               ["E3 RAG + verification", f"{f3(R.mean('E3','UFR'))} / {f3(R.mean('E3','CR'))}", pct0(covv('E3')), f"{R.words['E3'].mean():.0f}",
+                                "Largest reduction in unsupported claims; removes extrinsic advice; explicit abstentions; baseline coverage kept", "Shortest LLM summaries; abstentions are omissions; about ten API calls per note; no gain in contradictions",
+                                "High-stakes patient communication where omission is safer than invention and a clinician fills gaps"],
+                               ["E2 extractive", f"{f3(R.mean('E2','UFR'))} / {f3(R.mean('E2','CR'))}", pct0(covv('E2')), f"{R.words['E2'].mean():.0f}",
                                 "Cannot fabricate; highest coverage per word; no API cost; deterministic", "Unreadable for patients: fragments, abbreviations, no explanation; still mislabelled by the judge",
                                 "Clinician-facing digests; a grounding step before an LLM rewrites the selected sentences"]]))]
     b += [H2("6.5 Threats to Validity and Limitations")]
@@ -449,7 +564,7 @@ def blocks(R: Results) -> list:
         "between-condition comparisons in this thesis are comparisons of that index. They remain informative because every "
         "condition is scored on the same documents by the same instrument, but the magnitude of any true effect is unknown.",
         "**Transfer of the validation.** The expert-annotated summaries come from MIMIC-IV hospital courses and discharge "
-        "instructions, whereas the comparison uses MTSamples consultations and discharge summaries. The judge's behaviour was "
+        "instructions, whereas the comparison uses MTSamples consultations and discharge summaries. The judge's behavior was "
         "similar on both (it flagged about four sentences in five in both corpora), but the calibration is formally an assumption "
         "when transferred.",
         f"**Sample size and power.** Fifty documents give adequate power for large paired effects (the E2 comparisons) and marginal "
@@ -465,8 +580,10 @@ def blocks(R: Results) -> list:
         "**Heuristic components.** The header filter is a regular expression, the coverage proxy is an embedding-similarity "
         "threshold without human validation, and the error taxonomy is keyword-based with author review rather than an "
         "annotated typology. Each is reported transparently so that it can be replaced.",
-        "**Untested conditions.** E1b and E3 were implemented but not executed, so H3 and the focus-versus-coverage question remain "
-        "open."])]
+        "**Single verification design.** E3 uses one verifier (the generator itself, at temperature 0), one prompt and the judge's "
+        "own retriever; a verifier that sees the whole note, or a different model, could keep claims that this design deleted. "
+        "Abstentions were excluded from the claim set by a rule written after their mislabeling was observed; the pre-exclusion "
+        "numbers are reported in Section 5.5.4 so that the reader can judge the effect of that decision."])]
     b += [H2("6.6 Implications for the Design and Evaluation of Clinical Summarization Systems")]
     b += [("numbers", [
         "**Validate the evaluator before the system.** An automatic hallucination metric should be reported together with its "
@@ -487,16 +604,20 @@ def blocks(R: Results) -> list:
         "pipeline released with this thesis allows any of them to be substituted for the cross-encoder without other changes."])]
 
     # ══════════════════════════════════ CHAPTER 7 ══════════════════════════════════
-    b += [H1("Chapter 7: Conclusion and Future Work"), H2("7.1 Summary")]
+    b += [H1("Chapter 7 Conclusion and Future Work"), H2("7.1 Summary")]
     b += [P(f"This thesis set out to measure and reduce hallucinations in LLM-generated patient-facing summaries of clinical "
-            f"notes. It built a reproducible claim-level evaluation pipeline from open components, compared zero-context "
-            f"GPT-4o-mini summarization, excerpt-only retrieval-augmented generation and a centroid-based extractive summarizer on "
-            f"{R.n_docs} MTSamples notes with paired statistics, corrected two evaluation artifacts that had inflated an earlier "
-            f"report of the same experiment, and, for the first time for this class of judge on patient summaries, validated the "
-            f"pipeline's labels against medical-expert annotations of unsupported facts."),
-          P(f"Under the judge, retrieval reduced the contradiction rate by about a quarter, left the unsupported-fact rate "
-            f"unchanged and reduced coverage of the note; the extractive summarizer bounded both rates from below and exposed a "
-            f"non-zero error floor. Against the experts, the judge flagged {pct0(cal_all.judge_UFR)} of sentences where the experts "
+            f"notes. It built a reproducible claim-level evaluation pipeline from open components, compared five summarization "
+            f"conditions on {R.n_docs} MTSamples notes with paired statistics: zero-context GPT-4o-mini summarization, retrieval-"
+            f"augmented generation with excerpts only and with the full note, retrieval-augmented generation followed by "
+            f"Chain-of-Verification, and a centroid-based extractive summarizer. It corrected two evaluation artifacts that had "
+            f"inflated an earlier report of the same experiment and identified a third, the mislabeling of abstentions, and, for "
+            f"the first time for this class of judge on patient summaries, it validated the pipeline's labels against "
+            f"medical-expert annotations of unsupported facts."),
+          P(f"Under the judge, excerpt-only retrieval reduced the contradiction rate by about a quarter, left the unsupported-fact "
+            f"rate unchanged and reduced coverage of the note; retrieval with the full note lowered the unsupported-fact rate "
+            f"modestly without losing coverage; verification lowered it by about {abs(t30u.rel_change_mean):.0f} percent, the "
+            f"largest change of any LLM condition, by deleting unsupported claims and abstaining; and the extractive summarizer "
+            f"bounded both rates from below and exposed a non-zero error floor. Against the experts, the judge flagged {pct0(cal_all.judge_UFR)} of sentences where the experts "
             f"flagged {pct0(cal_all.expert_flag_rate)}, agreed with them at chance level, and ranked systems in nearly the "
             f"opposite order; no evidence-aggregation rule changed that conclusion. The principal contribution of the thesis is "
             f"therefore methodological: it shows, with quantitative evidence, that a small general-domain NLI judge applied at "
@@ -506,7 +627,11 @@ def blocks(R: Results) -> list:
     b += [("numbers", [
         f"Excerpt-only RAG reduced the judge's contradiction rate from {f3(R.mean('E0','CR'))} to {f3(R.mean('E1','CR'))} "
         f"({fp(t10c.p)}; Holm-adjusted {fp(t10c.p_holm)}) but not the unsupported-fact rate ({fp(t10u.p)}), and it reduced coverage "
-        f"of the note ({fp(cov.loc['E0','p_cov06_E1_vs_E0'])}).",
+        f"of the note ({fp(covp('E0','E1'))}). RAG with the full note (E1b) lowered the unsupported-fact rate to "
+        f"{f3(R.mean('E1b','UFR'))} ({fp(t1b0u.p)}) with the baseline's coverage.",
+        f"Chain-of-Verification on top of RAG (E3) lowered the unsupported-fact rate to {f3(R.mean('E3','UFR'))} ({fp(t30u.p)} versus "
+        f"E0; {fp(t31u.p)} versus E1; d(z) = {f2(t30u.d_z)}), removed extrinsic follow-up and advice statements, and left the "
+        f"contradiction rate unchanged; it did so by deleting claims and abstaining, producing the shortest LLM summaries.",
         f"The extractive summarizer reached UFR {f3(R.mean('E2','UFR'))} and CR {f3(R.mean('E2','CR'))} on verbatim text; its "
         f"non-zero rates are judge errors, two thirds of them on negated sentences.",
         f"Against 1,781 expert-annotated sentences, the judge's precision was {pct0(cal_all.any_precision)}, recall "
@@ -518,9 +643,10 @@ def blocks(R: Results) -> list:
         "the categories that contain retrievable facts and not the extrinsic ones."])]
     b += [H2("7.3 Future Work")]
     b += [("numbers", [
-        "**Run E1b and E3.** Both conditions are implemented against the same interfaces and require only API access. E1b answers "
-        "whether focus can be gained without losing coverage; E3 tests H3 directly, and its per-claim verifier can be evaluated "
-        "against the expert annotations exactly as the NLI judge was.",
+        "**Evaluate the verifier as a judge.** The E3 verifier is itself an LLM-based claim judge; running it on the ann-pt-summ "
+        "annotations exactly as the NLI judge was run would show whether an LLM verifier agrees with medical experts better than "
+        "the cross-encoder, and a verifier that sees the whole note rather than three retrieved sentences should be compared "
+        "with the present design so that deletions of supported claims can be counted.",
         "**Replace the judge.** Evaluate larger consistency-tuned NLI models and alignment models [[cite:honovich2022,zha2023]], "
         "atomic-claim decomposition [[cite:min2023]], a MedNLI-adapted classifier [[cite:romanov2018]], and an LLM-based judge, "
         "all on the ann-pt-summ annotations first, and adopt only a judge whose kappa and AUROC justify it. The validation scripts "
@@ -542,26 +668,27 @@ def abstract(R: Results) -> list:
     t10u, t10c = R.test("UFR", "E0", "E1"), R.test("CR", "E0", "E1")
     cal = R.cal_row("all"); cov = R.cov.set_index("condition")
     var_all = R.cal_var[R.cal_var.group == "all"] if R.cal_var is not None else None
+    t30u = R.test("UFR", "E0", "E3"); t1b0u = R.test("UFR", "E0", "E1b")
     txt = (f"Large language models (LLMs) can turn clinical notes into fluent patient-facing summaries, but they also produce "
            f"statements that the note does not support. This thesis builds a reproducible, reference-free evaluation pipeline that "
            f"segments a summary into claims, retrieves the most similar sentences of the source note with a sentence-embedding "
            f"model, labels each claim with a natural language inference (NLI) cross-encoder, and reports an Unsupported Fact Rate "
-           f"(UFR) and a Contradiction Rate (CR) per summary. Three summarization approaches were compared on {R.n_docs} "
-           f"de-identified MTSamples clinical notes: zero-context GPT-4o-mini summarization (E0), excerpt-only retrieval-augmented "
-           f"generation (E1), and a centroid-based extractive summarizer (E2). After correcting two evaluation artifacts, header "
-           f"lines counted as claims and comma-encoded line breaks, retrieval reduced the judge's CR from {f3(R.mean('E0','CR'))} to "
-           f"{f3(R.mean('E1','CR'))} (Wilcoxon {fp(t10c.p)}) but left UFR unchanged ({f3(R.mean('E0','UFR'))} versus "
-           f"{f3(R.mean('E1','UFR'))}, {fp(t10u.p)}) and lowered coverage of the note; the extractive summarizer reached UFR "
-           f"{f3(R.mean('E2','UFR'))} and CR {f3(R.mean('E2','CR'))} on verbatim text, exposing a non-zero judge error floor driven by "
-           f"negated sentences. The judge was then validated against {int(cal.n_summaries)} patient summaries annotated by medical "
-           f"experts (ann-pt-summ). It flagged {pct0(cal.judge_UFR)} of sentences where the experts flagged {pct0(cal.expert_flag_rate)}, "
-           f"with precision {f2(cal.any_precision)}, Cohen's kappa {f2(cal.any_kappa)} and an area under the ROC curve of "
-           f"{f2(cal.auroc_1_minus_p_entail)}, and it ranked summarization systems in nearly the reverse order of the experts; five "
-           f"evidence-aggregation variants raised kappa to at most {f2(var_all.best_kappa.max()) if var_all is not None else '—'}. "
-           f"Robustness analyses showed that the retrieval effect on CR holds only at the default decision threshold. The thesis "
-           f"concludes that a small general-domain NLI judge at sentence granularity is not a valid hallucination detector for "
-           f"patient-facing clinical summaries, that retrieval changes what an LLM writes in the predicted direction at a "
-           f"measurable coverage cost, and that verbatim extractive controls and expert-label validation should accompany any "
-           f"automatic hallucination metric. Implementations of two extensions, RAG with the full note and RAG with "
-           f"Chain-of-Verification, are released for future evaluation.")
+           f"(UFR) and a Contradiction Rate (CR) per summary. Five summarization conditions were compared on {R.n_docs} de-identified "
+           f"MTSamples clinical notes: zero-context GPT-4o-mini (E0), retrieval-augmented generation with excerpts only (E1) or with "
+           f"the full note (E1b), retrieval-augmented generation with Chain-of-Verification (E3), and a centroid-based extractive "
+           f"summarizer (E2). After correcting two evaluation artifacts, header lines counted as claims and comma-encoded line "
+           f"breaks, excerpt-only retrieval reduced CR from {f3(R.mean('E0','CR'))} to {f3(R.mean('E1','CR'))} (Wilcoxon {fp(t10c.p)}) "
+           f"but left UFR unchanged and lowered coverage of the note; the full note restored coverage and lowered UFR modestly "
+           f"({fp(t1b0u.p)}); verification lowered UFR from {f3(R.mean('E0','UFR'))} to {f3(R.mean('E3','UFR'))} ({fp(t30u.p)}) by "
+           f"deleting unsupported claims and abstaining, without changing CR; and the extractive summarizer reached UFR "
+           f"{f3(R.mean('E2','UFR'))} and CR {f3(R.mean('E2','CR'))} on verbatim text, exposing a judge error floor driven by negated "
+           f"sentences. The judge was then validated against {int(cal.n_summaries)} patient summaries annotated by medical experts "
+           f"(ann-pt-summ). It flagged {pct0(cal.judge_UFR)} of sentences where the experts flagged {pct0(cal.expert_flag_rate)}, with "
+           f"precision {f2(cal.any_precision)}, Cohen's kappa {f2(cal.any_kappa)} and an area under the ROC curve of "
+           f"{f2(cal.auroc_1_minus_p_entail)}, and it ranked systems in nearly the reverse order of the experts; five "
+           f"evidence-aggregation variants raised kappa to at most {f2(var_all.best_kappa.max()) if var_all is not None else '—'}. The "
+           f"thesis concludes that a small general-domain NLI judge at sentence granularity is not a valid hallucination detector for "
+           f"patient-facing clinical summaries, that retrieval and verification change what an LLM writes in the predicted directions, "
+           f"with a coverage cost when the model sees excerpts only, and that verbatim extractive controls, abstention-aware claim sets and expert-label "
+           f"validation should accompany any automatic hallucination metric.")
     return [txt]

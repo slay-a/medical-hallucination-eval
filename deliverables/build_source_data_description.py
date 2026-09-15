@@ -60,8 +60,8 @@ def main():
     scripts = [
         ("hallucination_eval.py", "Main pipeline: loads MTSamples, samples 50 notes (seed 42), generates E0 (full note) and E1 (top-3 retrieved chunks only) summaries with GPT-4o-mini, segments claims (spaCy; header lines removed), retrieves top-3 evidence sentences (all-MiniLM-L6-v2), labels claims with cross-encoder/nli-MiniLM2-L6-H768, writes per-claim and per-summary results."),
         ("e2_extractive_eval.py", "E2 extractive baseline: centroid ranking of source sentences by mean cosine similarity, top-5 kept in document order, no LLM call; evaluated with the same judge; appends E2 rows and columns to the result files."),
-        ("e1b_fullnote_rag_eval.py", "E1b (implemented, not yet run): RAG with the full note plus the retrieved excerpts. Requires OPENAI_API_KEY; about 50 calls."),
-        ("e3_cove_eval.py", "E3 (implemented, not yet run): factored Chain-of-Verification on top of the E1 draft; per-claim verification against top-3 sentences from the full note, then revision. Requires OPENAI_API_KEY; about 500 calls."),
+        ("e1b_fullnote_rag_eval.py", "E1b: RAG with the full note plus the retrieved excerpts, and its evaluation. Requires OPENAI_API_KEY; 50 calls."),
+        ("e3_cove_eval.py", "E3: factored Chain-of-Verification on top of the E1 draft; per-claim verification against top-3 sentences from the full note, then revision (keep / replace / remove per claim); checkpointed with a --revise-only mode. Requires OPENAI_API_KEY; about 500 calls."),
         ("preprocessing.py", "Shared utilities: is_markdown_header() removes section-header lines from the claim set; clean_mtsamples_text() and sentencize_cleaned() repair the comma-encoded line breaks of MTSamples."),
         ("recompute_metrics.py", "Offline recomputation of every metric from results/claims_all.csv with headers excluded: per-sample UFR/CR, comparison table, aggregate statistics, Wilcoxon tests, bootstrap 95% CIs, effect sizes, header-filter effect tables."),
         ("ablations.py", "Offline robustness analyses: NLI threshold sweep, evidence top-k (1, 3, 5), cleaned-evidence re-scoring, coverage proxy, negation analysis, keyword-assisted error taxonomy."),
@@ -131,7 +131,7 @@ def main():
 
     heading(doc, "4. Data sources")
     table(doc, ["Source", "Type", "Content", "Size", "Access status and location"], [
-        ["MTSamples", "Public CSV", "4,999 sample medical transcriptions, 40 specialties; 624 eligible Discharge Summary and Consult - History and Physical notes; 50 sampled (seed 42): 40 consultations, 10 discharge summaries; source length 117 to 1,809 words (mean 539)", "17 MB", "Public. Stored one directory above the repository (../mtsamples.csv), not tracked."],
+        ["MTSamples", "Public CSV", "4,999 sample medical transcriptions, 40 specialties; 624 eligible Discharge Summary and Consult - History and Physical notes; 50 sampled (seed 42): 40 consultations, 10 discharge summaries; source length 117 to 1,809 words (mean 539); summaries generated under five conditions", "17 MB", "Public. Stored one directory above the repository (../mtsamples.csv), not tracked."],
         ["MIMIC-IV-Note v2.2", "Credentialed CSV (gzip)", "331,794 de-identified discharge summaries and about 2.3 million radiology reports (PhysioNet doi 10.13026/1n74-ne17)", "1.8 GB compressed", "Credentialing approved 4/28/2026; downloaded 5/14/2026; gzip integrity verified; SHA-256 manifest present. Stored locally (~/Desktop/Thesis). Staged for future generation experiments; not used for generation in this thesis."],
         ["ann-pt-summ v1.0.1", "Credentialed JSONL/XML", "Expert span annotations of unsupported facts: 100 doctor-written and 100 LLM-generated patient summaries plus 10 validation summaries; 423 agreed spans in 10 label types (PhysioNet doi 10.13026/gedc-j464)", "2.3 MB used (archive incomplete: 934 MB of >3.4 GB; the 14 annotation and derived files verified against SHA-256)", "DUA accepted; downloaded 5/12/2026. Used only to validate the NLI judge, with local models. Per-sentence outputs in results_private/ (git-ignored)."],
     ], [1.0, 0.8, 2.4, 0.8, 1.5], font=8.5)
@@ -142,7 +142,7 @@ def main():
 
     heading(doc, "6. Pipeline architecture")
     for s in [
-        "Stage 1, generation: E0 prompts GPT-4o-mini with the first 4,500 characters of the note; E1 prompts it with the top-3 retrieved five-sentence chunks only (query = description + first 300 characters; all-MiniLM-L6-v2 cosine; at most 4,000 characters); E2 selects the top-5 centroid sentences without an LLM.",
+        "Stage 1, generation: E0 prompts GPT-4o-mini with the first 4,500 characters of the note; E1 prompts it with the top-3 retrieved five-sentence chunks only (query = description + first 300 characters; all-MiniLM-L6-v2 cosine; at most 4,000 characters); E1b adds the full note to the same excerpts; E3 verifies each E1 claim against the top-3 sentences retrieved from the full note and rewrites the summary; E2 selects the top-5 centroid sentences without an LLM.",
         "Stage 2, claim segmentation: spaCy en_core_web_sm sentences of at least 10 characters; lines that are only a markdown/section header are removed (preprocessing.is_markdown_header).",
         "Stage 3, evidence retrieval: for each claim the 3 most similar source sentences by cosine similarity of all-MiniLM-L6-v2 embeddings.",
         "Stage 4, NLI classification: cross-encoder/nli-MiniLM2-L6-H768 scores each (evidence sentence, claim) pair; the claim's p_entailment and p_contradiction are the maxima over the three pairs. Supported if p_entailment ≥ 0.5 and p_entailment > p_contradiction; Contradicted if p_contradiction ≥ 0.5 and p_contradiction > p_entailment; otherwise Not-Supported.",
@@ -161,7 +161,7 @@ def main():
               "bash run.sh --offline               # reproduce every reported number from the stored results without any API call",
               "python thesis/build_thesis.py       # rebuild the thesis .docx and .pdf"]:
         p = doc.add_paragraph(); _pf(p, spacing="single", after=2, left_indent=0.3); r = p.add_run(s); _font(r, 9.5); r.font.name = "Courier New"
-    para(doc, "Changes since the May 2026 description: header lines are excluded from the claim set (162 of 1,373 stored claim rows), which changes every metric; the E1 description was corrected (excerpts only, non-overlapping five-sentence chunks); four dependencies that the analysis scripts import (matplotlib, scipy, python-docx, reportlab) were added to requirements.txt; bootstrap confidence intervals, effect sizes and Holm adjustment are now actually computed; the ann-pt-summ DUA is signed and the annotation files are in use.", size=10)
+    para(doc, "Changes since the May 2026 description: header lines are excluded from the claim set (162 of 1,373 stored E0/E1/E2 claim rows), which changes every metric; the E1 description was corrected (excerpts only, non-overlapping five-sentence chunks); two new conditions, E1b and E3, were generated and evaluated; four dependencies that the analysis scripts import (matplotlib, scipy, python-docx, reportlab) were added to requirements.txt; bootstrap confidence intervals, effect sizes and Holm adjustment are now actually computed; the ann-pt-summ DUA is signed and the annotation files are in use.", size=10)
 
     docx_path = OUT.with_suffix(".docx"); doc.save(docx_path)
     pdf = soffice_convert(docx_path, HERE / "_build"); (HERE / "_build" / pdf.name).replace(OUT.with_suffix(".pdf"))

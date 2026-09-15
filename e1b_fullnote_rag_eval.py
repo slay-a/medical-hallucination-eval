@@ -78,6 +78,9 @@ def main():
                                        description=str(row["description"]).strip(), **c))
         new_summ[doc_id] = (summary, len(summary.split()))
 
+    # re-read the shared result files right before writing so that a concurrently finished run is not overwritten
+    summ = pd.read_csv(RESULTS / "summaries.csv")
+    claims = pd.read_csv(RESULTS / "claims_all.csv"); claims = claims[claims.condition != COND]
     summ["e1b_summary"] = summ.doc_id.map(lambda d: new_summ.get(d, ("", 0))[0])
     summ["e1b_summary_words"] = summ.doc_id.map(lambda d: new_summ.get(d, ("", 0))[1])
     summ.to_csv(RESULTS / "summaries.csv", index=False)

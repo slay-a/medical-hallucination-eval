@@ -46,6 +46,15 @@ def is_markdown_header(text: str) -> bool:
     return False
 
 
+_ABSTENTION_RE = re.compile(r"^\s*(?:\*\*[^*]{1,60}\*\*:?\s*)?(?:not stated in the (?:clinical )?note|not stated|not mentioned in the note|no information (?:is )?(?:provided|available) in the note)\.?\s*$", re.I)
+
+
+def is_abstention(text: str) -> bool:
+    """True for an explicit abstention such as "Not stated in the note." (E3 writes these for sections without support).
+    Abstentions are not factual claims about the patient and are excluded from UFR and CR."""
+    return bool(_ABSTENTION_RE.match((text or "").strip()))
+
+
 def clean_mtsamples_text(text: str) -> str:
     """Repair the comma-for-line-break artefact of the MTSamples corpus."""
     t = (text or "").replace("\r", "")

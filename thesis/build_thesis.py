@@ -60,7 +60,7 @@ def main():
     blocks, refs = resolve_citations(blocks)
     # place the reference list after the last chapter and before the appendices
     idx = next((i for i, b in enumerate(blocks) if b[0] == "h1" and b[1].startswith("Appendix")), len(blocks))
-    blocks = blocks[:idx] + [("h1", "References"), ("refs", refs)] + blocks[idx:]
+    blocks = blocks[:idx] + [("h1", "Bibliography"), ("refs", refs)] + blocks[idx:]
     meta = dict(META)
     meta["abstract"] = abstract or ["Abstract to be generated from the final results."]
     out_docx, out_pdf = HERE / f"{args.out}.docx", HERE / f"{args.out}.pdf"

@@ -53,3 +53,6 @@ deliverables/*.docx
 # Build scratch
 deliverables/_build/
 thesis/_build/
+
+# E3 run checkpoint (scratch)
+results/e3_checkpoint.json
