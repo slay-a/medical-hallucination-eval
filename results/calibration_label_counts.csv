@@ -1,0 +1,11 @@
+expert_label,n_spans
+word_unsupported,126
+condition_unsupported,79
+medication_unsupported,47
+location_unsupported,42
+time_unsupported,42
+name_unsupported,27
+contradicted_fact,25
+procedure_unsupported,24
+number_unsupported,10
+other_unsupported,1

@@ -1,0 +1,49 @@
+condition,category,label,count
+E0,Diagnosis or assessment,Contradicted,5
+E0,Diagnosis or assessment,Not-Supported,25
+E0,"Findings, exam, labs or imaging",Contradicted,20
+E0,"Findings, exam, labs or imaging",Not-Supported,48
+E0,Follow-up or scheduling,Contradicted,16
+E0,Follow-up or scheduling,Not-Supported,65
+E0,Generic advice or patient education,Contradicted,12
+E0,Generic advice or patient education,Not-Supported,43
+E0,"History, symptoms or timeline",Contradicted,4
+E0,"History, symptoms or timeline",Not-Supported,45
+E0,Medication or dosage,Contradicted,7
+E0,Medication or dosage,Not-Supported,24
+E0,Other or unclassified,Contradicted,17
+E0,Other or unclassified,Not-Supported,47
+E0,Procedure or treatment,Contradicted,9
+E0,Procedure or treatment,Not-Supported,35
+E1,Diagnosis or assessment,Contradicted,9
+E1,Diagnosis or assessment,Not-Supported,21
+E1,"Findings, exam, labs or imaging",Contradicted,19
+E1,"Findings, exam, labs or imaging",Not-Supported,37
+E1,Follow-up or scheduling,Contradicted,5
+E1,Follow-up or scheduling,Not-Supported,85
+E1,Generic advice or patient education,Contradicted,2
+E1,Generic advice or patient education,Not-Supported,36
+E1,"History, symptoms or timeline",Contradicted,8
+E1,"History, symptoms or timeline",Not-Supported,29
+E1,Medication or dosage,Contradicted,2
+E1,Medication or dosage,Not-Supported,19
+E1,Other or unclassified,Contradicted,11
+E1,Other or unclassified,Not-Supported,47
+E1,Procedure or treatment,Contradicted,3
+E1,Procedure or treatment,Not-Supported,25
+E0,Diagnosis or assessment,All unsupported,30
+E0,"Findings, exam, labs or imaging",All unsupported,68
+E0,Follow-up or scheduling,All unsupported,81
+E0,Generic advice or patient education,All unsupported,55
+E0,"History, symptoms or timeline",All unsupported,49
+E0,Medication or dosage,All unsupported,31
+E0,Other or unclassified,All unsupported,64
+E0,Procedure or treatment,All unsupported,44
+E1,Diagnosis or assessment,All unsupported,30
+E1,"Findings, exam, labs or imaging",All unsupported,56
+E1,Follow-up or scheduling,All unsupported,90
+E1,Generic advice or patient education,All unsupported,38
+E1,"History, symptoms or timeline",All unsupported,37
+E1,Medication or dosage,All unsupported,21
+E1,Other or unclassified,All unsupported,58
+E1,Procedure or treatment,All unsupported,28

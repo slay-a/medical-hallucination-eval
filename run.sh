@@ -1,28 +1,26 @@
 #!/usr/bin/env bash
-# run.sh — Activate venv and launch the evaluation pipeline
+# run.sh — Full reproduction chain.
+#   bash run.sh            # generation (needs OPENAI_API_KEY) + evaluation + analysis
+#   bash run.sh --offline  # skip generation; recompute metrics, ablations, calibration, plots from stored results
 set -euo pipefail
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV="$SCRIPT_DIR/.venv"
-
-if [ ! -d "$VENV" ]; then
-    echo "ERROR: Virtual environment not found. Run setup.sh first."
-    exit 1
-fi
-
+[ -d "$VENV" ] || { echo "ERROR: run setup.sh first"; exit 1; }
 source "$VENV/bin/activate"
+cd "$SCRIPT_DIR"
 
-# Prefer the env-var key; fall back to the hardcoded placeholder check
-if [ -z "${OPENAI_API_KEY:-}" ]; then
-    echo "ERROR: OPENAI_API_KEY environment variable is not set."
-    echo "  Run:  export OPENAI_API_KEY='sk-...'"
-    exit 1
+if [ "${1:-}" != "--offline" ]; then
+  [ -n "${OPENAI_API_KEY:-}" ] || { echo "ERROR: export OPENAI_API_KEY='sk-...' (or use --offline)"; exit 1; }
+  python hallucination_eval.py          # E0 baseline + E1 RAG generation and NLI evaluation (50 docs)
+  python e2_extractive_eval.py          # E2 extractive baseline (no API calls)
+  # Optional additional conditions (uncomment to run; each needs the API key):
+  # python e1b_fullnote_rag_eval.py     # E1b: full note + excerpts
+  # python e3_cove_eval.py              # E3: RAG + Chain-of-Verification
 fi
-
-echo "Starting evaluation pipeline …"
-echo "  Model  : gpt-4o-mini"
-echo "  Samples: 50"
-echo "  Output : $SCRIPT_DIR/results/"
-echo ""
-
-python "$SCRIPT_DIR/hallucination_eval.py" "$@"
+python recompute_metrics.py             # header filter, per-sample metrics, paired tests
+python ablations.py                     # thresholds, top-k, cleaned evidence, coverage, taxonomy (local models only)
+if [ -d "$HOME/Desktop/Thesis/ann-pt-summ-1.0.1-partial" ]; then
+  python calibration_annptsumm.py       # judge vs. medical-expert labels (credentialed data, local only)
+fi
+python analyze.py                       # figures and tables for the thesis
+echo "Done. Outputs in results/"
