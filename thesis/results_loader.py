@@ -110,7 +110,7 @@ class Results:
         w = self.cmp["source_word_count"]
         self.src_words = dict(mean=w.mean(), sd=w.std(), min=w.min(), median=w.median(), max=w.max())
         self.words = {c: self.cmp[f"{c.lower()}_summary_words"] for c in self.conds if f"{c.lower()}_summary_words" in self.cmp.columns}
-        nh = self.claims[~self.claims.is_header]
+        nh = self.claims[~self.claims.is_header & ~self.claims.get('is_abstention', False)]
         self.label_counts = pd.crosstab(nh.condition, nh.label)
         self.claims_per = nh.groupby("condition").size() / self.n_docs
         self.n_claims_total = int(len(nh)); self.n_rows_total = int(len(self.claims)); self.n_headers = int(self.claims.is_header.sum())
@@ -160,7 +160,7 @@ class Results:
         return str(row.get(f"{cond.lower()}_summary", ""))
 
     def example_claims(self, doc_id, cond):
-        c = self.claims[(self.claims.doc_id == doc_id) & (self.claims.condition == cond) & (~self.claims.is_header)]
+        c = self.claims[(self.claims.doc_id == doc_id) & (self.claims.condition == cond) & (~self.claims.is_header) & (~self.claims.get('is_abstention', False))]
         return c[["claim", "label", "p_entailment", "p_contradiction"]]
 
 

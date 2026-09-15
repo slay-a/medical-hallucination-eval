@@ -31,6 +31,37 @@ E1,Other or unclassified,Contradicted,11
 E1,Other or unclassified,Not-Supported,47
 E1,Procedure or treatment,Contradicted,3
 E1,Procedure or treatment,Not-Supported,25
+E1b,Diagnosis or assessment,Contradicted,6
+E1b,Diagnosis or assessment,Not-Supported,32
+E1b,"Findings, exam, labs or imaging",Contradicted,22
+E1b,"Findings, exam, labs or imaging",Not-Supported,38
+E1b,Follow-up or scheduling,Contradicted,10
+E1b,Follow-up or scheduling,Not-Supported,70
+E1b,Generic advice or patient education,Contradicted,8
+E1b,Generic advice or patient education,Not-Supported,29
+E1b,"History, symptoms or timeline",Contradicted,6
+E1b,"History, symptoms or timeline",Not-Supported,41
+E1b,Medication or dosage,Contradicted,4
+E1b,Medication or dosage,Not-Supported,25
+E1b,Other or unclassified,Contradicted,19
+E1b,Other or unclassified,Not-Supported,43
+E1b,Procedure or treatment,Contradicted,2
+E1b,Procedure or treatment,Not-Supported,31
+E3,Diagnosis or assessment,Contradicted,5
+E3,Diagnosis or assessment,Not-Supported,10
+E3,"Findings, exam, labs or imaging",Contradicted,8
+E3,"Findings, exam, labs or imaging",Not-Supported,23
+E3,Follow-up or scheduling,Contradicted,5
+E3,Follow-up or scheduling,Not-Supported,30
+E3,Generic advice or patient education,Not-Supported,10
+E3,"History, symptoms or timeline",Contradicted,6
+E3,"History, symptoms or timeline",Not-Supported,23
+E3,Medication or dosage,Contradicted,2
+E3,Medication or dosage,Not-Supported,9
+E3,Other or unclassified,Contradicted,14
+E3,Other or unclassified,Not-Supported,28
+E3,Procedure or treatment,Contradicted,8
+E3,Procedure or treatment,Not-Supported,17
 E0,Diagnosis or assessment,All unsupported,30
 E0,"Findings, exam, labs or imaging",All unsupported,68
 E0,Follow-up or scheduling,All unsupported,81
@@ -47,3 +78,19 @@ E1,"History, symptoms or timeline",All unsupported,37
 E1,Medication or dosage,All unsupported,21
 E1,Other or unclassified,All unsupported,58
 E1,Procedure or treatment,All unsupported,28
+E1b,Diagnosis or assessment,All unsupported,38
+E1b,"Findings, exam, labs or imaging",All unsupported,60
+E1b,Follow-up or scheduling,All unsupported,80
+E1b,Generic advice or patient education,All unsupported,37
+E1b,"History, symptoms or timeline",All unsupported,47
+E1b,Medication or dosage,All unsupported,29
+E1b,Other or unclassified,All unsupported,62
+E1b,Procedure or treatment,All unsupported,33
+E3,Diagnosis or assessment,All unsupported,15
+E3,"Findings, exam, labs or imaging",All unsupported,31
+E3,Follow-up or scheduling,All unsupported,35
+E3,Generic advice or patient education,All unsupported,10
+E3,"History, symptoms or timeline",All unsupported,29
+E3,Medication or dosage,All unsupported,11
+E3,Other or unclassified,All unsupported,42
+E3,Procedure or treatment,All unsupported,25

@@ -176,24 +176,40 @@ def _new_page(doc):
 
 
 # ───────────────────────────── numbering / cross-refs ────────────────────────
+def _chapter_tag(h1_text: str, current: str) -> str:
+    m = re.match(r"^\s*Chapter\s+(\d+)", h1_text)
+    if m:
+        return m.group(1)
+    m = re.match(r"^\s*Appendix\s+([A-Z])", h1_text)
+    if m:
+        return m.group(1)
+    return current
+
+
 def collect_entries(blocks):
-    """Assign table/figure numbers and gather TOC entries. Returns (labels, headings, tables, figures)."""
+    """Assign per-chapter table/figure numbers (e.g. Table 3.1) and gather TOC entries.
+    Returns (labels, headings, tables, figures)."""
     labels, headings, tables, figures = {}, [], [], []
-    t = f = 0
+    tag, t, f = "0", 0, 0
     for b in blocks:
         kind = b[0]
-        if kind in ("h1", "h2", "h3"):
+        if kind == "h1":
+            new_tag = _chapter_tag(b[1], tag)
+            if new_tag != tag:
+                tag, t, f = new_tag, 0, 0
+            headings.append((1, b[1]))
+        elif kind in ("h2", "h3"):
             headings.append((int(kind[1]), b[1]))
         elif kind == "table":
-            t += 1; d = b[1]; d["_num"] = t
+            t += 1; d = b[1]; d["_num"] = f"{tag}.{t}"
             if d.get("label"):
-                labels[f"tab:{d['label']}"] = f"Table {t}"
-            tables.append((t, d["caption"]))
+                labels[f"tab:{d['label']}"] = f"Table {d['_num']}"
+            tables.append((d["_num"], d["caption"]))
         elif kind == "figure":
-            f += 1; d = b[1]; d["_num"] = f
+            f += 1; d = b[1]; d["_num"] = f"{tag}.{f}"
             if d.get("label"):
-                labels[f"fig:{d['label']}"] = f"Figure {f}"
-            figures.append((f, d["caption"]))
+                labels[f"fig:{d['label']}"] = f"Figure {d['_num']}"
+            figures.append((d["_num"], d["caption"]))
     return labels, headings, tables, figures
 
 
@@ -351,7 +367,7 @@ class Renderer:
         self._list_page("Table of Contents", entries, "toc", indent_levels=True)
 
     def list_of(self, title, items, prefix):
-        entries = [(1, f"{prefix} {n}. {cap}", f"{prefix.lower()}:{n}") for n, cap in items]
+        entries = [(1, f"{prefix} {n}  {cap}", f"{prefix.lower()}:{n}") for n, cap in items]
         self._list_page(title, entries, prefix)
 
     def abstract_page(self):
@@ -372,7 +388,7 @@ class Renderer:
         num = d["_num"]
         cap = self._p()
         _pf(cap, spacing="single", before=12, after=6, keep_next=True)
-        r = cap.add_run(f"Table {num}. "); _font(r, 12, True)
+        r = cap.add_run(f"Table {num}  "); _font(r, 12, True)
         _marked(cap, self._t(d["caption"]), size=12)
         cols, rows = d["columns"], d["rows"]
         fs = d.get("font", 10)
@@ -380,7 +396,10 @@ class Renderer:
         tbl.style = "Table Grid"
         tbl.alignment = WD_TABLE_ALIGNMENT.CENTER
         tbl.autofit = False
-        widths = d.get("widths") or [TEXT_WIDTH_IN / len(cols)] * len(cols)
+        widths = list(d.get("widths") or [TEXT_WIDTH_IN / len(cols)] * len(cols))
+        total = sum(widths)
+        if total > TEXT_WIDTH_IN:          # never exceed the 1-inch margins
+            widths = [w * TEXT_WIDTH_IN / total for w in widths]
         aligns = d.get("align") or ["left"] + ["center"] * (len(cols) - 1)
         amap = {"left": WD_ALIGN_PARAGRAPH.LEFT, "center": WD_ALIGN_PARAGRAPH.CENTER, "right": WD_ALIGN_PARAGRAPH.RIGHT}
         for j, c in enumerate(cols):
@@ -409,7 +428,7 @@ class Renderer:
         else:
             r = p.add_run(f"[missing figure: {path.name}]"); _font(r, 12, True)
         cap = self._p(); _pf(cap, spacing="single", after=12)
-        r = cap.add_run(f"Figure {num}. "); _font(r, 12, True)
+        r = cap.add_run(f"Figure {num}  "); _font(r, 12, True)
         _marked(cap, self._t(d["caption"]), size=12)
 
     def references(self, entries):
@@ -479,13 +498,13 @@ class Renderer:
             elif kind == "refs":
                 self.references(b[1])
             elif kind == "code":
-                for line in b[1].split("\n"):
-                    p = self._p(); _pf(p, spacing="single", after=0, left_indent=0.3)
+                lines = b[1].split("\n")
+                for i, line in enumerate(lines):
+                    p = self._p(); _pf(p, spacing="single", after=12 if i == len(lines) - 1 else 0, left_indent=0.3)
                     r = p.add_run(line if line.strip() else " "); _font(r, 9); r.font.name = "Courier New"
                     rpr = r._element.get_or_add_rPr(); rf = rpr.find(qn("w:rFonts"))
                     for attr in ("w:ascii", "w:hAnsi", "w:eastAsia", "w:cs"):
                         rf.set(qn(attr), "Courier New")
-                self._p()
             elif kind == "pagebreak":
                 self._break_next = True
             else:
@@ -539,9 +558,9 @@ def locate_pages(pdf: Path, renderer: Renderer) -> tuple[dict, list]:
     for level, text in renderer.headings:
         find(f"h{level}:{text}", resolve_xrefs(text, renderer.labels), False, level == 1)
     for n, cap in renderer.tables:
-        find(f"table:{n}", f"Table {n}. {resolve_xrefs(cap, renderer.labels)[:40]}", False, False)
+        find(f"table:{n}", f"Table {n} {resolve_xrefs(cap, renderer.labels)[:40]}", False, False)
     for n, cap in renderer.figures:
-        find(f"figure:{n}", f"Figure {n}. {resolve_xrefs(cap, renderer.labels)[:40]}", False, False)
+        find(f"figure:{n}", f"Figure {n} {resolve_xrefs(cap, renderer.labels)[:40]}", False, False)
     return found, missing
 
 

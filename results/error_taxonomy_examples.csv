@@ -51,3 +51,59 @@ E1,Other or unclassified,1,Not-Supported,"However, it was noted that you have be
 E1,Procedure or treatment,4,Not-Supported,"He underwent visual field tests and disc photographs to assess his eye health, particularly due to concerns about glaucoma.",0.0508,0.006
 E1,Procedure or treatment,11,Not-Supported,"You received a nerve block to help manage pain during the procedure, and after surgery, you recovered well.",0.006,0.0096
 E1,Procedure or treatment,13,Not-Supported,We also noted improvements in your kidney function and blood pressure during your treatment.,0.002,0.0048
+E1b,Diagnosis or assessment,1,Not-Supported,"Your vital signs indicated a slightly elevated pulse, but you were otherwise in no acute distress.",0.0597,0.1138
+E1b,Diagnosis or assessment,1,Not-Supported,"Additionally, we suggest starting prenatal vitamins to support your health during this time.",0.0596,0.0031
+E1b,Diagnosis or assessment,2,Contradicted,"Your lab tests showed no concerning results, suggesting that the joint pain may have been related to a recent viral infection.",0.0019,0.8099
+E1b,"Findings, exam, labs or imaging",1,Not-Supported,You visited today due to concerns about abnormal menstrual periods and a possible pregnancy.,0.0059,0.0196
+E1b,"Findings, exam, labs or imaging",1,Contradicted,"**Key Findings:**  
+During your examination, you did not show signs of abdominal pain or vaginal bleeding.",0.1446,0.8846
+E1b,"Findings, exam, labs or imaging",2,Contradicted,"**Key Findings:**  
+During the examination, there were no signs of tenderness or swelling in your joints, and your muscle strength was normal.",0.221,0.9235
+E1b,Follow-up or scheduling,0,Contradicted,"During your visit, it was noted that you have stomach pain and cramping, but you denied any nausea, vomiting, or diarrhea.",0.0065,0.6953
+E1b,Follow-up or scheduling,0,Not-Supported,"Additionally, you were referred for a barium swallow series to check for any potential issues in your swallowing.",0.1251,0.0194
+E1b,Follow-up or scheduling,0,Not-Supported,"If your symptoms do not improve or worsen, please reach out to the clinic for further evaluation.",0.0047,0.0244
+E1b,Generic advice or patient education,1,Not-Supported,"It’s important to monitor your health closely, especially considering your recent experiences.",0.0093,0.0054
+E1b,Generic advice or patient education,3,Not-Supported,It is important to gently retract the skin during diaper changes to prevent it from adhering again.,0.0232,0.0316
+E1b,Generic advice or patient education,8,Contradicted,"It’s important to monitor your symptoms, especially any changes in fatigue or new cardiac symptoms.",0.0334,0.5391
+E1b,"History, symptoms or timeline",0,Not-Supported,"You visited the clinic due to foul-smelling urine and stomach pain after meals, which you have been experiencing for about a year and a half.",0.0138,0.0056
+E1b,"History, symptoms or timeline",2,Not-Supported,"You visited our Pediatric Rheumatology Clinic due to joint pain in several areas, including your fingers, elbows, and neck, which you experienced for a few months.",0.0109,0.0068
+E1b,"History, symptoms or timeline",2,Contradicted,"Currently, there are no specific treatments required since your symptoms have improved.",0.0256,0.8922
+E1b,Medication or dosage,0,Not-Supported,"For follow-up, please take your medications as prescribed and schedule a contraception consult.",0.0472,0.0135
+E1b,Medication or dosage,6,Contradicted,"You mentioned having taken an antibiotic recently for an upper respiratory infection, but you have not had any diarrhea or other gastrointestinal symptoms lately.",0.0041,0.9934
+E1b,Medication or dosage,6,Not-Supported,"Additionally, I have prescribed Lidex gel, which you can apply to the affected areas three times a day for relief.",0.0021,0.0832
+E1b,Other or unclassified,3,Not-Supported,"Fortunately, he is now afebrile and showing marked improvement.",0.3773,0.132
+E1b,Other or unclassified,5,Contradicted,Keep up the great work with your diet and exercise!,0.0149,0.9065
+E1b,Other or unclassified,6,Not-Supported,"To help with your mouth sores, we recommend stopping the methotrexate, as it may take some time for the sores to heal completely.",0.0623,0.2966
+E1b,Procedure or treatment,3,Not-Supported,He has been started on clindamycin and will be treated with Bactrim for about 10 days.,0.0248,0.0153
+E1b,Procedure or treatment,5,Contradicted,"**Treatment or Procedures Performed:**  
+You received dietary guidelines to help improve your cholesterol levels.",0.1223,0.9664
+E1b,Procedure or treatment,8,Not-Supported,You visited today for management of a fever and have a history of coronary artery disease (CAD) and prior bypass surgery.,0.052,0.0412
+E3,Diagnosis or assessment,3,Not-Supported,The swelling is a mixture of the resolving cellulitis from a suprapubic fat pad and is likely due to an infection suspected to be caused by Staph bacteria.,0.0019,0.0068
+E3,Diagnosis or assessment,13,Not-Supported,"You visited us due to breathing difficulties, which were diagnosed as severe bronchitis leading to acute respiratory failure, improving.",0.0438,0.0412
+E3,Diagnosis or assessment,13,Contradicted,"Your X-ray results did not show any congestion or infiltrates, and pro-BNP was within normal limits at discharge, indicating no issues with your heart or lungs.",0.019,0.9365
+E3,"Findings, exam, labs or imaging",0,Not-Supported,"Overall, your physical examination was unremarkable, and there were no significant findings such as palpitations, pain, visual disturbances, or eye irritation.",0.0134,0.0047
+E3,"Findings, exam, labs or imaging",1,Not-Supported,You visited us today due to concerns about your abnormal menstrual periods and possible pregnancy.,0.0024,0.0192
+E3,"Findings, exam, labs or imaging",2,Not-Supported,"**Key Findings:**  
+During the examination, we found no tenderness in your joints.",0.2261,0.0984
+E3,Follow-up or scheduling,0,Contradicted,"**Key Findings:**  
+During your visit, we noted that you have pain and cramping in your stomach, but you did not report any nausea, vomiting, or diarrhea.",0.0066,0.8608
+E3,Follow-up or scheduling,3,Not-Supported,"**Follow-Up Instructions:**  
+Please monitor your son's swelling, purulent discharge, and fever.",0.237,0.1186
+E3,Follow-up or scheduling,3,Not-Supported,"If the swelling worsens, the fever continues, or if you notice any new symptoms, contact your healthcare provider immediately.",0.0038,0.0174
+E3,Generic advice or patient education,6,Not-Supported,"It’s important to keep an eye on your mouth sores, as the patient has had them for the last 10-12 days.",0.352,0.0062
+E3,Generic advice or patient education,21,Not-Supported,The medical team will monitor your progress closely as the patient is admitted for continued close observation.,0.0136,0.0066
+E3,Generic advice or patient education,22,Not-Supported,"Your overall health was assessed, and you were found to be a healthy-appearing male.",0.4153,0.1494
+E3,"History, symptoms or timeline",0,Not-Supported,You visited us today due to concerns about foul-smelling urine and stomach pain after meals.,0.0268,0.0615
+E3,"History, symptoms or timeline",2,Not-Supported,"You visited our Pediatric Rheumatology Clinic today due to joint pain in your fingers, elbows, and neck that started a couple of months ago.",0.0089,0.0137
+E3,"History, symptoms or timeline",4,Contradicted,"**Key Findings:**  
+Mr. ABC has a history of astigmatism and has not worn his glasses for the last few years.",0.1125,0.65
+E3,Medication or dosage,7,Not-Supported,"After careful evaluation, we restarted your heart medication, digoxin, at a lower dose.",0.0054,0.0583
+E3,Medication or dosage,12,Contradicted,"**Treatment or Procedures Performed:**  
+Upon admission, Ms. ABC did not receive Rituxan; she received her weekly dose of Rituxan on the day prior to discharge.",0.0067,0.9542
+E3,Medication or dosage,16,Contradicted,You will be taking an antibiotic called Bactrim DS once a day for ten days.,0.0814,0.9511
+E3,Other or unclassified,1,Not-Supported,"Recently, she believes that she passed a fetus, although she did not know that she was pregnant at that time.",0.0715,0.0248
+E3,Other or unclassified,2,Not-Supported,"The patient may have had reactive arthritis, and an arthritis panel was included in the data.",0.3317,0.003
+E3,Other or unclassified,3,Contradicted,Your son has been placed on clindamycin and is currently afebrile with marked improvement.,0.5196,0.9055
+E3,Procedure or treatment,4,Not-Supported,He underwent Humphrey visual field tests and disc photographs today for baseline documentation in view of glaucoma suspicion.,0.2677,0.2012
+E3,Procedure or treatment,11,Not-Supported,"You received a femoral nerve block to help manage pain during the procedure, and after surgery, you recovered well.",0.0061,0.0098
+E3,Procedure or treatment,13,Contradicted,We noted improvements in your blood pressure during your treatment.,0.1374,0.7677

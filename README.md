@@ -1,8 +1,8 @@
 # Hallucination Evaluation in LLM-Based Medical Summarization
 
 Claim-level evaluation of hallucinations in patient-facing summaries generated from clinical notes,
-and a controlled comparison of three summarization approaches (zero-context GPT-4o-mini, retrieval-augmented
-GPT-4o-mini, and a centroid-based extractive baseline). Every generated claim is checked against the source
+and a controlled comparison of five summarization conditions (zero-context GPT-4o-mini, retrieval-augmented
+GPT-4o-mini with excerpts only or with the full note, RAG with Chain-of-Verification, and a centroid-based extractive baseline). Every generated claim is checked against the source
 note with sentence-embedding retrieval and a natural-language-inference cross-encoder, yielding two metrics per
 summary: the Unsupported Fact Rate (UFR) and the Contradiction Rate (CR).
 
@@ -12,9 +12,11 @@ M.S. thesis project, Department of Computer Science, California State University
 ## Pipeline
 
 ```
-source note ─┬─ E0  GPT-4o-mini, full note ──────────┐
-             ├─ E1  GPT-4o-mini, top-3 retrieved chunks ─┤─ summary ─► claim segmentation (spaCy, header lines removed)
-             └─ E2  centroid extractive, top-5 sentences ─┘             ─► evidence retrieval (all-MiniLM-L6-v2, top-3 sentences)
+source note ─┬─ E0  GPT-4o-mini, full note ──────────────────┐
+             ├─ E1  GPT-4o-mini, top-3 retrieved chunks only ───┤
+             ├─ E1b GPT-4o-mini, full note + retrieved chunks ──┤─ summary ─► claim segmentation (spaCy, header lines removed)
+             ├─ E3  E1 draft ► per-claim verification ► revision ┤             ─► evidence retrieval (all-MiniLM-L6-v2, top-3 sentences)
+             └─ E2  centroid extractive, top-5 sentences ───────┘
                                                                         ─► NLI cross-encoder (nli-MiniLM2-L6-H768)
                                                                         ─► UFR, CR per summary ─► Wilcoxon, bootstrap CI
 ```
@@ -25,8 +27,8 @@ source note ─┬─ E0  GPT-4o-mini, full note ──────────�
 |---|---|---|
 | `hallucination_eval.py` | E0 and E1 generation on 50 MTSamples notes (seed 42) and NLI evaluation | yes |
 | `e2_extractive_eval.py` | E2 extractive baseline and its evaluation | no |
-| `e1b_fullnote_rag_eval.py` | E1b: RAG with the full note plus excerpts (implemented, not yet run) | yes |
-| `e3_cove_eval.py` | E3: RAG + Chain-of-Verification (implemented, not yet run) | yes |
+| `e1b_fullnote_rag_eval.py` | E1b: RAG with the full note plus excerpts | yes |
+| `e3_cove_eval.py` | E3: RAG + Chain-of-Verification (per-claim verification against the note, then revision; checkpointed, `--revise-only` redoes only the revision step) | yes |
 | `recompute_metrics.py` | Header filter, per-sample metrics, paired tests, bootstrap CIs | no |
 | `ablations.py` | Threshold sweep, top-k ablation, cleaned-evidence ablation, coverage proxy, negation analysis, error taxonomy | no |
 | `calibration_annptsumm.py` | Judge validation against medical-expert annotations (ann-pt-summ, credentialed; local models only) | no |

@@ -32,7 +32,7 @@ def blocks(R: Results) -> list:
     t_cr_before = R.hdr_test("before_filter", "CR"); t_cr_after = R.hdr_test("after_filter", "CR")
 
     # ══════════════════════════════════ CHAPTER 1 ══════════════════════════════════
-    b += [H1("Chapter 1: Introduction"), H2("1.1 Motivation")]
+    b += [H1("Chapter 1 Introduction"), H2("1.1 Motivation")]
     b += [P("Clinical care generates large volumes of free-text documentation: admission notes, consultation reports, "
             "operative notes, and discharge summaries. Much of this text is written by clinicians for clinicians, and "
             "patients frequently leave a hospital or clinic with instructions that they do not fully understand. Large "
@@ -100,18 +100,22 @@ def blocks(R: Results) -> list:
               "**H2 (retrieval grounding).** Document-grounded RAG reduces the Unsupported Fact Rate and the Contradiction Rate "
               "relative to zero-context generation.",
               "**H3 (verification).** Adding a structured verification and revision step (Chain-of-Verification) on top of "
-              "RAG further reduces unsupported and contradicted statements. This hypothesis is operationalized in the released "
-              "code (condition E3) but, as explained in Section 1.6, it is not tested empirically in this thesis."])]
+              "RAG further reduces unsupported and contradicted statements. This hypothesis is tested with condition E3."])]
     b += [H2("1.4 Overview of the Approach")]
     b += [P(f"Fifty de-identified clinical transcriptions (consultation histories and physicals, and discharge summaries) were "
             f"sampled from the public MTSamples corpus [[cite:mtsamples]] with a fixed random seed. Each note was summarized "
-            f"under three conditions, illustrated in [[fig:pipeline]]:"),
+            f"under five conditions, illustrated in [[fig:pipeline]]:"),
           ("bullets", [
               "**E0, zero-context LLM summarization.** GPT-4o-mini receives the full note and writes a 150 to 250 word "
               "patient-facing summary with a fixed four-part structure.",
               "**E1, retrieval-augmented generation.** The note is split into five-sentence chunks, the three chunks most "
               "similar to a query built from the note's description are retrieved with a sentence-embedding model, and "
               "GPT-4o-mini writes the same kind of summary from those excerpts only.",
+              "**E1b, retrieval-augmented generation with the full note.** The model receives the same excerpts together with the "
+              "full note, which separates the effect of focusing attention from the effect of withholding content.",
+              "**E3, retrieval-augmented generation with Chain-of-Verification.** Every claim of the E1 summary is verified by the "
+              "model against the sentences retrieved for that claim from the full note, and the summary is rewritten to keep, "
+              "correct or remove each claim.",
               "**E2, extractive summarization.** A centroid-based extractive summarizer selects the five most representative "
               "sentences of the note without any language model; because every sentence is copied verbatim, E2 bounds the "
               "faithfulness that any summarizer can reach and exposes the judge's own error rate."]),
@@ -127,7 +131,8 @@ def blocks(R: Results) -> list:
               "An open, fully reproducible claim-level evaluation pipeline for source-grounded summaries, built from "
               "open-weight components (spaCy, all-MiniLM-L6-v2, cross-encoder/nli-MiniLM2-L6-H768) with a fixed sampling seed "
               "and pinned dependencies.",
-              f"A controlled comparison of three summarization approaches on {R.n_docs} clinical notes with paired statistics, "
+              f"A controlled comparison of five summarization conditions, spanning zero-context generation, two forms of retrieval "
+              f"grounding, generation with verification and an extractive bound, on {R.n_docs} clinical notes with paired statistics, "
               "including the first correction of two evaluation artifacts, markdown section headers counted as claims and "
               "comma-encoded line breaks in MTSamples, that had inflated previously reported effects.",
               "A validation of the NLI judge against medical-expert annotations of unsupported facts, including sentence-level "
@@ -135,8 +140,8 @@ def blocks(R: Results) -> list:
               "far an off-the-shelf NLI judge can and cannot be trusted for this task.",
               "A quantitative analysis of the coverage cost of excerpt-only RAG, and a keyword-assisted taxonomy of the "
               "statements that remain unsupported under every condition.",
-              "Implemented and documented extensions, E1b (RAG with the full note and excerpts) and E3 (RAG with "
-              "Chain-of-Verification), ready to be executed in future work."])]
+              "Open, documented implementations of every condition, including RAG with the full note (E1b) and RAG with "
+              "Chain-of-Verification (E3), so that each can be re-run or extended with a single command."])]
     b += [H2("1.6 Scope and Delimitations")]
     b += [P("The scope of the empirical work is deliberately narrow so that every comparison is controlled. A single "
             "generator, GPT-4o-mini [[cite:openai2024]], is used for all LLM conditions. Generation experiments use the public "
@@ -144,9 +149,8 @@ def blocks(R: Results) -> list:
             "MIMIC text without a zero-data-retention agreement; MIMIC-derived data are used only to validate the judge, "
             "with models that run locally. The thesis proposal also described a document-grounded question-answering task; "
             "that task was not implemented and is left to future work, and the title of this thesis has been narrowed "
-            "accordingly. Finally, the two extension conditions E1b and E3 were implemented but not executed, because "
-            "their execution requires additional API access; their designs are documented so that they can be run without "
-            "changing any other part of the pipeline."),
+            "accordingly. Every condition was generated once per document at a fixed temperature; sampling variance is not "
+            "measured."),
           P("Within this scope the thesis makes no claim about the clinical acceptability of any summary. The metrics "
             "measure whether statements are supported by the note as judged by an automatic model, and Chapter 5 shows "
             "precisely how that judgment relates to the judgment of medical experts.")]
@@ -161,7 +165,7 @@ def blocks(R: Results) -> list:
             "per-document results, worked examples with every claim label, and a description of the code repository.")]
 
     # ══════════════════════════════════ CHAPTER 2 ══════════════════════════════════
-    b += [H1("Chapter 2: Literature Review"), H2("2.1 Hallucination in Natural Language Generation")]
+    b += [H1("Chapter 2 Literature Review"), H2("2.1 Hallucination in Natural Language Generation")]
     b += [P("The term hallucination entered the natural language generation literature to describe output that is fluent "
             "but unfaithful to its input. Maynez et al. distinguished *intrinsic* hallucinations, which misrepresent "
             "information that is present in the source, from *extrinsic* hallucinations, which introduce information that "
@@ -314,9 +318,9 @@ def blocks(R: Results) -> list:
             "medical-expert annotations before drawing conclusions from it. This thesis fills that gap.")]
 
     # ══════════════════════════════════ CHAPTER 3 ══════════════════════════════════
-    b += [H1("Chapter 3: Data and Preprocessing"), H2("3.1 Overview of the Data Sources")]
+    b += [H1("Chapter 3 Data and Preprocessing"), H2("3.1 Overview of the Data Sources")]
     b += [P("Three data sources play distinct roles ([[tab:datasources]]). MTSamples supplies the fifty notes on which the "
-            "three summarization approaches are generated and compared. The ann-pt-summ expert annotations supply an "
+            "five summarization conditions are generated and compared. The ann-pt-summ expert annotations supply an "
             "independent reference standard for validating the judge. MIMIC-IV-Note was obtained under PhysioNet "
             "credentialing and is staged for the future migration of the generation experiments to real clinical notes, but "
             "it is not used to generate summaries in this thesis, for the governance reasons given in Section 3.7."),
@@ -324,7 +328,7 @@ def blocks(R: Results) -> list:
                          columns=["Source", "Access", "Content", "Size", "Role in this thesis"],
                          widths=[1.1, 1.0, 2.1, 0.8, 1.5], font=9.5, align=["left", "left", "left", "center", "left"],
                          rows=[["MTSamples [[cite:mtsamples]]", "Public", f"{R.total_rows:,} sample medical transcriptions, "
-                                f"{R.n_specialties} specialty categories", "17 MB", f"Generation and comparison of E0, E1, E2 on {R.n_docs} sampled notes"],
+                                f"{R.n_specialties} specialty categories", "17 MB", f"Generation and comparison of E0, E1, E1b, E2 and E3 on {R.n_docs} sampled notes"],
                                ["ann-pt-summ v1.0.1 [[cite:hegselmann2025data]]", "PhysioNet credentialed, DUA", "210 patient summaries with expert span "
                                 "annotations of unsupported facts (100 doctor-written, 100 LLM-generated, 10 validation)", "2.3 MB used",
                                 "Validation of the NLI judge with local models only"],
@@ -418,6 +422,10 @@ def blocks(R: Results) -> list:
               "verifiable proposition. They are removed from the claim set with a pattern that matches lines consisting only "
               "of bold text, a markdown heading, or a short title-case phrase ending in a colon. Section 3.6 quantifies why "
               "this step is necessary.",
+              "**Removal of explicit abstentions.** Condition E3 writes \"Not stated in the note.\" for a section that has no "
+              "supported content. Such a line is an abstention, not a claim about the patient. Abstention lines are excluded "
+              "from the claim set and counted separately; Section 5.5.4 shows why this matters, since the judge labels almost all "
+              "of them as contradictions.",
               "**Repair of comma-encoded line breaks (ablation only).** A cleaning function restores line breaks where the "
               "MTSamples file replaced them with commas (a period followed by a comma, a heading colon followed by a comma, "
               "or a comma preceding an upper-case heading), and heading-only lines are dropped before segmentation. Because "
@@ -429,7 +437,7 @@ def blocks(R: Results) -> list:
     b += [P(f"The original April 2026 pipeline treated every spaCy sentence of a summary as a claim, including markdown "
             f"headers, although the accompanying draft stated that headers had been excluded. Re-examination of the stored "
             f"claims showed that {hdr0} of the {e0_claims_before} E0 claims and {hdr1} of the {e1_claims_before} E1 claims "
-            f"were header lines, and that the NLI model had labelled {hc0} of the E0 headers and {hc1} of the E1 headers as "
+            f"were header lines, and that the NLI model had labeled {hc0} of the E0 headers and {hc1} of the E1 headers as "
             f"Contradicted. Because the zero-context condition emits about four times as many headers as the RAG condition, "
             f"part of the contradiction-rate difference that had been reported between E0 and E1 was an artifact of "
             f"formatting rather than of medical content. [[tab:headerfilter]] shows the effect of removing header lines. "
@@ -438,7 +446,7 @@ def blocks(R: Results) -> list:
             f"E1 versus E0 difference in CR shrinks from {signed_(t_cr_before.delta_mean)} ({fp(t_cr_before.p)}) to "
             f"{signed_(t_cr_after.delta_mean)} ({fp(t_cr_after.p)}). All results in this thesis use the corrected claim set."),
           ("table", dict(label="headerfilter", caption="Effect of removing markdown header lines from the claim set. Means are per-document means over the fifty documents.",
-                         columns=["Condition", "Claim rows before", "Header lines", "Claims after", "Headers labelled Contradicted", "Mean CR before", "Mean CR after", "Mean UFR before", "Mean UFR after"],
+                         columns=["Condition", "Claim rows before", "Header lines", "Claims after", "Headers labeled Contradicted", "Mean CR before", "Mean CR after", "Mean UFR before", "Mean UFR after"],
                          widths=[0.8, 0.75, 0.7, 0.7, 0.9, 0.7, 0.7, 0.7, 0.7], font=9,
                          rows=[[c, str(int(R.hdr(c, "CR", "n_claims_before"))), str(int(R.hdr(c, "CR", "n_headers"))), str(int(R.hdr(c, "CR", "n_claims_after"))),
                                 str(int(R.hdr(c, "CR", "headers_contradicted"))), f3(R.hdr(c, "CR", "mean_before")), f3(R.hdr(c, "CR", "mean_after")),
@@ -469,21 +477,21 @@ def blocks(R: Results) -> list:
             "described in Appendix D.")]
 
     # ══════════════════════════════════ CHAPTER 4 ══════════════════════════════════
-    b += [H1("Chapter 4: Methodology"), H2("4.1 Overview")]
+    b += [H1("Chapter 4 Methodology"), H2("4.1 Overview")]
     b += [P("The methodology has two layers ([[fig:pipeline]]). The *generation layer* produces one summary per document "
-            "under each of three conditions. The *evaluation layer* applies an identical claim-level NLI judge to every "
+            "under each of five conditions. The *evaluation layer* applies an identical claim-level NLI judge to every "
             "summary, so that differences between conditions cannot be attributed to differences in measurement. A third "
             "component, the validation study, applies the same judge to expert-annotated summaries to establish how the "
             "judge's labels relate to expert judgment, and a fourth, the robustness analyses, varies the judge's own design "
             "choices."),
           ("figure", dict(label="pipeline", path=f"{FIG}/fig_pipeline.png", width=6.5,
-                          caption="Overview of the experimental pipeline. Each source note is summarized under three conditions; every summary is scored by the same claim-level NLI judge, whose evidence sentences are retrieved from the same note."))]
+                          caption="Overview of the experimental pipeline. Each source note is summarized under five conditions; every summary is scored by the same claim-level NLI judge, whose evidence sentences are retrieved from the same note."))]
     b += [H2("4.2 The Claim-Level Evaluation Framework"), H3("4.2.1 Claim Segmentation")]
     b += [P("A summary is decomposed into claims at sentence granularity. Sentence-level claims are coarser than the atomic "
             "facts of FActScore [[cite:min2023]] but avoid an additional generation step whose errors would propagate into "
             "the metric, and they match the granularity of the expert annotations used for validation, which are mapped to "
             "sentences in Section 4.7. Segmentation uses spaCy, sentences under ten characters are dropped, and section "
-            "header lines are removed as described in Section 3.5.")]
+            "header lines and explicit abstention lines are removed as described in Section 3.5.")]
     b += [H3("4.2.2 Evidence Retrieval")]
     b += [P("For each claim c, the source note is segmented into sentences s(1), ..., s(n) and each sentence and the claim "
             "are embedded with the all-MiniLM-L6-v2 bi-encoder, which maps a sentence to a 384-dimensional vector "
@@ -508,7 +516,7 @@ def blocks(R: Results) -> list:
             "evidence sentence, or its entailment and contradiction probabilities are both below the threshold. The "
             "threshold is varied in Section 5.5.")]
     b += [H3("4.2.4 Metrics")]
-    b += [P("Two rates are computed for every summary from its N claims, of which N(c) are labelled Contradicted and N(n) "
+    b += [P("Two rates are computed for every summary from its N claims, of which N(c) are labeled Contradicted and N(n) "
             "Not-Supported:"),
           ("eq", "UFR = (N(c) + N(n)) / N          CR = N(c) / N"),
           P("The Unsupported Fact Rate is the share of claims that the judge could not verify against the note, and the "
@@ -560,14 +568,14 @@ def blocks(R: Results) -> list:
             "content in unretrieved chunks cannot appear in the summary, which the coverage proxy of Section 4.8 measures. "
             "An earlier draft of this work described E1 as receiving the note together with the excerpts; that description "
             "was incorrect, and the variant it describes is implemented as E1b (Section 4.6)."),
-          ("table", dict(label="conditions", caption="Generation settings of the three evaluated conditions and the two implemented extensions.",
+          ("table", dict(label="conditions", caption="Generation settings of the five evaluated conditions.",
                          columns=["Condition", "Generator", "Input to the generator", "Retrieval", "Decoding"],
                          widths=[0.8, 1.0, 2.3, 1.5, 0.9], font=9, align=["left", "left", "left", "left", "left"],
                          rows=[["E0", "GPT-4o-mini", "First 4,500 characters of the note; four-part instruction", "none", "T = 0.3, 450 tokens"],
                                ["E1", "GPT-4o-mini", "Top-3 retrieved chunks only (at most 4,000 characters); instruction to use only the excerpts", "5-sentence chunks; query = description + first 300 characters; all-MiniLM-L6-v2 cosine", "T = 0.3, 450 tokens"],
                                ["E2", "none (extractive)", "All source sentences", "centroid ranking by mean cosine similarity; top-5 kept in document order", "deterministic"],
-                               ["E1b (implemented)", "GPT-4o-mini", "Full note plus the same excerpts", "as E1", "as E1"],
-                               ["E3 (implemented)", "GPT-4o-mini", "E1 draft; per-claim verification against top-3 sentences from the full note; revision", "as the judge (k = 3)", "verification T = 0; revision T = 0.3"]]))]
+                               ["E1b", "GPT-4o-mini", "Full note plus the same excerpts", "as E1", "as E1"],
+                               ["E3", "GPT-4o-mini", "E1 draft; per-claim verification against top-3 sentences from the full note; revision keeps, corrects or removes each claim", "as the judge (k = 3)", "verification T = 0; revision T = 0.3"]]))]
     b += [H2("4.5 Approach 3: Centroid-Based Extractive Summarization (E2)")]
     b += [P("The third approach contains no language model. Following the centroid principle of Radev et al. "
             "[[cite:radev2004]], every source sentence is embedded with all-MiniLM-L6-v2, the cosine similarity between every "
@@ -580,18 +588,20 @@ def blocks(R: Results) -> list:
             "Every E2 claim is a verbatim sentence of the note, so a perfect judge would label every E2 claim Supported. Any "
             "Not-Supported or Contradicted label on an E2 claim is a judge error, and the E2 rates therefore estimate the "
             "floor below which UFR and CR cannot be interpreted.")]
-    b += [H2("4.6 Implemented Extensions Not Evaluated in This Thesis: E1b and E3")]
-    b += [P("Two further conditions are implemented in the released code with the same interfaces as E0 and E1, so that "
-            "running them adds columns to the stored results and rows to the claim table without any other change. E1b gives "
+    b += [H2("4.6 Approaches 4 and 5: RAG with the Full Note (E1b) and RAG with Chain-of-Verification (E3)")]
+    b += [P("Two further conditions extend E1 and share its interfaces, so that their outputs enter the same result files and the "
+            "same judge without any other change. E1b gives "
             "GPT-4o-mini the retrieved excerpts *and* the full note, with an instruction to give the excerpts priority; it "
             "separates the effect of focusing attention from the effect of withholding content. E3 implements a factored "
             "Chain-of-Verification [[cite:dhuliawala2024]] on top of E1: the E1 summary is taken as the draft; each of its "
             "claims is verified in a separate prompt against the three source sentences retrieved for that claim from the "
             "full note, with the verifier returning SUPPORTED, NOT SUPPORTED or CONTRADICTED together with a corrected "
             "statement or the instruction REMOVE; and a final prompt rewrites the draft applying every verdict, writing "
-            "\"Not stated in the note\" where a section has no supported content. Verification uses temperature 0 and "
-            "revision temperature 0.3. Both conditions require roughly 50 and 500 API calls respectively and are evaluated "
-            "with the unchanged judge; their execution is the first item of future work in Section 7.3.")]
+            "\"Not stated in the note\" where a section has no supported content. In the revision prompt a claim verified as "
+            "SUPPORTED is marked keep unchanged, a claim with a usable correction is marked replace, and a claim without one is "
+            "marked remove. Verification uses temperature 0 and revision temperature 0.3. E1b required 50 API calls and E3 about "
+            "500; both are scored by the unchanged judge, so any difference from E1 is attributable to the extra note context "
+            "(E1b) or to the verification and revision step (E3).")]
     b += [H2("4.7 Validation of the Judge Against Expert Annotations")]
     b += [P("A judge is only useful if its labels track the judgments that matter. The validation study applies the judge, "
             "unchanged, to the 210 expert-annotated summaries of ann-pt-summ (Section 3.4) and compares its labels with the "
@@ -604,7 +614,7 @@ def blocks(R: Results) -> list:
           P("Agreement is summarized with precision, recall, specificity, F1, accuracy, balanced accuracy and Cohen's kappa "
             "[[cite:cohen1960]] at the sentence level, for all summaries, for the doctor-written and LLM-generated subsets, "
             "and for each of the five LLM configurations. Because the judge's threshold is arbitrary, the entailment "
-            "threshold is swept from 0.30 to 0.95 and the area under the receiver operating characteristic curve "
+            "threshold is swept from 0.30 to 0.95 and the area under the receiver operating characteriztic curve "
             "[[cite:hanley1982]] is reported for two scores, one minus the entailment probability and the contradiction "
             "probability, which measures how well the judge's continuous outputs separate expert-flagged from unflagged "
             "sentences independently of any threshold. Recall is also reported for each expert label type. At the summary "

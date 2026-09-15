@@ -77,8 +77,20 @@ def call_gpt(system: str, user: str, temperature: float) -> str:
     return ""
 
 
+def format_block_line(claim: str, verdict: str, corr: str) -> str:
+    """One line of the verification block given to the revision prompt.
+    Supported claims are kept unchanged; unsupported or contradicted claims are replaced by the
+    verifier's correction, or removed when the verifier gave no usable correction."""
+    if verdict == "SUPPORTED":
+        return f'- "{claim}" -> SUPPORTED: keep unchanged'
+    c = (corr or "").strip()
+    if not c or c.upper().startswith("REMOVE"):
+        return f'- "{claim}" -> {verdict}: REMOVE this statement'
+    return f'- "{claim}" -> {verdict}: replace with "{c}"'
+
+
 def parse_verdict(text: str):
-    verdict, correction = "NOT SUPPORTED", "REMOVE"
+    verdict, correction = "NOT SUPPORTED", ""
     for line in text.splitlines():
         u = line.strip().upper()
         if u.startswith("VERDICT:"):
@@ -93,6 +105,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--max-docs", type=int, default=None)
+    ap.add_argument("--revise-only", action="store_true", help="reuse stored verifications; redo only the revision step and evaluation")
     args = ap.parse_args()
 
     samples = he.load_samples(str((HERE / he.INPUT_CSV).resolve()), n=he.N_SAMPLES)
@@ -118,9 +131,36 @@ def main():
     claims_all = pd.read_csv(RESULTS / "claims_all.csv")
     claims_all = claims_all[claims_all.condition != COND]
     new_claim_rows, new_summ, verif_rows = [], {}, []
+    # checkpoint: resume after interruption without repeating API calls
+    import json
+    ckpt_path = RESULTS / "e3_checkpoint.json"
+    ckpt = json.loads(ckpt_path.read_text()) if ckpt_path.exists() else {}
     for idx, row in tqdm(samples.iterrows(), total=len(samples), desc=COND):
         doc_id = int(idx)
         source = str(row["transcription"]).strip()
+        if str(doc_id) in ckpt and not args.revise_only:
+            c = ckpt[str(doc_id)]
+            new_summ[doc_id] = (c["revised"], len(c["revised"].split()))
+            verif_rows.extend(c["verif"])
+            for cl in c["claims"]:
+                new_claim_rows.append(dict(doc_id=doc_id, condition=COND, specialty=str(row["medical_specialty"]).strip(),
+                                           description=str(row["description"]).strip(), **cl))
+            continue
+        if args.revise_only:
+            if str(doc_id) not in ckpt:
+                sys.exit(f"no stored verification for document {doc_id}; run without --revise-only first")
+            stored = ckpt[str(doc_id)]["verif"]
+            verif_rows.extend(stored)
+            block = [format_block_line(v["claim"], v["verdict"], v["correction"]) for v in stored]
+            revised = call_gpt(REVISE_SYSTEM, REVISE_USER.format(draft=draft, verification_block="\n".join(block)), he.GPT_TEMPERATURE)
+            recs, _ = he.evaluate_summary(revised, source)
+            for c in recs:
+                new_claim_rows.append(dict(doc_id=doc_id, condition=COND, specialty=str(row["medical_specialty"]).strip(),
+                                           description=str(row["description"]).strip(), **c))
+            new_summ[doc_id] = (revised, len(revised.split()))
+            ckpt[str(doc_id)] = dict(revised=revised, verif=stored, claims=recs)
+            ckpt_path.write_text(json.dumps(ckpt))
+            continue
         draft = str(drafts.get(doc_id, "")).strip()
         src_sents = he.sentencize(source)
         claims = [c for c in he.sentencize(draft) if not is_markdown_header(c)]
@@ -129,15 +169,21 @@ def main():
             ev = [e for e, _ in he.retrieve_top_k(claim, src_sents, he.TOP_K_EVIDENCE)]
             reply = call_gpt(VERIFY_SYSTEM, VERIFY_USER.format(evidence="\n".join(f"- {e}" for e in ev), claim=claim), 0.0)
             verdict, corr = parse_verdict(reply)
-            block.append(f'- "{claim}" -> {verdict}; correction: {corr}')
+            block.append(format_block_line(claim, verdict, corr))
             verif_rows.append(dict(doc_id=doc_id, claim=claim, verdict=verdict, correction=corr, evidence=" | ".join(ev)))
         revised = call_gpt(REVISE_SYSTEM, REVISE_USER.format(draft=draft, verification_block="\n".join(block)), he.GPT_TEMPERATURE)
         recs, _ = he.evaluate_summary(revised, source)
+        doc_verif = [v for v in verif_rows if v["doc_id"] == doc_id]
         for c in recs:
             new_claim_rows.append(dict(doc_id=doc_id, condition=COND, specialty=str(row["medical_specialty"]).strip(),
                                        description=str(row["description"]).strip(), **c))
         new_summ[doc_id] = (revised, len(revised.split()))
+        ckpt[str(doc_id)] = dict(revised=revised, verif=doc_verif, claims=recs)
+        ckpt_path.write_text(json.dumps(ckpt))
 
+    # re-read the shared result files right before writing so that a concurrently finished run is not overwritten
+    summ = pd.read_csv(RESULTS / "summaries.csv")
+    claims_all = pd.read_csv(RESULTS / "claims_all.csv"); claims_all = claims_all[claims_all.condition != COND]
     summ["e3_summary"] = summ.doc_id.map(lambda d: new_summ.get(d, ("", 0))[0])
     summ["e3_summary_words"] = summ.doc_id.map(lambda d: new_summ.get(d, ("", 0))[1])
     summ.to_csv(RESULTS / "summaries.csv", index=False)

@@ -31,8 +31,8 @@ from recompute_metrics import per_sample_metrics, paired_stats, order_conditions
 
 RESULTS = HERE / "results"
 CSV_PATH = (HERE / he.INPUT_CSV).resolve()
-GEN_CONDS = ["E0", "E1"]           # LLM-generated conditions whose claims are re-labelled
-ALL_CONDS = ["E0", "E1", "E2"]
+GEN_CONDS = ["E0", "E1"]           # replaced at run time by the conditions present (all except E2)
+ALL_CONDS = ["E0", "E1", "E2"]      # replaced at run time by the conditions present
 
 
 def decide(pe: float, pc: float, tau: float) -> str:
@@ -97,7 +97,12 @@ def main() -> None:
     claims = pd.read_csv(RESULTS / "claims_all.csv")
     if "is_header" not in claims.columns:
         claims["is_header"] = claims["claim"].astype(str).map(is_markdown_header)
-    claims = claims[~claims.is_header].copy()
+    claims = claims[~claims.is_header & ~claims.get('is_abstention', False)].copy()
+    global ALL_CONDS, GEN_CONDS
+    ALL_CONDS = order_conditions(claims.condition.unique())
+    GEN_CONDS = [c for c in ALL_CONDS if c != "E2"]
+    OTHERS = [c for c in ALL_CONDS if c != "E0"]
+    print("conditions:", ALL_CONDS)
     samples = he.load_samples(str(CSV_PATH), n=he.N_SAMPLES)
     nlp = he.get_nlp()
     he.get_bi_encoder(); he.get_cross_encoder()
@@ -113,10 +118,9 @@ def main() -> None:
             for m in ("UFR", "CR"):
                 row[f"{c}_{m}_mean"] = ps.loc[ps.condition == c, m].mean()
         for m in ("UFR", "CR"):
-            st = paired_stats(wide[m]["E0"], wide[m]["E1"])
-            row[f"p_E1_vs_E0_{m}"] = st["p"]; row[f"delta_E1_vs_E0_{m}"] = st["delta_mean"]
-            st2 = paired_stats(wide[m]["E0"], wide[m]["E2"])
-            row[f"p_E2_vs_E0_{m}"] = st2["p"]
+            for c in OTHERS:
+                st = paired_stats(wide[m]["E0"], wide[m][c])
+                row[f"p_{c}_vs_E0_{m}"] = st["p"]; row[f"delta_{c}_vs_E0_{m}"] = st["delta_mean"]
         rows.append(row)
     pd.DataFrame(rows).to_csv(RESULTS / "ablation_thresholds.csv", index=False)
     print(f"[A] thresholds done ({time.time()-t0:.0f}s)")
@@ -187,8 +191,8 @@ def main() -> None:
                 r[f"{c}_{m}_mean"] = ps.loc[ps.condition == c, m].mean()
                 r[f"{c}_{m}_median"] = ps.loc[ps.condition == c, m].median()
         for m in ("UFR", "CR"):
-            st = paired_stats(wide[m]["E0"], wide[m]["E1"]); r[f"p_E1_vs_E0_{m}"] = st["p"]; r[f"delta_E1_vs_E0_{m}"] = st["delta_mean"]
-            st = paired_stats(wide[m]["E0"], wide[m]["E2"]); r[f"p_E2_vs_E0_{m}"] = st["p"]
+            for c in OTHERS:
+                st = paired_stats(wide[m]["E0"], wide[m][c]); r[f"p_{c}_vs_E0_{m}"] = st["p"]; r[f"delta_{c}_vs_E0_{m}"] = st["delta_mean"]
         r["label_agreement_with_stored"] = float(np.mean(agree_k3)) if k == 3 else np.nan
         rows.append(r)
     pd.DataFrame(rows).to_csv(RESULTS / "ablation_topk.csv", index=False)
@@ -205,8 +209,8 @@ def main() -> None:
                          n_contradicted=int(sub.n_contradicted.sum()), n_not_supported=int(sub.n_not_supported.sum())))
     df_c = pd.DataFrame(rows)
     for m in ("UFR", "CR"):
-        st = paired_stats(wide[m]["E0"], wide[m]["E1"]); df_c[f"p_E1_vs_E0_{m}"] = st["p"]; df_c[f"delta_E1_vs_E0_{m}"] = st["delta_mean"]
-        st = paired_stats(wide[m]["E0"], wide[m]["E2"]); df_c[f"p_E2_vs_E0_{m}"] = st["p"]
+        for c in OTHERS:
+            st = paired_stats(wide[m]["E0"], wide[m][c]); df_c[f"p_{c}_vs_E0_{m}"] = st["p"]; df_c[f"delta_{c}_vs_E0_{m}"] = st["delta_mean"]
     df_c.to_csv(RESULTS / "ablation_cleaned_evidence.csv", index=False)
     print("[C] cleaned-evidence done")
 
@@ -215,15 +219,16 @@ def main() -> None:
     cov.to_csv(RESULTS / "coverage_per_sample.csv", index=False)
     summ = cov.groupby("condition")[["coverage_at_0_5", "coverage_at_0_6", "coverage_at_0_7", "mean_best_similarity", "n_claims"]].mean().reset_index()
     w = cov.pivot(index="doc_id", columns="condition", values="coverage_at_0_6")
-    for a, b in (("E0", "E1"), ("E0", "E2"), ("E1", "E2")):
-        st = paired_stats(w[a], w[b])
-        summ[f"p_cov06_{b}_vs_{a}"] = st["p"]
+    for i, a in enumerate(ALL_CONDS):
+        for b in ALL_CONDS[i + 1:]:
+            st = paired_stats(w[a], w[b])
+            summ[f"p_cov06_{b}_vs_{a}"] = st["p"]
     summ.to_csv(RESULTS / "coverage_summary.csv", index=False)
     print("[D] coverage done")
 
     # ═══════════════ E. negation analysis ═══════════════
     all_claims = pd.read_csv(RESULTS / "claims_all.csv")
-    all_claims = all_claims[~all_claims.is_header].copy()
+    all_claims = all_claims[~all_claims.is_header & ~all_claims.get('is_abstention', False)].copy()
     all_claims["has_negation"] = all_claims.claim.astype(str).str.contains(NEG)
     ct = all_claims.groupby(["condition", "has_negation", "label"]).size().reset_index(name="count")
     e2 = all_claims[all_claims.condition == "E2"]
