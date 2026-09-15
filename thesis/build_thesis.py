@@ -23,10 +23,9 @@ META = dict(
     program="Computer Science",
     date="December 2026",
     chair="Taehyung Wang, Ph.D.",
-    committee=["Committee Member, Ph.D.", "Committee Member, Ph.D."],   # TODO: replace with the committee members' names
+    committee=[],   # committee members to be added after they are confirmed with the advisor
     acknowledgments=[
-        "I thank my advisor and committee chair, Dr. Taehyung Wang, for his guidance throughout this project, and the "
-        "members of my committee for their time and feedback.",
+        "I thank my advisor and committee chair, Dr. Taehyung Wang, for his guidance throughout this project.",
         "I am grateful to the PhysioNet team and to Hegselmann and colleagues for making MIMIC-IV-Note and the ann-pt-summ "
         "expert annotations available to credentialed researchers; the validation study in Chapter 5 would not have been "
         "possible without them.",
