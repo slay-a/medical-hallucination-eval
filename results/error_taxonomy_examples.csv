@@ -1,0 +1,53 @@
+condition,category,doc_id,label,claim,p_entailment,p_contradiction
+E0,Diagnosis or assessment,0,Not-Supported,"The assessment indicates that you have a urinary tract infection (UTI), gastroesophageal reflux disease (GERD), and some difficulty swallowing (dysphagia).",0.0176,0.4092
+E0,Diagnosis or assessment,0,Not-Supported,"A urinalysis showed some blood, likely due to your menstrual cycle, and moderate white blood cells, which supports the diagnosis of a UTI.",0.2197,0.0213
+E0,Diagnosis or assessment,2,Contradicted,"The results were normal, indicating no current issues with your joints.",0.269,0.8581
+E0,"Findings, exam, labs or imaging",0,Not-Supported,"**Key Findings:**  
+During the examination, your overall health appeared unremarkable.",0.0307,0.0268
+E0,"Findings, exam, labs or imaging",0,Contradicted,"Your abdomen was soft and without tenderness, and your lungs and heart sounded normal.",0.0449,0.9984
+E0,"Findings, exam, labs or imaging",1,Contradicted,"**Key Findings:**  
+During your examination, your vital signs were stable, and you did not show signs of acute distress.",0.0319,0.6827
+E0,Follow-up or scheduling,0,Not-Supported,"Make sure to follow up for your barium swallow test, and we will also discuss contraception options during your next visit.",0.0024,0.0152
+E0,Follow-up or scheduling,1,Not-Supported,It is important for you to follow up as an outpatient for routine prenatal care.,0.0839,0.1238
+E0,Follow-up or scheduling,1,Not-Supported,"If you have any questions or concerns before your next appointment, please reach out.",0.0402,0.0353
+E0,Generic advice or patient education,1,Not-Supported,We will monitor your health and the development of the pregnancy closely.,0.0246,0.0069
+E0,Generic advice or patient education,3,Not-Supported,It’s important to gently retract the skin to prevent it from adhering again due to the swelling.,0.4456,0.0065
+E0,Generic advice or patient education,4,Not-Supported,"Additionally, he is encouraged to return sooner if he experiences any worsening symptoms.",0.1418,0.006
+E0,"History, symptoms or timeline",0,Not-Supported,You came in today due to foul-smelling urine and stomach pain after meals.,0.334,0.2471
+E0,"History, symptoms or timeline",0,Not-Supported,"If your symptoms do not improve or worsen, contact our office.",0.0067,0.0245
+E0,"History, symptoms or timeline",1,Not-Supported,"You mentioned having daily spotting for three months and recently passing what you believed to be a fetus, although you were unaware of being pregnant at that time.",0.0187,0.0866
+E0,Medication or dosage,0,Not-Supported,"You were prescribed Cipro for the UTI, as well as omeprazole and famotidine to help with your stomach issues.",0.1873,0.1833
+E0,Medication or dosage,0,Contradicted,Please take your medications as prescribed.,0.3191,0.599
+E0,Medication or dosage,6,Not-Supported,"Although you have also been taking an NSAID and an antibiotic recently, it seems that methotrexate is the primary factor in this case.",0.0018,0.0197
+E0,Other or unclassified,0,Not-Supported,"Additionally, a barium swallow series has been ordered to further investigate your swallowing difficulties.",0.0025,0.1624
+E0,Other or unclassified,1,Not-Supported,You visited today due to concerns about your menstrual periods and a possible pregnancy.,0.0066,0.0429
+E0,Other or unclassified,5,Not-Supported,"**Key Findings:**  
+You have made significant improvements in your diet by reducing high-fat foods and packing your lunch more often.",0.0401,0.1097
+E0,Procedure or treatment,3,Not-Supported,You brought your 16-month-old son in for treatment of penile cellulitis following a recent circumcision.,0.1252,0.092
+E0,Procedure or treatment,3,Contradicted,"Tests showed he has a Staph infection, and he has been responding well to treatment.",0.0454,0.5613
+E0,Procedure or treatment,6,Not-Supported,"You visited today to evaluate sores in your mouth, which may be related to your methotrexate treatment for rheumatoid arthritis.",0.0048,0.0349
+E1,Diagnosis or assessment,2,Contradicted,"Your lab tests, including an arthritis panel, showed no significant issues, which suggests that your joint pain may have been related to a recent viral infection.",0.0024,0.9032
+E1,Diagnosis or assessment,3,Not-Supported,"The swelling is likely a mix of the healing process and an infection, which is suspected to be caused by Staph bacteria.",0.0179,0.0237
+E1,Diagnosis or assessment,3,Not-Supported,The healthcare team is monitoring his condition and will check the results of tests to determine the specific type of bacteria involved.,0.009,0.013
+E1,"Findings, exam, labs or imaging",0,Not-Supported,"Overall, your physical examination was unremarkable, and there were no significant findings in other areas.",0.0093,0.0029
+E1,"Findings, exam, labs or imaging",1,Not-Supported,You reported experiencing abnormal menstrual cycles and had daily spotting for three months.,0.0804,0.0222
+E1,"Findings, exam, labs or imaging",1,Contradicted,"During your examination, no significant physical issues were found, and your neurological functions appeared normal.",0.0141,0.9917
+E1,Follow-up or scheduling,0,Contradicted,"During your visit, we noted that you have pain and cramping in your stomach, but you did not report any nausea, vomiting, or diarrhea.",0.0051,0.5766
+E1,Follow-up or scheduling,0,Not-Supported,"For your follow-up, please continue to monitor your symptoms and reach out if they worsen or if you have any new concerns.",0.008,0.0303
+E1,Follow-up or scheduling,0,Not-Supported,It may be helpful to keep a record of your meals and any associated symptoms to discuss during your next visit.,0.0054,0.0027
+E1,Generic advice or patient education,3,Not-Supported,Please keep an eye on your son's symptoms.,0.0799,0.0171
+E1,Generic advice or patient education,5,Not-Supported,Please review the materials I provided and let me know if you have any questions.,0.0049,0.0191
+E1,Generic advice or patient education,6,Not-Supported,"For treatment, we will monitor your symptoms and may adjust your medications if necessary.",0.0053,0.0116
+E1,"History, symptoms or timeline",0,Not-Supported,You visited us today due to concerns about foul-smelling urine and stomach pain after meals.,0.0268,0.0615
+E1,"History, symptoms or timeline",1,Contradicted,You did not report any abdominal pain or vaginal bleeding.,0.8281,0.8617
+E1,"History, symptoms or timeline",2,Not-Supported,"You visited our Pediatric Rheumatology Clinic today due to joint pain in your fingers, elbows, and neck that started a couple of months ago.",0.0089,0.0137
+E1,Medication or dosage,4,Not-Supported,"**Treatment or Procedures Performed:**  
+During the visit, Mr. ABC was advised to start taking Ocuvite PreserVision, a supplement for age-related macular degeneration.",0.1072,0.0454
+E1,Medication or dosage,6,Not-Supported,You were also taking an NSAID for your mouth ulcers and had been on an antibiotic for a suspected upper respiratory infection shortly before the sores developed.,0.0041,0.0086
+E1,Medication or dosage,7,Not-Supported,"After careful evaluation, we adjusted your heart medication to a lower dose, which helped improve your condition.",0.0028,0.0532
+E1,Other or unclassified,1,Not-Supported,You visited us today due to concerns about your menstrual periods and possible pregnancy.,0.0032,0.0538
+E1,Other or unclassified,1,Not-Supported,"Recently, you believe you passed a fetus, although you were unaware of being pregnant at that time.",0.1165,0.0374
+E1,Other or unclassified,1,Not-Supported,"However, it was noted that you have been feeling emotionally flat, which is important for your overall well-being.",0.0047,0.0074
+E1,Procedure or treatment,4,Not-Supported,"He underwent visual field tests and disc photographs to assess his eye health, particularly due to concerns about glaucoma.",0.0508,0.006
+E1,Procedure or treatment,11,Not-Supported,"You received a nerve block to help manage pain during the procedure, and after surgery, you recovered well.",0.006,0.0096
+E1,Procedure or treatment,13,Not-Supported,We also noted improvements in your kidney function and blood pressure during your treatment.,0.002,0.0048

@@ -1,293 +1,370 @@
 #!/usr/bin/env python3
 """
-analyze.py — Post-hoc analysis of hallucination evaluation results.
+analyze.py — Figures and example tables for the thesis, built from results/*.csv.
 
-Generates:
-  - 4 PNG plots in results/
-  - Wilcoxon signed-rank tests (UFR and CR)
-  - 5 example claims fixed by RAG (Contradicted→Supported)
-  - 5 example persistent hallucinations (Not-Supported in both E0 and E1)
+Runs offline.  Every figure is written to results/fig_*.png at 200 dpi.  Figures whose
+inputs are missing (e.g. ablations not yet run) are skipped with a message.
+
+Also writes:
+  results/examples_fixed_by_rag.csv   E0 claims labelled Contradicted whose closest E1 claim is Supported
+  results/examples_persistent.csv     claims unsupported in both E0 and E1 (closest pairs)
 """
+import re
+import sys
+from pathlib import Path
 
-import os
-import textwrap
-import warnings
-import pandas as pd
-import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-from scipy.stats import wilcoxon
+from matplotlib.patches import FancyBboxPatch, FancyArrowPatch
+import numpy as np
+import pandas as pd
 
-warnings.filterwarnings("ignore")
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+from preprocessing import is_markdown_header  # noqa: E402
 
-RESULTS = os.path.join(os.path.dirname(__file__), "results")
-CLAIMS_CSV = os.path.join(RESULTS, "claims_all.csv")
-CMP_CSV    = os.path.join(RESULTS, "comparison_per_sample.csv")
+RES = HERE / "results"
+COL = {"E0": "#E07B54", "E1": "#4C8BB5", "E1b": "#8E6BB5", "E2": "#5DBF6E", "E3": "#B5A14C"}
+NAME = {"E0": "E0 Baseline LLM", "E1": "E1 RAG (excerpts only)", "E1b": "E1b RAG (note + excerpts)",
+        "E2": "E2 Extractive", "E3": "E3 RAG + CoVe"}
+plt.rcParams.update({"font.family": "serif", "font.serif": ["Times New Roman", "Times", "DejaVu Serif"],
+                     "font.size": 11, "axes.titlesize": 12, "axes.labelsize": 11, "legend.fontsize": 9.5,
+                     "figure.dpi": 100})
 
-# ── palette ────────────────────────────────────────────────────────────────
-C_E0 = "#E07B54"   # warm orange  → baseline
-C_E1 = "#4C8BB5"   # steel blue   → RAG
-GREY = "#888888"
+
+def csv(name):
+    p = RES / name
+    return pd.read_csv(p) if p.exists() else None
+
 
 def save(fig, name):
-    path = os.path.join(RESULTS, name)
-    fig.savefig(path, dpi=150, bbox_inches="tight")
-    print(f"  [saved] {path}")
+    out = RES / name
+    fig.savefig(out, dpi=200, bbox_inches="tight", facecolor="white")
     plt.close(fig)
+    print(f"  [saved] {out.name}")
 
 
-def section(title):
-    bar = "─" * 70
-    print(f"\n{bar}\n  {title}\n{bar}")
+def conds_in(df):
+    return [c for c in ["E0", "E1", "E1b", "E2", "E3"] if f"{c}_UFR" in df.columns]
 
 
-# ══════════════════════════════════════════════════════════════════════════
-# 1. Load data
-# ══════════════════════════════════════════════════════════════════════════
-section("Loading data")
-claims = pd.read_csv(CLAIMS_CSV)
-cmp    = pd.read_csv(CMP_CSV)
-print(f"  claims rows : {len(claims):,}  ({claims['condition'].value_counts().to_dict()})")
-print(f"  samples     : {len(cmp)}")
+# ───────────────────────── 1. pipeline diagram ─────────────────────────
+def fig_pipeline():
+    fig, ax = plt.subplots(figsize=(9.5, 5.2))
+    ax.set_xlim(0, 10); ax.set_ylim(0, 5.4); ax.axis("off")
+
+    def box(x, y, w, h, text, fc="#F4F4F4", ec="#444444", fs=9.5, bold=False):
+        ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.02,rounding_size=0.08", fc=fc, ec=ec, lw=1.2))
+        ax.text(x + w / 2, y + h / 2, text, ha="center", va="center", fontsize=fs, fontweight="bold" if bold else "normal", wrap=True)
+
+    def arrow(x1, y1, x2, y2):
+        ax.add_patch(FancyArrowPatch((x1, y1), (x2, y2), arrowstyle="-|>", mutation_scale=14, lw=1.2, color="#333333"))
+
+    box(0.2, 2.2, 1.6, 1.0, "Source clinical\nnote (MTSamples)", fc="#FFFFFF", bold=True)
+    # three generators
+    box(2.4, 3.9, 2.3, 0.95, "E0  GPT-4o-mini\nfull note, no retrieval", fc="#F9E1D6")
+    box(2.4, 2.25, 2.3, 0.95, "E1  GPT-4o-mini\ntop-3 retrieved chunks only", fc="#DCE8F2")
+    box(2.4, 0.6, 2.3, 0.95, "E2  Extractive\ncentroid top-5 sentences", fc="#DDF1E0")
+    for y in (4.37, 2.72, 1.07):
+        arrow(1.8, 2.7, 2.4, y)
+    box(5.2, 2.25, 1.5, 0.95, "Summary\n(claims)", fc="#FFFFFF")
+    for y in (4.37, 2.72, 1.07):
+        arrow(4.7, y, 5.2, 2.72)
+    # judge
+    box(7.1, 3.55, 2.7, 0.85, "Claim segmentation (spaCy)\nheader lines removed", fc="#F4F4F4")
+    box(7.1, 2.45, 2.7, 0.85, "Evidence retrieval\nall-MiniLM-L6-v2, top-3 sentences", fc="#F4F4F4")
+    box(7.1, 1.35, 2.7, 0.85, "NLI cross-encoder\nnli-MiniLM2-L6-H768", fc="#F4F4F4")
+    box(7.1, 0.25, 2.7, 0.85, "Labels -> UFR, CR per summary\nWilcoxon, bootstrap CI", fc="#FFF6CC", bold=True)
+    arrow(6.7, 2.72, 7.1, 3.97)
+    arrow(8.45, 3.55, 8.45, 3.3); arrow(8.45, 2.45, 8.45, 2.2); arrow(8.45, 1.35, 8.45, 1.1)
+    ax.text(8.45, 4.75, "Claim-level NLI judge (identical for every condition)", ha="center", fontsize=10, fontweight="bold")
+    ax.plot([0.2, 1.8], [2.05, 2.05], color="none")
+    ax.text(1.0, 1.55, "evidence sentences\nretrieved from the same note", ha="center", fontsize=8.5, style="italic", color="#555555")
+    ax.add_patch(FancyArrowPatch((1.0, 2.2), (7.1, 2.87), arrowstyle="-|>", mutation_scale=12, lw=1.0, color="#777777",
+                                 linestyle="--", connectionstyle="arc3,rad=0.35"))
+    save(fig, "fig_pipeline.png")
 
 
-# ══════════════════════════════════════════════════════════════════════════
-# 2. Box plots — UFR and CR
-# ══════════════════════════════════════════════════════════════════════════
-section("Generating plots")
-
-def boxplot_metric(metric_e0, metric_e1, ylabel, title, filename):
-    fig, ax = plt.subplots(figsize=(5, 5))
-    data   = [cmp[metric_e0].values, cmp[metric_e1].values]
-    labels = ["E0  Baseline", "E1  RAG"]
-    colors = [C_E0, C_E1]
-
-    bp = ax.boxplot(
-        data,
-        patch_artist=True,
-        widths=0.45,
-        medianprops=dict(color="white", linewidth=2.5),
-        whiskerprops=dict(linewidth=1.4),
-        capprops=dict(linewidth=1.4),
-        flierprops=dict(marker="o", markerfacecolor=GREY, markersize=4, linestyle="none"),
-    )
-    for patch, color in zip(bp["boxes"], colors):
-        patch.set_facecolor(color)
-        patch.set_alpha(0.85)
-
-    # overlay jittered points
-    for i, (d, color) in enumerate(zip(data, colors), start=1):
-        jitter = np.random.default_rng(42).uniform(-0.12, 0.12, size=len(d))
-        ax.scatter(np.full(len(d), i) + jitter, d,
-                   color=color, alpha=0.45, s=18, zorder=3)
-
-    ax.set_xticks([1, 2])
-    ax.set_xticklabels(labels, fontsize=11)
-    ax.set_ylabel(ylabel, fontsize=12)
-    ax.set_title(title, fontsize=13, fontweight="bold", pad=10)
-    ax.yaxis.grid(True, linestyle="--", alpha=0.5)
-    ax.set_axisbelow(True)
-    fig.tight_layout()
-    save(fig, filename)
-
-boxplot_metric("E0_UFR", "E1_UFR",
-               "Unsupported Fact Rate",
-               "UFR Distribution — Baseline vs RAG",
-               "plot_ufr_boxplot.png")
-
-boxplot_metric("E0_CR", "E1_CR",
-               "Contradiction Rate",
-               "CR Distribution — Baseline vs RAG",
-               "plot_cr_boxplot.png")
+# ───────────────────────── 2. distributions ─────────────────────────
+def fig_boxplots(cmp):
+    conds = conds_in(cmp)
+    for metric, ylabel, fname in (("UFR", "Unsupported Fact Rate", "fig_ufr_boxplot.png"), ("CR", "Contradiction Rate", "fig_cr_boxplot.png")):
+        fig, ax = plt.subplots(figsize=(6.5, 4.6))
+        data = [cmp[f"{c}_{metric}"].dropna().values for c in conds]
+        bp = ax.boxplot(data, patch_artist=True, widths=0.5, medianprops=dict(color="black", lw=2),
+                        flierprops=dict(marker="o", markersize=3, alpha=0.5))
+        rng = np.random.default_rng(42)
+        for i, (d, c) in enumerate(zip(data, conds), start=1):
+            bp["boxes"][i - 1].set_facecolor(COL[c]); bp["boxes"][i - 1].set_alpha(0.75)
+            ax.scatter(np.full(len(d), i) + rng.uniform(-0.15, 0.15, len(d)), d, s=12, color=COL[c], alpha=0.55, zorder=3, edgecolor="none")
+        ax.set_xticks(range(1, len(conds) + 1)); ax.set_xticklabels([NAME[c] for c in conds], fontsize=9.5)
+        ax.set_ylabel(ylabel); ax.set_ylim(-0.03, 1.03); ax.yaxis.grid(True, ls="--", alpha=0.4); ax.set_axisbelow(True)
+        ax.set_title(f"{ylabel} per summary (n = {len(cmp)} documents)")
+        save(fig, fname)
 
 
-# ══════════════════════════════════════════════════════════════════════════
-# 3. Scatter plot — E0 CR vs E1 CR per sample
-# ══════════════════════════════════════════════════════════════════════════
-fig, ax = plt.subplots(figsize=(5.5, 5.5))
-
-ax.scatter(cmp["E0_CR"], cmp["E1_CR"],
-           color=C_E1, alpha=0.7, s=45, zorder=3, label="Sample")
-
-# diagonal
-lim_max = max(cmp["E0_CR"].max(), cmp["E1_CR"].max()) * 1.05
-ax.plot([0, lim_max], [0, lim_max], color=GREY, linewidth=1.3,
-        linestyle="--", label="No change (y = x)")
-
-# shade region below diagonal (RAG improved)
-ax.fill_between([0, lim_max], [0, 0], [0, lim_max],
-                color=C_E1, alpha=0.07, label="RAG improved (below line)")
-
-ax.set_xlabel("E0 Contradiction Rate  (Baseline)", fontsize=11)
-ax.set_ylabel("E1 Contradiction Rate  (RAG)",       fontsize=11)
-ax.set_title("Per-Sample CR: Baseline vs RAG", fontsize=13,
-             fontweight="bold", pad=10)
-ax.legend(fontsize=9, loc="upper left")
-ax.set_xlim(left=0); ax.set_ylim(bottom=0)
-ax.set_aspect("equal", adjustable="box")
-ax.yaxis.grid(True, linestyle="--", alpha=0.4)
-ax.xaxis.grid(True, linestyle="--", alpha=0.4)
-ax.set_axisbelow(True)
-fig.tight_layout()
-save(fig, "plot_cr_scatter.png")
+def fig_scatter(cmp):
+    pairs = [(a, b) for a, b in (("E0", "E1"), ("E0", "E2")) if a in conds_in(cmp) and b in conds_in(cmp)]
+    fig, axes = plt.subplots(1, len(pairs), figsize=(4.6 * len(pairs), 4.4), squeeze=False)
+    for ax, (a, b) in zip(axes[0], pairs):
+        x, y = cmp[f"{a}_CR"], cmp[f"{b}_CR"]
+        ax.fill_between([0, 1], [0, 1], [0, 0], color=COL[b], alpha=0.08)
+        ax.plot([0, 1], [0, 1], "--", color="grey", lw=1)
+        ax.scatter(x, y, s=28, color=COL[b], alpha=0.75, edgecolor="black", lw=0.4)
+        below = int((y < x).sum()); ax.text(0.03, 0.92, f"{below}/{len(cmp)} below diagonal\n({b} lower CR)", transform=ax.transAxes, fontsize=9)
+        lim = max(0.05, float(max(x.max(), y.max())) * 1.1)
+        ax.set_xlim(-0.01, lim); ax.set_ylim(-0.01, lim)
+        ax.set_xlabel(f"{a} contradiction rate"); ax.set_ylabel(f"{b} contradiction rate"); ax.set_title(f"{b} vs {a}, per document")
+        ax.grid(True, ls="--", alpha=0.35)
+    save(fig, "fig_cr_scatter.png")
 
 
-# ══════════════════════════════════════════════════════════════════════════
-# 4. Bar chart — % samples improved for UFR and CR
-# ══════════════════════════════════════════════════════════════════════════
-pct_ufr_improved = (cmp["delta_UFR"] < 0).mean() * 100
-pct_cr_improved  = (cmp["delta_CR"]  < 0).mean() * 100
-pct_ufr_worse    = (cmp["delta_UFR"] > 0).mean() * 100
-pct_cr_worse     = (cmp["delta_CR"]  > 0).mean() * 100
-pct_ufr_same     = (cmp["delta_UFR"] == 0).mean() * 100
-pct_cr_same      = (cmp["delta_CR"]  == 0).mean() * 100
-
-fig, ax = plt.subplots(figsize=(6.5, 4.5))
-x      = np.array([0, 1])
-width  = 0.25
-
-improved = [pct_ufr_improved, pct_cr_improved]
-same     = [pct_ufr_same,     pct_cr_same]
-worse    = [pct_ufr_worse,    pct_cr_worse]
-
-b1 = ax.bar(x - width, improved, width, label="Improved (E1 < E0)",
-            color="#4CB87A", alpha=0.85)
-b2 = ax.bar(x,          same,    width, label="No change",
-            color=GREY,    alpha=0.6)
-b3 = ax.bar(x + width,  worse,   width, label="Worse (E1 > E0)",
-            color="#D9534F", alpha=0.85)
-
-# value labels
-for bars in (b1, b2, b3):
-    for bar in bars:
-        h = bar.get_height()
-        if h > 1:
-            ax.text(bar.get_x() + bar.get_width() / 2, h + 0.8,
-                    f"{h:.0f}%", ha="center", va="bottom", fontsize=9)
-
-ax.set_xticks(x)
-ax.set_xticklabels(["UFR", "CR"], fontsize=12)
-ax.set_ylabel("% of samples", fontsize=11)
-ax.set_title("Samples Improved / Unchanged / Worse — RAG vs Baseline",
-             fontsize=12, fontweight="bold", pad=10)
-ax.set_ylim(0, 100)
-ax.legend(fontsize=9)
-ax.yaxis.grid(True, linestyle="--", alpha=0.4)
-ax.set_axisbelow(True)
-fig.tight_layout()
-save(fig, "plot_pct_improved_bar.png")
+def fig_pct_improved(tests):
+    t = tests[tests.comparison.isin(["E1 vs E0", "E2 vs E0", "E2 vs E1"])]
+    comps = list(dict.fromkeys(t.comparison))
+    fig, axes = plt.subplots(1, 2, figsize=(8.5, 3.8), sharey=True)
+    for ax, metric in zip(axes, ("UFR", "CR")):
+        sub = t[t.metric == metric].set_index("comparison").loc[comps]
+        bottom = np.zeros(len(sub))
+        for col, lab, colr in (("pct_improved", "improved (lower)", "#5DBF6E"), ("pct_unchanged", "unchanged", "#BBBBBB"), ("pct_worse", "worse (higher)", "#E07B54")):
+            ax.bar(range(len(sub)), sub[col], bottom=bottom, color=colr, label=lab, width=0.6, edgecolor="white")
+            for i, (v, b) in enumerate(zip(sub[col], bottom)):
+                if v >= 8:
+                    ax.text(i, b + v / 2, f"{v:.0f}%", ha="center", va="center", fontsize=9)
+            bottom += sub[col].values
+        ax.set_xticks(range(len(sub))); ax.set_xticklabels(comps); ax.set_title(f"{metric}: share of documents"); ax.set_ylim(0, 100)
+    axes[0].set_ylabel("Percent of documents"); axes[1].legend(loc="upper center", bbox_to_anchor=(-0.1, -0.15), ncol=3, frameon=False)
+    save(fig, "fig_pct_improved.png")
 
 
-# ══════════════════════════════════════════════════════════════════════════
-# 5. Wilcoxon signed-rank tests
-# ══════════════════════════════════════════════════════════════════════════
-section("Wilcoxon Signed-Rank Tests  (two-sided, H0: no difference)")
-
-for metric, col_e0, col_e1 in [
-    ("UFR", "E0_UFR", "E1_UFR"),
-    ("CR",  "E0_CR",  "E1_CR"),
-]:
-    e0 = cmp[col_e0].values
-    e1 = cmp[col_e1].values
-    diff = e1 - e0
-    n_nonzero = (diff != 0).sum()
-    if n_nonzero < 2:
-        print(f"  {metric}: not enough non-zero differences to test (n={n_nonzero})")
-        continue
-    stat, p = wilcoxon(e0, e1, alternative="two-sided", zero_method="wilcox")
-    direction = "E1 < E0  (RAG reduced)" if np.median(diff) < 0 else "E1 > E0  (RAG increased)"
-    sig = "***" if p < 0.001 else ("**" if p < 0.01 else ("*" if p < 0.05 else "n.s."))
-    print(f"\n  {metric}")
-    print(f"    W statistic : {stat:.1f}")
-    print(f"    p-value     : {p:.4f}  {sig}")
-    print(f"    median Δ    : {np.median(diff):+.4f}  ({direction})")
-    print(f"    mean  Δ     : {np.mean(diff):+.4f}")
+def fig_label_distribution(claims):
+    c = claims[~claims.is_header]
+    conds = [x for x in ["E0", "E1", "E1b", "E2", "E3"] if x in set(c.condition)]
+    ct = pd.crosstab(c.condition, c.label, normalize="index").loc[conds]
+    ct = ct[[l for l in ["Supported", "Not-Supported", "Contradicted"] if l in ct.columns]]
+    fig, ax = plt.subplots(figsize=(7.2, 3.9))
+    left = np.zeros(len(ct))
+    colors = {"Supported": "#5DBF6E", "Not-Supported": "#BBBBBB", "Contradicted": "#E07B54"}
+    for lab in ct.columns:
+        ax.barh(range(len(ct)), ct[lab] * 100, left=left, color=colors[lab], label=lab, edgecolor="white")
+        for i, (v, l) in enumerate(zip(ct[lab] * 100, left)):
+            if v > 6:
+                ax.text(l + v / 2, i, f"{v:.0f}%", ha="center", va="center", fontsize=9)
+        left += ct[lab].values * 100
+    n = c.groupby("condition").size().loc[conds]
+    ax.set_yticks(range(len(ct))); ax.set_yticklabels([f"{NAME[x]}\n({n[x]} claims)" for x in conds], fontsize=9)
+    ax.invert_yaxis(); ax.set_xlim(0, 100); ax.set_xlabel("Share of claims (%)"); ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.02), ncol=3, frameon=False)
+    save(fig, "fig_label_distribution.png")
 
 
-# ══════════════════════════════════════════════════════════════════════════
-# 6. RAG-fixed — docs where E0 had Contradicted claims but E1 had Supported
-# ══════════════════════════════════════════════════════════════════════════
-# E0 and E1 generate different summaries so claims won't match verbatim.
-# Instead: find documents that have ≥1 Contradicted claim in E0 AND ≥1
-# Supported claim in E1, then show the most contradicted E0 claim alongside
-# the most-supported E1 claim for the same document.
-section("5 Claim Pairs: E0 Contradicted vs E1 Supported  (RAG improved same doc)")
-
-e0_all = claims[claims["condition"] == "E0"].copy()
-e1_all = claims[claims["condition"] == "E1"].copy()
-
-docs_e0_contra = set(e0_all[e0_all["label"] == "Contradicted"]["doc_id"])
-docs_e1_supp   = set(e1_all[e1_all["label"] == "Supported"]["doc_id"])
-improved_docs  = sorted(docs_e0_contra & docs_e1_supp)
-
-print(f"\n  Docs with E0 Contradicted AND E1 Supported claim: {len(improved_docs)}")
-
-rng = np.random.default_rng(42)
-chosen_docs = rng.choice(improved_docs, size=min(5, len(improved_docs)), replace=False)
-
-for rank, doc_id in enumerate(chosen_docs, 1):
-    # pick E0 claim with highest contradiction probability
-    e0_doc = e0_all[(e0_all["doc_id"] == doc_id) & (e0_all["label"] == "Contradicted")]
-    e0_row = e0_doc.sort_values("p_contradiction", ascending=False).iloc[0]
-    # pick E1 claim with highest entailment probability
-    e1_doc = e1_all[(e1_all["doc_id"] == doc_id) & (e1_all["label"] == "Supported")]
-    e1_row = e1_doc.sort_values("p_entailment", ascending=False).iloc[0]
-
-    ev_e0 = str(e0_row["evidence"]).split(" | ")[0][:120]
-    ev_e1 = str(e1_row["evidence"]).split(" | ")[0][:120]
-    print(f"\n  [{rank}] doc_id={doc_id}  ({e0_row['description'][:60]})")
-    print(f"  E0 claim : {textwrap.fill(str(e0_row['claim']), 78, subsequent_indent='             ')}")
-    print(f"  E0 evid  : {textwrap.fill(ev_e0, 78, subsequent_indent='             ')}")
-    print(f"  E0 label : Contradicted  (p_contra={e0_row['p_contradiction']:.3f})")
-    print(f"  E1 claim : {textwrap.fill(str(e1_row['claim']), 78, subsequent_indent='             ')}")
-    print(f"  E1 evid  : {textwrap.fill(ev_e1, 78, subsequent_indent='             ')}")
-    print(f"  E1 label : Supported     (p_entail={e1_row['p_entailment']:.3f})")
+def fig_specialty(cmp):
+    conds = conds_in(cmp)
+    g = cmp.groupby("specialty")
+    fig, axes = plt.subplots(1, 2, figsize=(9, 3.8))
+    for ax, metric in zip(axes, ("UFR", "CR")):
+        means = g[[f"{c}_{metric}" for c in conds]].mean(); sems = g[[f"{c}_{metric}" for c in conds]].sem()
+        x = np.arange(len(means)); w = 0.8 / len(conds)
+        for i, c in enumerate(conds):
+            ax.bar(x + i * w - 0.4 + w / 2, means[f"{c}_{metric}"], w, yerr=sems[f"{c}_{metric}"], color=COL[c], label=NAME[c], capsize=3, edgecolor="black", lw=0.4)
+        ax.set_xticks(x); ax.set_xticklabels([f"{s}\n(n = {int(n)})" for s, n in g.size().items()], fontsize=9)
+        ax.set_ylabel(f"Mean {metric} (± s.e.m.)"); ax.set_title(f"{metric} by note type"); ax.yaxis.grid(True, ls="--", alpha=0.35); ax.set_axisbelow(True)
+    axes[0].legend(frameon=False, fontsize=8.5)
+    save(fig, "fig_specialty.png")
 
 
-# ══════════════════════════════════════════════════════════════════════════
-# 7. Persistent hallucinations — docs where BOTH E0 and E1 have Not-Supported
-#    claims. Show the least-supported E0 claim (lowest p_entailment) plus
-#    the corresponding worst E1 claim for the same document.
-# ══════════════════════════════════════════════════════════════════════════
-section("5 Persistent Hallucinations  (Not-Supported in both E0 and E1)")
-
-docs_e0_ns = set(e0_all[e0_all["label"] == "Not-Supported"]["doc_id"])
-docs_e1_ns = set(e1_all[e1_all["label"] == "Not-Supported"]["doc_id"])
-persist_docs = sorted(docs_e0_ns & docs_e1_ns)
-
-print(f"\n  Docs with Not-Supported claims in BOTH E0 and E1: {len(persist_docs)}")
-
-chosen_persist = rng.choice(persist_docs, size=min(5, len(persist_docs)), replace=False)
-
-for rank, doc_id in enumerate(chosen_persist, 1):
-    e0_ns = e0_all[(e0_all["doc_id"] == doc_id) & (e0_all["label"] == "Not-Supported")]
-    e0_row = e0_ns.sort_values("p_entailment").iloc[0]   # least supported
-    e1_ns = e1_all[(e1_all["doc_id"] == doc_id) & (e1_all["label"] == "Not-Supported")]
-    e1_row = e1_ns.sort_values("p_entailment").iloc[0]
-
-    ev_e0 = str(e0_row["evidence"]).split(" | ")[0][:120]
-    ev_e1 = str(e1_row["evidence"]).split(" | ")[0][:120]
-    print(f"\n  [{rank}] doc_id={doc_id}  ({e0_row['description'][:60]})")
-    print(f"  E0 claim : {textwrap.fill(str(e0_row['claim']), 78, subsequent_indent='             ')}")
-    print(f"  E0 evid  : {textwrap.fill(ev_e0, 78, subsequent_indent='             ')}")
-    print(f"  E0 label : Not-Supported  (p_entail={e0_row['p_entailment']:.3f})")
-    print(f"  E1 claim : {textwrap.fill(str(e1_row['claim']), 78, subsequent_indent='             ')}")
-    print(f"  E1 evid  : {textwrap.fill(ev_e1, 78, subsequent_indent='             ')}")
-    print(f"  E1 label : Not-Supported  (p_entail={e1_row['p_entailment']:.3f})")
+def fig_length_claims(cmp):
+    conds = conds_in(cmp)
+    fig, axes = plt.subplots(1, 2, figsize=(9, 3.8))
+    for ax, (col, lab) in zip(axes, (("summary_words", "Words per summary"), ("n_claims", "Claims per summary (headers removed)"))):
+        data = []
+        for c in conds:
+            key = f"{c.lower()}_{col}" if col == "summary_words" else f"{c}_{col}"
+            data.append(cmp[key].dropna().values if key in cmp.columns else np.array([]))
+        bp = ax.boxplot(data, patch_artist=True, widths=0.5, medianprops=dict(color="black", lw=2))
+        for patch, c in zip(bp["boxes"], conds):
+            patch.set_facecolor(COL[c]); patch.set_alpha(0.75)
+        ax.set_xticks(range(1, len(conds) + 1)); ax.set_xticklabels(conds); ax.set_ylabel(lab); ax.yaxis.grid(True, ls="--", alpha=0.35); ax.set_axisbelow(True)
+    axes[0].set_title("Summary length"); axes[1].set_title("Number of claims")
+    save(fig, "fig_length_claims.png")
 
 
-# ══════════════════════════════════════════════════════════════════════════
-# 8. Summary
-# ══════════════════════════════════════════════════════════════════════════
-section("Summary")
-print(f"  Plots written to: {RESULTS}/")
-print(f"    plot_ufr_boxplot.png")
-print(f"    plot_cr_boxplot.png")
-print(f"    plot_cr_scatter.png")
-print(f"    plot_pct_improved_bar.png")
-print(f"\n  UFR: {pct_ufr_improved:.0f}% of samples improved with RAG")
-print(f"  CR : {pct_cr_improved:.0f}% of samples improved with RAG")
-print(f"  Docs with E0-Contradicted / E1-Supported pairs: {len(improved_docs)}")
-print(f"  Docs with persistent Not-Supported in both E0+E1: {len(persist_docs)}")
+def fig_header_effect(eff):
+    e = eff.copy()
+    fig, axes = plt.subplots(1, 2, figsize=(9, 3.8))
+    for ax, metric in zip(axes, ("UFR", "CR")):
+        sub = e[e.metric == metric].set_index("condition")
+        x = np.arange(len(sub)); w = 0.38
+        ax.bar(x - w / 2, sub.mean_before, w, color="#BBBBBB", label="headers counted as claims (original)", edgecolor="black", lw=0.4)
+        ax.bar(x + w / 2, sub.mean_after, w, color=[COL[c] for c in sub.index], label="headers removed (this thesis)", edgecolor="black", lw=0.4)
+        for i, (b, a) in enumerate(zip(sub.mean_before, sub.mean_after)):
+            ax.text(i - w / 2, b + 0.01, f"{b:.3f}", ha="center", fontsize=8.5); ax.text(i + w / 2, a + 0.01, f"{a:.3f}", ha="center", fontsize=8.5)
+        ax.set_xticks(x); ax.set_xticklabels(sub.index); ax.set_ylabel(f"Mean {metric}"); ax.set_title(f"Effect of the header filter on {metric}")
+        ax.yaxis.grid(True, ls="--", alpha=0.35); ax.set_axisbelow(True)
+    h = [mpatches.Patch(color="#BBBBBB", label="headers counted as claims (original pipeline)"), mpatches.Patch(color="#888888", label="headers removed (corrected)")]
+    axes[1].legend(handles=h, frameon=False, fontsize=8.5, loc="upper right")
+    save(fig, "fig_header_effect.png")
+
+
+def fig_thresholds(tau):
+    fig, axes = plt.subplots(1, 2, figsize=(9, 3.8))
+    conds = [c for c in ["E0", "E1", "E2"] if f"{c}_UFR_mean" in tau.columns]
+    for ax, metric in zip(axes, ("UFR", "CR")):
+        for c in conds:
+            ax.plot(tau.tau, tau[f"{c}_{metric}_mean"], marker="o", color=COL[c], label=NAME[c])
+        ax.set_xlabel("NLI decision threshold τ"); ax.set_ylabel(f"Mean {metric}"); ax.set_title(f"{metric} versus decision threshold"); ax.grid(True, ls="--", alpha=0.35)
+        ax2 = ax.twinx(); ax2.plot(tau.tau, tau[f"p_E1_vs_E0_{metric}"], ls=":", color="black", marker="x", label="p (E1 vs E0)")
+        ax2.set_yscale("log"); ax2.set_ylabel("Wilcoxon p, E1 vs E0 (log)"); ax2.axhline(0.05, color="red", lw=0.8, ls="--")
+    axes[0].legend(frameon=False, fontsize=8.5, loc="center left")
+    save(fig, "fig_threshold_ablation.png")
+
+
+def fig_topk(topk):
+    conds = [c for c in ["E0", "E1", "E2"] if f"{c}_UFR_mean" in topk.columns]
+    fig, axes = plt.subplots(1, 2, figsize=(9, 3.8))
+    for ax, metric in zip(axes, ("UFR", "CR")):
+        x = np.arange(len(topk)); w = 0.8 / len(conds)
+        for i, c in enumerate(conds):
+            ax.bar(x + i * w - 0.4 + w / 2, topk[f"{c}_{metric}_mean"], w, color=COL[c], label=NAME[c], edgecolor="black", lw=0.4)
+        ax.set_xticks(x); ax.set_xticklabels([f"k = {int(k)}" for k in topk.k]); ax.set_ylabel(f"Mean {metric}"); ax.set_title(f"{metric} versus evidence sentences retrieved (k)")
+        ax.yaxis.grid(True, ls="--", alpha=0.35); ax.set_axisbelow(True)
+    axes[0].legend(frameon=False, fontsize=8.5)
+    save(fig, "fig_topk_ablation.png")
+
+
+def fig_e2_probs(claims):
+    e2 = claims[(claims.condition == "E2") & (~claims.is_header)]
+    fig, ax = plt.subplots(figsize=(5.6, 4.6))
+    colors = {"Supported": "#5DBF6E", "Not-Supported": "#999999", "Contradicted": "#E07B54"}
+    for lab, d in e2.groupby("label"):
+        ax.scatter(d.p_entailment, d.p_contradiction, s=26, color=colors.get(lab, "black"), label=f"{lab} (n = {len(d)})", alpha=0.8, edgecolor="black", lw=0.3)
+    ax.plot([0, 1], [0, 1], "--", color="grey", lw=1); ax.axvline(0.5, color="grey", lw=0.7, ls=":"); ax.axhline(0.5, color="grey", lw=0.7, ls=":")
+    ax.set_xlabel("max entailment probability over evidence"); ax.set_ylabel("max contradiction probability over evidence")
+    ax.set_title("E2 verbatim source sentences: judge probabilities"); ax.legend(frameon=False, fontsize=8.5, loc="lower left")
+    save(fig, "fig_e2_probs.png")
+
+
+def fig_calibration(cal, sweep):
+    groups = [g for g in ["all", "generated", "doctor_written", "llama_70b_original", "llama_70b_cleaned", "gpt4_zero_shot", "gpt4_orig", "gpt4_cleaned"] if g in set(cal.group)]
+    c = cal.set_index("group").loc[groups]
+    fig, axes = plt.subplots(1, 2, figsize=(10.5, 4.3), gridspec_kw={"width_ratios": [1.55, 1]})
+    ax = axes[0]; x = np.arange(len(groups)); w = 0.2
+    ax.bar(x - 1.5 * w, c.expert_flag_rate, w, label="expert-flagged share of sentences", color="#333333", edgecolor="black", lw=0.4)
+    ax.bar(x - 0.5 * w, c.judge_UFR, w, label="judge-flagged share (UFR)", color="#BBBBBB", edgecolor="black", lw=0.4)
+    ax.bar(x + 0.5 * w, c.any_precision, w, label="precision of judge flags", color="#4C8BB5", edgecolor="black", lw=0.4)
+    ax.bar(x + 1.5 * w, c.any_recall, w, label="recall of judge flags", color="#E07B54", edgecolor="black", lw=0.4)
+    ax.set_xticks(x); ax.set_xticklabels([g.replace("_", "\n") for g in groups], fontsize=8.5); ax.set_ylim(0, 1.05)
+    ax.set_title("Judge versus medical experts, sentence level"); ax.legend(frameon=False, fontsize=8, loc="upper center", ncol=2)
+    ax.yaxis.grid(True, ls="--", alpha=0.35); ax.set_axisbelow(True)
+    ax = axes[1]
+    priv = HERE / "results_private" / "calibration_sentences.csv"
+    if priv.exists():
+        d = pd.read_csv(priv)
+        bins = np.linspace(0, 1, 21)
+        ax.hist(d.loc[~d.expert_flag, "p_entailment"], bins=bins, density=True, alpha=0.6, color="#5DBF6E", label=f"not flagged by experts (n = {int((~d.expert_flag).sum())})")
+        ax.hist(d.loc[d.expert_flag, "p_entailment"], bins=bins, density=True, alpha=0.6, color="#E07B54", label=f"flagged by experts (n = {int(d.expert_flag.sum())})")
+        ax.axvline(0.5, color="black", ls=":", lw=1); ax.set_xlabel("judge entailment probability p(e)"); ax.set_ylabel("density")
+        ax.set_title("Entailment probability by expert judgment"); ax.legend(frameon=False, fontsize=8.5)
+    else:
+        ax.axis("off"); ax.text(0.5, 0.5, "per-sentence data not available", ha="center")
+    save(fig, "fig_calibration.png")
+
+
+def fig_variants(var):
+    v = var[var.group == "all"].set_index("variant")
+    order = [k for k in ["max3", "concat3", "concat5", "maxall", "concat_ctx"] if k in v.index]
+    names = {"max3": "max over\ntop-3", "concat3": "concat\ntop-3", "concat5": "concat\ntop-5", "maxall": "max over\nall sentences", "concat_ctx": "whole\ncontext"}
+    v = v.loc[order]
+    fig, axes = plt.subplots(1, 2, figsize=(10, 3.9))
+    ax = axes[0]; x = np.arange(len(order)); w = 0.26
+    ax.bar(x - w, v.auroc_1_minus_pe, w, label="AUROC, 1 − p(e)", color="#4C8BB5", edgecolor="black", lw=0.4)
+    ax.bar(x, v.best_kappa, w, label="best κ over thresholds", color="#5DBF6E", edgecolor="black", lw=0.4)
+    ax.bar(x + w, v.judge_flag_rate, w, label="judge flag rate at τ = 0.5", color="#BBBBBB", edgecolor="black", lw=0.4)
+    ax.axhline(v.expert_flag_rate.iloc[0], color="black", ls="--", lw=1, label="expert flag rate")
+    ax.set_xticks(x); ax.set_xticklabels([names[k] for k in order], fontsize=9); ax.set_ylim(0, 1); ax.set_title("Evidence aggregation variants, all 210 summaries")
+    ax.legend(frameon=False, fontsize=8); ax.yaxis.grid(True, ls="--", alpha=0.35); ax.set_axisbelow(True)
+    ax = axes[1]
+    for g, colr in (("generated", "#4C8BB5"), ("doctor_written", "#E07B54")):
+        s = var[var.group == g].set_index("variant").loc[order]
+        ax.plot(range(len(order)), s.summary_spearman, marker="o", color=colr, label=f"{g}")
+    ax.set_xticks(range(len(order))); ax.set_xticklabels([names[k] for k in order], fontsize=9); ax.axhline(0, color="grey", lw=0.8)
+    ax.set_ylabel("Spearman ρ, judge UFR vs expert share"); ax.set_title("Summary-level rank agreement"); ax.legend(frameon=False, fontsize=8.5); ax.grid(True, ls="--", alpha=0.35)
+    save(fig, "fig_variants.png")
+
+
+def fig_coverage(cov_ps):
+    conds = [c for c in ["E0", "E1", "E2"] if c in set(cov_ps.condition)]
+    fig, axes = plt.subplots(1, 2, figsize=(9, 3.8))
+    for ax, (col, lab) in zip(axes, (("coverage_at_0_6", "Source sentences covered (cos ≥ 0.6)"), ("mean_best_similarity", "Mean best similarity of source sentences"))):
+        data = [cov_ps.loc[cov_ps.condition == c, col].values for c in conds]
+        bp = ax.boxplot(data, patch_artist=True, widths=0.5, medianprops=dict(color="black", lw=2))
+        for patch, c in zip(bp["boxes"], conds):
+            patch.set_facecolor(COL[c]); patch.set_alpha(0.75)
+        ax.set_xticks(range(1, len(conds) + 1)); ax.set_xticklabels(conds); ax.set_ylabel(lab); ax.yaxis.grid(True, ls="--", alpha=0.35); ax.set_axisbelow(True)
+    axes[0].set_title("Coverage proxy"); axes[1].set_title("Soft coverage")
+    save(fig, "fig_coverage.png")
+
+
+def fig_taxonomy(tc):
+    t = tc[tc.label == "All unsupported"].pivot(index="category", columns="condition", values="count").fillna(0)
+    t = t.loc[t.sum(axis=1).sort_values().index]
+    fig, ax = plt.subplots(figsize=(8, 4.2))
+    y = np.arange(len(t)); w = 0.38
+    for i, c in enumerate([x for x in ["E0", "E1"] if x in t.columns]):
+        ax.barh(y + (i - 0.5) * w, t[c], w, color=COL[c], label=NAME[c], edgecolor="black", lw=0.4)
+    ax.set_yticks(y); ax.set_yticklabels(t.index, fontsize=9.5); ax.set_xlabel("Unsupported or contradicted claims"); ax.legend(frameon=False)
+    ax.set_title("Keyword-assisted categories of claims not supported by the note"); ax.xaxis.grid(True, ls="--", alpha=0.35); ax.set_axisbelow(True)
+    save(fig, "fig_taxonomy.png")
+
+
+# ───────────────────────── examples ─────────────────────────
+def _tok(s):
+    return set(re.findall(r"[a-z0-9]+", str(s).lower()))
+
+
+def examples(claims):
+    c = claims[~claims.is_header]
+    fixed, persistent = [], []
+    for doc_id, d in c.groupby("doc_id"):
+        e0 = d[d.condition == "E0"]; e1 = d[d.condition == "E1"]
+        for _, r0 in e0.iterrows():
+            best, best_j = 0.0, None
+            for _, r1 in e1.iterrows():
+                a, b = _tok(r0.claim), _tok(r1.claim)
+                j = len(a & b) / max(1, len(a | b))
+                if j > best:
+                    best, best_j = j, r1
+            if best_j is None or best < 0.2:
+                continue
+            rec = dict(doc_id=doc_id, specialty=r0.specialty, jaccard=round(best, 2), e0_claim=r0.claim, e0_label=r0.label,
+                       e1_claim=best_j.claim, e1_label=best_j.label, e0_evidence=r0.evidence)
+            if r0.label == "Contradicted" and best_j.label == "Supported":
+                fixed.append(rec)
+            elif r0.label != "Supported" and best_j.label != "Supported":
+                persistent.append(rec)
+    pd.DataFrame(fixed).sort_values("jaccard", ascending=False).to_csv(RES / "examples_fixed_by_rag.csv", index=False)
+    pd.DataFrame(persistent).sort_values("jaccard", ascending=False).to_csv(RES / "examples_persistent.csv", index=False)
+    print(f"  examples: {len(fixed)} fixed-by-RAG pairs, {len(persistent)} persistent pairs")
+
+
+def main():
+    cmp, tests, claims = csv("comparison_per_sample.csv"), csv("pairwise_tests.csv"), csv("claims_all.csv")
+    if "is_header" not in claims.columns:
+        claims["is_header"] = claims.claim.astype(str).map(is_markdown_header)
+    print("Figures:")
+    fig_pipeline(); fig_boxplots(cmp); fig_scatter(cmp); fig_pct_improved(tests); fig_label_distribution(claims)
+    fig_specialty(cmp); fig_length_claims(cmp); fig_e2_probs(claims)
+    eff = csv("header_filter_effect.csv");   fig_header_effect(eff) if eff is not None else print("  skip header effect")
+    tau = csv("ablation_thresholds.csv");    fig_thresholds(tau) if tau is not None else print("  skip thresholds (not run)")
+    topk = csv("ablation_topk.csv");         fig_topk(topk) if topk is not None else print("  skip top-k (not run)")
+    cal = csv("calibration_overall.csv");    fig_calibration(cal, csv("calibration_threshold_sweep.csv")) if cal is not None else print("  skip calibration (not run)")
+    var = csv("calibration_variants.csv"); fig_variants(var) if var is not None else print("  skip variants (not run)")
+    cov = csv("coverage_per_sample.csv");    fig_coverage(cov) if cov is not None else print("  skip coverage (not run)")
+    tc = csv("error_taxonomy_counts.csv");   fig_taxonomy(tc) if tc is not None else print("  skip taxonomy (not run)")
+    examples(claims)
+    print("done")
+
+
+if __name__ == "__main__":
+    main()

@@ -39,3 +39,17 @@ results/claims_partial.csv
 # Secrets
 .env
 *.key
+
+# Credentialed (PhysioNet) derived outputs — never commit
+results_private/
+data/
+
+# Generated thesis documents (large binaries; distributed separately)
+thesis/*.docx
+thesis/*.pdf
+thesis/_build/
+deliverables/*.docx
+
+# Build scratch
+deliverables/_build/
+thesis/_build/
