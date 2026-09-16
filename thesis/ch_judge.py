@@ -63,7 +63,7 @@ def blocks(R: Results) -> list:
             f"{pct0(best.flag_rate)} of sentences where the experts flag {pct0(best.expert_rate)}."),
           ("table", dict(label="judges", caption="Candidate judges scored against the medical-expert annotations on all 1,781 sentences. Thresholds are chosen on the other subset (doctor-written for the generated summaries and vice versa; for the all-sentences row the two are pooled). Flag rate is the share of sentences the judge marks unsupported; the experts marked 20.4 percent.",
                          columns=["Judge", "Evidence", "AUROC", "Precision", "Recall", "Specificity", "F1", "Kappa", "Flag rate", "τ"],
-                         widths=[1.7, 0.85, 0.5, 0.6, 0.5, 0.7, 0.4, 0.5, 0.45, 0.3], font=8, align=["left", "left"] + ["center"] * 8,
+                         widths=[1.55, 0.85, 0.55, 0.6, 0.5, 0.7, 0.4, 0.5, 0.45, 0.4], font=8, align=["left", "left"] + ["center"] * 8,
                          rows=[[r.jn, r.mn, f2(r.auroc), f2(r.precision), f2(r.recall), f2(r.specificity), f2(r.f1), f2(r.kappa), pct0(r.flag_rate), f"{r.tau_from_other_subset:.2f}"] for _, r in allr.iterrows()])),
           ("figure", dict(label="judges", path="results/fig_judges.png", width=6.3, caption="AUROC and kappa of each candidate judge and evidence mode against the expert annotations, all sentences."))]
     gen = jc[jc.group == "generated"].sort_values("kappa", ascending=False); doc = jc[jc.group == "doctor_written"].sort_values("kappa", ascending=False)

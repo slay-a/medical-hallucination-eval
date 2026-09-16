@@ -240,7 +240,12 @@ def blocks(R: Results) -> list:
                 f"the evidence there."),
               P(f"Two further results guard against over-reading these gains. The verbatim extractive control reached a UFR of "
                 f"{f3(M.mean('E2','UFR'))}, which is the judge's error floor on this corpus, and the grounded LLM conditions sit within a few "
-                f"hundredths of it; the judge cannot tell how much of their residual unsupported content is real. And the clinicians' own "
+                f"hundredths of it; the judge cannot tell how much of their residual unsupported content is real"
+                + ((lambda g: f" (a second judge of a different family flags only {pct(g.loc['E2','flag_rate_second'])} of the same verbatim claims, confirms "
+                              f"{pct0(g.loc['all','first_flags_confirmed'])} of the selected judge's flags overall, and bounds the unsupported share of the grounded "
+                              f"conditions between {f3(min(g.loc[c,'UFR_both'] for c in ('E1','E1b','E3')))} and {f3(max(g.loc[c,'UFR_either'] for c in ('E1','E1b','E3')))}, "
+                              f"Section 7.8)")(_agr.set_index("condition")) if _agr is not None and all(c in set(_agr.condition) for c in ("E2", "all", "E1", "E1b", "E3")) else "")
+                + f". And the clinicians' own "
                 f"instructions received a UFR of {f3(M.mean('REF','UFR'))} under the same judge, higher than every LLM condition, because they "
                 f"contain medication changes, appointments and advice that the hospital course never states. A metric of support by the "
                 f"source is a metric of source-faithfulness, not of clinical correctness, and a summarizer that only paraphrases the course "
@@ -415,7 +420,13 @@ def blocks(R: Results) -> list:
             f"{pct0(M.mean('E1b','citation_accuracy'))} for E1b; {M.faithfulness_phrase()}, while coverage followed the amount of retrieved text.",
             f"Question answering with abstention: the model abstained on {pct0(M.qa_tot.loc['QA-E0','abstention_rate'])} of questions from the full course "
             f"and {pct0(M.qa_tot.loc['QA-E1','abstention_rate'])} from excerpts, most often for warning signs, which the course rarely states; UFR of "
-            f"answered questions {f3(M.qa_tot.loc['QA-E0','UFR_mean'])} and {f3(M.qa_tot.loc['QA-E1','UFR_mean'])}." if M.qa_tot is not None else ""]
+            f"answered questions {f3(M.qa_tot.loc['QA-E0','UFR_mean'])} and {f3(M.qa_tot.loc['QA-E1','UFR_mean'])}." if M.qa_tot is not None else "",
+            (lambda g: f"Second judge: Bespoke-MiniCheck-7B agrees with the selected judge on {pct0(g.loc['all','agreement'])} of the {int(g.loc['all','n_claims']):,} "
+                       f"main-study claims (kappa {f2(g.loc['all','kappa'])}), confirms {pct0(g.loc['all','first_flags_confirmed'])} of its flags, flags "
+                       f"{pct(g.loc['E2','flag_rate_second'])} of verbatim extracts (the selected judge's floor is its own error), and preserves the ordering of the "
+                       f"conditions; the unsupported share of the grounded conditions lies between {f3(min(g.loc[c,'UFR_both'] for c in ('E1','E1b','E3')))} "
+                       f"(flagged by both judges) and {f3(max(g.loc[c,'UFR_either'] for c in ('E1','E1b','E3')))} (flagged by either).")(_agr.set_index("condition"))
+            if _agr is not None and all(c in set(_agr.condition) for c in ("E2", "all", "E1", "E1b", "E3")) else ""]
            if M.ok and jr is not None else []))]
     b += [H2("9.3 Future Work")]
     b += [("numbers", [
