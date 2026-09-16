@@ -102,7 +102,14 @@ def blocks(R: Results) -> list:
             f"where medical experts flagged 5 to 9 percent of sentences, the same judge flagged 86 to 87 percent. The honest answer "
             f"to RQ1 is therefore twofold: the summaries do contain unsupported statements, in every note and in identifiable "
             f"categories, but this instrument cannot say how many, and its absolute rates should not be reported as hallucination "
-            f"rates."),
+            f"rates."
+            + (f" The main study answers the question with a validated instrument on real hospital courses: under the selected judge, "
+               f"{pct0(M.mean('E0','UFR'))} of the claims in zero-context summaries written by the local model were not supported by the course "
+               f"and {pct0(M.mean('E0','CR'))} contradicted it, against a judge error floor of {pct0(M.mean('E2','UFR'))} measured on verbatim "
+               f"extracts; the clinicians' own discharge instructions scored {pct0(M.mean('REF','UFR'))} under the same judge, because they "
+               f"contain what the course does not say. The honest rate of unsupported content in zero-context summaries is therefore of the "
+               f"order of {pct0(M.mean('E0','UFR') - M.mean('E2','UFR'))} above the floor, an estimate made with an instrument of kappa "
+               f"{f2(jr.kappa) if jr is not None else '—'}." if M.ok else "")),
           P("**RQ2.** The statements that the judge cannot support fall predominantly into follow-up instructions, generic advice, "
             "restatements of history and paraphrased findings. Two of these categories, follow-up and advice, are largely "
             "extrinsic: the note says nothing about them, the model supplies them from its knowledge of what patient instructions "
@@ -122,7 +129,17 @@ def blocks(R: Results) -> list:
             f"safest statement is that retrieval and verification changed the model's output in the directions predicted, most "
             f"visibly for medication, procedure and finding statements and for extrinsic follow-up advice respectively, but that "
             f"the size of the true improvement is unknown, and that the coverage cost is real for excerpt-only retrieval but not for "
-            f"retrieval with the full note or for verification at the primary threshold.")]
+            f"retrieval with the full note or for verification at the primary threshold."
+            + (f" The main study, with the validated judge and a reference written by the clinician, gives the answer the pilot could not. "
+               f"Excerpt-only retrieval {M.verb(M.test('UFR','E1'))} the unsupported fact rate by {M.rel(M.test('UFR','E1'))} relative to E0 "
+               f"({fp(M.test('UFR','E1').p)}), retrieval with the whole course by {M.rel(M.test('UFR','E1b'))} ({fp(M.test('UFR','E1b').p)}) and "
+               f"verification by {M.rel(M.test('UFR','E3'))} ({fp(M.test('UFR','E3').p)}), and the three do not differ from one another "
+               f"({fp(M.test('UFR','E1b','E1').p)} and {fp(M.test('UFR','E3','E1').p)} against E1). None of them changed the contradiction rate. "
+               f"The coverage cost separates them: excerpt-only retrieval covered {pct0(M.mean('E1','coverage_ref'))} of the clinician's sentences "
+               f"against {pct0(M.mean('E0','coverage_ref'))} for E0 ({fp(M.test('coverage_ref','E1').p)}), verification {pct0(M.mean('E3','coverage_ref'))} "
+               f"({fp(M.test('coverage_ref','E3').p)}), whereas retrieval with the whole course kept it at {pct0(M.mean('E1b','coverage_ref'))} "
+               f"({fp(M.test('coverage_ref','E1b').p)}). The extractive control reached {f3(M.mean('E2','UFR'))}, so the residual rates of the three "
+               f"grounded LLM conditions are within judge error of a system that cannot fabricate." if M.ok and M.test('UFR', 'E1') is not None else ""))]
     b += [H2("8.2 Why the Judge Disagrees with the Experts")]
     b += [P("Four causes, in decreasing order of importance, explain the disagreement. The first is a *granularity mismatch*. A "
             "patient-facing sentence such as \"You came in because of stomach pain after meals and foul-smelling urine, and you "
@@ -199,6 +216,38 @@ def blocks(R: Results) -> list:
             f"The validation study favors the second reading. Finally, verification depends on the same retrieval as the judge, so "
             f"a claim whose support lies in an unretrieved sentence is deleted rather than confirmed; the {fewer_e3} of {R.n_docs} documents in "
             f"which E3 has fewer claims than its draft include such losses.")]
+    if M.ok:
+        e1b_cov, e1_cov = M.test("coverage_ref", "E1b"), M.test("coverage_ref", "E1")
+        b += [P(f"The main study confirms the mechanism the pilot could only suggest, and resolves the trade-off in favour of one design. "
+                f"Every grounded condition, whether it withholds the course (E1), adds excerpts to it (E1b) or checks each sentence after "
+                f"generation (E3), cut the unsupported fact rate by about {M.rel(M.test('UFR','E1b'))} relative to the zero-context baseline, and the "
+                f"three are statistically indistinguishable. What separates them is omission. Withholding the course cost "
+                f"{abs(e1_cov.delta_mean):.2f} of coverage of the clinician's instructions ({fp(e1_cov.p)}) and verification cost "
+                f"{abs(M.test('coverage_ref','E3').delta_mean):.2f} ({fp(M.test('coverage_ref','E3').p)}), partly through its "
+                f"{M.mean('E3','abstentions'):.1f} abstentions per summary, whereas showing the model the excerpts together with the whole course "
+                f"{'kept coverage at the baseline level' if e1b_cov.p >= 0.05 else 'changed coverage'} ({fp(e1b_cov.p)}). Focusing the model's attention "
+                f"on retrieved passages therefore reduces unsupported content on its own; withholding the rest of the document adds nothing "
+                f"to faithfulness and takes away completeness. The price E1b pays is in its citations: because it may draw on the whole "
+                f"course while citing only the excerpts, only {pct0(M.mean('E1b','citation_accuracy'))} of its citations are supported by the passage "
+                f"they name, against {pct0(M.mean('E1','citation_accuracy'))} for E1, so a reviewer who follows E1b's citations will often not find "
+                f"the evidence there."),
+              P(f"Two further results guard against over-reading these gains. The verbatim extractive control reached a UFR of "
+                f"{f3(M.mean('E2','UFR'))}, which is the judge's error floor on this corpus, and the grounded LLM conditions sit within a few "
+                f"hundredths of it; the judge cannot tell how much of their residual unsupported content is real. And the clinicians' own "
+                f"instructions received a UFR of {f3(M.mean('REF','UFR'))} under the same judge, higher than every LLM condition, because they "
+                f"contain medication changes, appointments and advice that the hospital course never states. A metric of support by the "
+                f"source is a metric of source-faithfulness, not of clinical correctness, and a summarizer that only paraphrases the course "
+                f"will always beat a clinician on it. The retrieval ablations sharpen the picture from the pilot: no change of chunk size, "
+                f"number of chunks, retriever or citation requirement moved UFR or CR significantly, whereas coverage rose and fell with the "
+                f"amount of retrieved text and citation accuracy fell when five chunks were retrieved. How much of the course the model sees "
+                f"is the lever; how it is retrieved is not."),
+              P(f"The question-answering pilot points the same way from a different angle. Questions whose answers are usually in the course "
+                f"(medications) were answered faithfully; questions about warning signs, which a hospital course rarely states, drew the most "
+                f"abstentions and, when answered, the highest unsupported rates, because the model supplied the standard advice from its "
+                f"training data. Retrieval {'raised' if M.qa_tot is not None and M.qa_tot.loc['QA-E1','abstention_rate'] > M.qa_tot.loc['QA-E0','abstention_rate'] else 'changed'} "
+                f"abstention and lowered the unsupported rate of the answered questions, again partly by making the model say less. The "
+                f"extrinsic categories identified in the pilot are thus the same categories that limit document-grounded question "
+                f"answering, and abstention, not retrieval, is the appropriate response to them.")]
     b += [H2("8.4 Comparison of the Three Approaches")]
     b += [P("[[tab:compare]] summarizes the strengths, weaknesses and appropriate uses of the five conditions in the light of "
             "all results. No approach dominates. The zero-context LLM is the most readable and complete but adds the most "
@@ -312,7 +361,17 @@ def blocks(R: Results) -> list:
             f"opposite order; no evidence-aggregation rule changed that conclusion. The principal contribution of the thesis is "
             f"therefore methodological: it shows, with quantitative evidence, that a small general-domain NLI judge applied at "
             f"sentence granularity is not a valid hallucination detector for patient-facing clinical summaries, and it provides "
-            f"the tools, the controls and the validation protocol needed to evaluate better judges and better summarizers.")]
+            f"the tools, the controls and the validation protocol needed to evaluate better judges and better summarizers.")
+          ] + ([P(f"The thesis then acted on that finding. A judge selection study scored five off-the-shelf judges and a MedNLI-adapted "
+                  f"model against the same expert annotations and selected a DeBERTa-v3-large NLI model with whole-course evidence, which "
+                  f"agrees with the experts at kappa {f2(jr.kappa) if jr is not None else '—'} and AUROC {f2(jr.auroc) if jr is not None else '—'}; the "
+                  f"clinical adaptation raised MedNLI accuracy by nine points but not agreement with the experts. With that judge, the main "
+                  f"study repeated the five conditions on {M.n_docs} MIMIC-IV hospital courses with an open-weight model running on the "
+                  f"author's laptop, measured omission against the discharge instructions the clinicians actually wrote, and added citation "
+                  f"accuracy, six retrieval ablations and a question-answering pilot. Retrieval, retrieval with the whole course and "
+                  f"verification each lowered the unsupported fact rate by about {M.rel(M.test('UFR','E1b'))}; only retrieval with the whole "
+                  f"course did so without losing coverage; no retrieval setting changed faithfulness, and the clinicians' own instructions "
+                  f"scored worse than every model under a metric of support by the source.")] if M.ok else [])
     b += [H2("9.2 Key Findings")]
     b += [("numbers", [
         f"Excerpt-only RAG reduced the judge's contradiction rate from {f3(R.mean('E0','CR'))} to {f3(R.mean('E1','CR'))} "
@@ -330,7 +389,22 @@ def blocks(R: Results) -> list:
         f"Counting markdown header lines as claims had inflated the RAG effect on CR from {rel(t10c)} to 32 percent relative; the "
         f"correction changes every previously reported number.",
         "Unsupported statements concentrate in follow-up instructions, generic advice and paraphrased history; retrieval reduces "
-        "the categories that contain retrievable facts and not the extrinsic ones."])]
+        "the categories that contain retrievable facts and not the extrinsic ones."]
+        + ([f"Judge selection: a 24-layer DeBERTa-v3-large NLI model with whole-course evidence raised kappa against the experts from "
+            f"{f2(cal_all.any_kappa)} to {f2(jr.kappa)} and AUROC from {f2(cal_all.auroc_1_minus_p_entail)} to {f2(jr.auroc)}; MedNLI fine-tuning raised "
+            f"MedNLI accuracy from 80.6% to 87.8% but left kappa at 0.31, so granularity rather than clinical vocabulary limits agreement.",
+            f"Main study ({M.n_docs} MIMIC-IV hospital courses, local Qwen2.5-7B-Instruct, validated judge): zero-context UFR {f3(M.mean('E0','UFR'))}; "
+            f"E1 {f3(M.mean('E1','UFR'))}, E1b {f3(M.mean('E1b','UFR'))} and E3 {f3(M.mean('E3','UFR'))} (all {fp(max(M.test('UFR', c).p for c in ('E1','E1b','E3')))} "
+            f"versus E0, indistinguishable from one another); CR unchanged at about {f3(M.mean('E0','CR'))}; verbatim extraction {f3(M.mean('E2','UFR'))} "
+            f"(the judge's floor); the clinicians' own instructions {f3(M.mean('REF','UFR'))}.",
+            f"Coverage of the clinician's instructions: E0 {pct0(M.mean('E0','coverage_ref'))}, E1b {pct0(M.mean('E1b','coverage_ref'))} "
+            f"({fp(M.test('coverage_ref','E1b').p)} versus E0), E1 {pct0(M.mean('E1','coverage_ref'))} and E3 {pct0(M.mean('E3','coverage_ref'))} "
+            f"(both {fp(max(M.test('coverage_ref', c).p for c in ('E1','E3')))}); citation accuracy {pct0(M.mean('E1','citation_accuracy'))} for E1 and "
+            f"{pct0(M.mean('E1b','citation_accuracy'))} for E1b; no retrieval ablation changed UFR or CR, while coverage followed the amount of retrieved text.",
+            f"Question answering with abstention: the model abstained on {pct0(M.qa_tot.loc['QA-E0','abstention_rate'])} of questions from the full course "
+            f"and {pct0(M.qa_tot.loc['QA-E1','abstention_rate'])} from excerpts, most often for warning signs, which the course rarely states; UFR of "
+            f"answered questions {f3(M.qa_tot.loc['QA-E0','UFR_mean'])} and {f3(M.qa_tot.loc['QA-E1','UFR_mean'])}." if M.qa_tot is not None else ""]
+           if M.ok and jr is not None else []))]
     b += [H2("9.3 Future Work")]
     b += [("numbers", [
         "**Validate the judge on the generator's own output.** A small clinician annotation of local-model summaries would let the "

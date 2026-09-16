@@ -446,30 +446,33 @@ def blocks(R: Results) -> list:
 
 
 def abstract(R: Results) -> list:
-    t10u, t10c = R.test("UFR", "E0", "E1"), R.test("CR", "E0", "E1")
-    cal = R.cal_row("all"); cov = R.cov.set_index("condition")
-    var_all = R.cal_var[R.cal_var.group == "all"] if R.cal_var is not None else None
-    t30u = R.test("UFR", "E0", "E3"); t1b0u = R.test("UFR", "E0", "E1b")
-    txt = (f"Large language models (LLMs) can turn clinical notes into fluent patient-facing summaries, but they also produce "
-           f"statements that the note does not support. This thesis builds a reproducible, reference-free evaluation pipeline that "
-           f"segments a summary into claims, retrieves the most similar sentences of the source note with a sentence-embedding "
-           f"model, labels each claim with a natural language inference (NLI) cross-encoder, and reports an Unsupported Fact Rate "
-           f"(UFR) and a Contradiction Rate (CR) per summary. Five summarization conditions were compared on {R.n_docs} de-identified "
-           f"MTSamples clinical notes: zero-context GPT-4o-mini (E0), retrieval-augmented generation with excerpts only (E1) or with "
-           f"the full note (E1b), retrieval-augmented generation with Chain-of-Verification (E3), and a centroid-based extractive "
-           f"summarizer (E2). After correcting two evaluation artifacts, header lines counted as claims and comma-encoded line "
-           f"breaks, excerpt-only retrieval reduced CR from {f3(R.mean('E0','CR'))} to {f3(R.mean('E1','CR'))} (Wilcoxon {fp(t10c.p)}) "
-           f"but left UFR unchanged and lowered coverage of the note; the full note restored coverage and lowered UFR modestly "
-           f"({fp(t1b0u.p)}); verification lowered UFR from {f3(R.mean('E0','UFR'))} to {f3(R.mean('E3','UFR'))} ({fp(t30u.p)}) by "
-           f"deleting unsupported claims and abstaining, without changing CR; and the extractive summarizer reached UFR "
-           f"{f3(R.mean('E2','UFR'))} and CR {f3(R.mean('E2','CR'))} on verbatim text, exposing a judge error floor driven by negated "
-           f"sentences. The judge was then validated against {int(cal.n_summaries)} patient summaries annotated by medical experts "
-           f"(ann-pt-summ). It flagged {pct0(cal.judge_UFR)} of sentences where the experts flagged {pct0(cal.expert_flag_rate)}, with "
-           f"precision {f2(cal.any_precision)}, Cohen's kappa {f2(cal.any_kappa)} and an area under the ROC curve of "
-           f"{f2(cal.auroc_1_minus_p_entail)}, and it ranked systems in nearly the reverse order of the experts; five "
-           f"evidence-aggregation variants raised kappa to at most {f2(var_all.best_kappa.max()) if var_all is not None else '—'}. The "
-           f"thesis concludes that a small general-domain NLI judge at sentence granularity is not a valid hallucination detector for "
-           f"patient-facing clinical summaries, that retrieval and verification change what an LLM writes in the predicted directions, "
-           f"with a coverage cost when the model sees excerpts only, and that verbatim extractive controls, abstention-aware claim sets and expert-label "
-           f"validation should accompany any automatic hallucination metric.")
+    from mimic_results import Mimic
+    M = Mimic(); jr = M.judge_row()
+    t10c = R.test("CR", "E0", "E1"); t30u = R.test("UFR", "E0", "E3"); t1b0u = R.test("UFR", "E0", "E1b")
+    cal = R.cal_row("all")
+    main = M.ok and jr is not None
+    txt = (f"Large language models (LLMs) can turn clinical notes into fluent patient-facing summaries, but they also produce statements "
+           f"that the note does not support. This thesis builds a reproducible, reference-free pipeline that segments a summary into "
+           f"claims, retrieves evidence from the source, labels each claim with a natural language "
+           f"inference (NLI) model, and reports an Unsupported Fact Rate (UFR) and a Contradiction Rate (CR) per summary. Five conditions are "
+           f"compared: zero-context LLM summarization, retrieval-augmented generation (RAG) with excerpts only or with the full document, RAG "
+           f"with Chain-of-Verification, and an extractive summarizer. In a pilot study on {R.n_docs} public MTSamples notes with GPT-4o-mini and "
+           f"a small MiniLM judge, excerpt-only retrieval lowered CR but not UFR and reduced coverage, and verification lowered UFR from "
+           f"{f3(R.mean('E0','UFR'))} to {f3(R.mean('E3','UFR'))} ({fp(t30u.p)}). Validated against {int(cal.n_summaries)} patient summaries annotated by "
+           f"medical experts, that judge flagged "
+           f"{pct0(cal.judge_UFR)} of sentences where the experts flagged {pct0(cal.expert_flag_rate)}, with Cohen's kappa {f2(cal.any_kappa)}: it is not a "
+           f"valid hallucination detector for this task. "
+           + (f"A judge selection study of five off-the-shelf judges and a MedNLI-adapted model then selected a DeBERTa-v3-large NLI model with "
+              f"whole-document evidence (kappa {f2(jr.kappa)}, AUROC {f2(jr.auroc)}); clinical fine-tuning raised MedNLI accuracy by nine points but not "
+              f"agreement with the experts. With that judge, a main study repeated the five conditions on {M.n_docs} MIMIC-IV hospital courses with "
+              f"an open-weight model running locally, measuring omission against the clinicians' own discharge instructions. Retrieval, retrieval "
+              f"with the whole course and verification each lowered UFR from {f3(M.mean('E0','UFR'))} to about "
+              f"{f3((M.mean('E1','UFR') + M.mean('E1b','UFR') + M.mean('E3','UFR')) / 3)} (all {fp(max(M.test('UFR', c).p for c in ('E1','E1b','E3')))}), "
+              f"close to the {f3(M.mean('E2','UFR'))} error floor of verbatim extraction, without changing CR; only retrieval with the whole course kept "
+              f"the baseline's coverage of the clinician's instructions ({pct0(M.mean('E1b','coverage_ref'))} versus {pct0(M.mean('E1','coverage_ref'))} for "
+              f"excerpts only); no retrieval setting changed faithfulness; and the clinicians' own text scored {f3(M.mean('REF','UFR'))} under the same "
+              f"judge, because it states what the course does not. " if main else "")
+           + f"The thesis concludes that hallucination judges must be validated against expert labels before use, that grounding reduces "
+           f"unsupported content to the judge's error floor but only whole-document retrieval avoids omission, and that extractive controls "
+           f"and a human reference should accompany any source-faithfulness metric.")
     return [txt]

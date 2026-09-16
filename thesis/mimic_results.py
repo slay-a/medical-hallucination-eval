@@ -92,6 +92,8 @@ class Mimic:
         if jc is None or not self.ok:
             return None
         r = jc[(jc.judge == self.judge) & (jc["mode"] == self.mode) & (jc.group == "all")]
+        if not len(r):   # fall back to the best row of that judge (the selection rule) if the stored mode does not match
+            r = jc[(jc.judge == self.judge) & (jc.group == "all")].sort_values("kappa", ascending=False)
         return r.iloc[0] if len(r) else None
 
     # ---- ranking of the LLM conditions by a metric (lowest first)
