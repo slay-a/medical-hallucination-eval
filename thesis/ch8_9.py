@@ -4,7 +4,7 @@ import pandas as pd
 from scipy.stats import spearmanr
 
 from results_loader import Results, f3, f2, pct, pct0, fp, fpn, signed, COND_NAME
-from mimic_results import Mimic
+from mimic_results import Mimic, _csv
 
 FIG = "results"
 NAME = {"E0": "E0 zero-context LLM", "E1": "E1 RAG (excerpts only)", "E1b": "E1b RAG (note + excerpts)", "E3": "E3 RAG + CoVe", "E2": "E2 extractive"}
@@ -149,6 +149,24 @@ def blocks(R: Results) -> list:
             "off-the-shelf NLI models could not rank summaries by correctness [[cite:falke2019]]; the present study shows that "
             "the warning still applies to small models in the clinical domain six years later, even after the retrieval and "
             "aggregation improvements that made SummaC and AlignScore successful on news data [[cite:laban2022,zha2023]].")]
+    jc = _csv("judge_candidates.csv")
+    if jc is not None:
+        A = jc[jc.group == "all"].set_index(["judge", "mode"])
+        def jrow(j, m):
+            return A.loc[(j, m)] if (j, m) in A.index else None
+        mini, deb, med = jrow("minilm_nli", "top3"), jrow("deberta_large_nli", "doc"), jrow("mednli_deberta_large", "doc")
+        ftj = M.finetune_summary()
+        b += [P(f"The judge selection study of Chapter 6 sharpens this diagnosis. Replacing the six-layer cross-encoder with a 24-layer "
+                f"DeBERTa-v3-large model trained on five NLI and fact-verification datasets raised kappa from {f2(mini.kappa)} to {f2(deb.kappa)} and "
+                f"AUROC from {f2(mini.auroc)} to {f2(deb.auroc)} on all sentences, and letting the model see the whole hospital course in windows "
+                f"was better than three retrieved sentences; the second cause, capacity, is therefore real and large."
+                + (f" Adapting the same model to clinical language with MedNLI raised its MedNLI accuracy from {pct(ftj['zero_shot_dev_accuracy'])} to "
+                   f"{pct(ftj['dev_accuracy'])} but {'lowered' if med.kappa < deb.kappa else 'raised'} its agreement with the experts (kappa {f2(med.kappa)} versus "
+                   f"{f2(deb.kappa)}), which argues that clinical vocabulary is not what limits the judge on this task; the granularity mismatch is."
+                   if med is not None and ftj is not None and "zero_shot_dev_accuracy" in ftj else "")
+                + f" Even the selected judge flags {pct0(deb.flag_rate)} of sentences where the experts flag {pct0(deb.expert_rate)}, agrees with them at a "
+                f"kappa of {f2(deb.kappa)} and misses {100 - round(100 * deb.recall)} of every 100 expert-flagged sentences, so the main study's rates are "
+                f"estimates from a moderately valid instrument, and Chapter 7 reads them as such.")]
     b += [H2("8.3 Interpreting the Effects of Retrieval and Verification")]
     b += [P(f"The RAG effect must be read in the light of Sections 5.4 and 5.5. It is modest (a {rel(t10c)} relative reduction of "
             f"CR, d(z) = {f2(t10c.d_z)}), it disappears when the judge is made more conservative, and part of the change it "

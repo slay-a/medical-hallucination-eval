@@ -78,6 +78,12 @@ class Mimic:
     def rel(t):
         return f"{abs(t.rel_change_mean):.0f} percent" if t is not None and not np.isnan(t.rel_change_mean) else "—"
 
+    @staticmethod
+    def finetune_summary():
+        import json
+        f = Path.home() / "Desktop" / "Thesis" / "models" / "mednli-deberta-v3-large" / "mednli_finetune_summary.json"
+        return json.load(open(f)) if f.exists() else None
+
     def judge_name(self):
         return JUDGE_NAMES.get(self.judge, self.judge or "—")
 

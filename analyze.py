@@ -328,16 +328,17 @@ def fig_taxonomy(tc):
 
 def fig_judges(jc):
     a = jc[jc.group == "all"].copy()
-    names = {"minilm_nli": "MiniLM\n(pilot)", "deberta_large_nli": "DeBERTa-L\nNLI", "ce_deberta_large_nli": "CE DeBERTa-L\nNLI", "minicheck_deberta": "MiniCheck\nDeBERTa-L",
-             "minicheck_roberta": "MiniCheck\nRoBERTa-L", "mednli_deberta_large": "DeBERTa-L\n+ MedNLI"}
+    names = {"minilm_nli": "MiniLM\n(pilot)", "deberta_large_nli": "DeBERTa-L\nNLI", "ce_deberta_large_nli": "DeBERTa-L\ncross-enc.", "minicheck_deberta": "MiniCheck\nDeBERTa",
+             "minicheck_roberta": "MiniCheck\nRoBERTa", "mednli_deberta_large": "DeBERTa-L\n+MedNLI"}
     order = [k for k in names if k in set(a.judge)]
-    fig, axes = plt.subplots(1, 2, figsize=(10, 3.9))
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.2))
     for ax, metric, title in zip(axes, ("auroc", "kappa"), ("AUROC of the support score", "Cohen's kappa (threshold from other subset)")):
         x = np.arange(len(order)); w = 0.38
         for i, (mode, colr) in enumerate((("top3", "#4C8BB5"), ("doc", "#E07B54"))):
             vals = [a[(a.judge == k) & (a["mode"] == mode)][metric].iloc[0] if len(a[(a.judge == k) & (a["mode"] == mode)]) else np.nan for k in order]
             ax.bar(x + (i - 0.5) * w, vals, w, color=colr, label={"top3": "top-3 sentences", "doc": "whole course, windowed"}[mode], edgecolor="black", lw=0.4)
-        ax.set_xticks(x); ax.set_xticklabels([names[k] for k in order], fontsize=8.5); ax.set_title(title); ax.yaxis.grid(True, ls="--", alpha=0.35); ax.set_axisbelow(True)
+        ax.set_xticks(x); ax.set_xticklabels([names[k] for k in order], fontsize=8); ax.set_title(title); ax.yaxis.grid(True, ls="--", alpha=0.35); ax.set_axisbelow(True)
+        ax.set_xlim(-0.6, len(order) - 0.4)
         if metric == "auroc":
             ax.axhline(0.5, color="grey", ls=":", lw=1); ax.set_ylim(0.4, 1.0)
         else:

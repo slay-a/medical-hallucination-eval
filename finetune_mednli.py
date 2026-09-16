@@ -100,7 +100,8 @@ def main():
     mk = lambda rows, shuffle: DataLoader(PairDS(rows, tok, args.max_len, label2id), batch_size=args.batch, shuffle=shuffle,
                                           collate_fn=lambda b: collate(b, tok, args.max_len))
     tr, dv, te = mk(train, True), mk(dev, False), mk(test, False)
-    print(f"zero-shot dev accuracy: {evaluate(model, dv):.4f}  test: {evaluate(model, te):.4f}", flush=True)
+    zs_dev, zs_test = evaluate(model, dv), evaluate(model, te)
+    print(f"zero-shot dev accuracy: {zs_dev:.4f}  test: {zs_test:.4f}", flush=True)
 
     if args.freeze_embeddings:
         # freeze the 128k-token embedding matrix AND the embedding LayerNorm: on the MPS backend (torch 2.8) freezing the
@@ -142,7 +143,7 @@ def main():
             best = acc_dev; model.save_pretrained(out); tok.save_pretrained(out)
             json.dump(dict(base=args.base, epochs=ep + 1, dev_accuracy=acc_dev, test_accuracy=acc_test, lr=args.lr, optimizer=args.optimizer,
                            batch=args.batch * accum, micro_batch=args.batch, grad_accum=accum, freeze_embeddings=args.freeze_embeddings,
-                           train_minutes=round((time.time() - t0) / 60, 1)),
+                           train_minutes=round((time.time() - t0) / 60, 1), zero_shot_dev_accuracy=zs_dev, zero_shot_test_accuracy=zs_test),
                       open(out / "mednli_finetune_summary.json", "w"), indent=1)
             print(f"  saved to {out}", flush=True)
     print("done")
