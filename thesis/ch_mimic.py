@@ -72,7 +72,7 @@ def grouped_vs_ref(base, T, conds, metric="UFR"):
     if hi:
         parts.append(f"{_join([c for c, _ in hi])} received a higher {metric} than the clinician's instructions ({pmax(hi)})")
     if lo:
-        parts.append(f"{_join([c for c, _ in lo])} received a lower {metric} ({pmax(lo)})")
+        parts.append(f"{_join([c for c, _ in lo])} received a lower {metric} than the clinician's instructions ({pmax(lo)})")
     if same:
         parts.append(f"{_join([c for c, _ in same])} did not differ significantly from them (" + ("smallest " if len(same) > 1 else "") + f"{fp(min(t.p for _, t in same))})")
     return "; ".join(parts) + "." if parts else ""
@@ -106,7 +106,7 @@ def blocks(R: Results) -> list:
             f"{base.loc[[c for c in conds if c not in ('REF','E2')],'words_mean'].max():.0f} words."
             + (f" The verified condition wrote {base.loc['E3','abstentions_mean']:.1f} abstentions per summary on average." if "E3" in conds else "")),
           ("table", dict(label="mdesc", caption="Length, number of claims and abstentions per summary in the main study (per-document means).",
-                         columns=["Condition", "Documents", "Words", "Claims", "Abstentions"], widths=[2.6, 0.9, 1.0, 1.0, 1.0], font=10,
+                         columns=["Condition", "Documents", "Words", "Claims", "Abstentions"], widths=[3.1, 0.85, 0.85, 0.85, 0.85], font=10,
                          rows=[[NAME.get(c, c), str(int(base.loc[c, 'n_docs'])), f"{base.loc[c,'words_mean']:.0f}", f"{base.loc[c,'claims_mean']:.1f}", f"{base.loc[c,'abstentions_mean']:.1f}"] for c in conds]))]
     b += [("h2", "7.3 Unsupported Fact Rate and Contradiction Rate")]
     rows = []
@@ -119,7 +119,7 @@ def blocks(R: Results) -> list:
             f"and [[fig:mbox]] the distributions. "
             + " ".join(rate_sentence(base, T, c, "E0") for c in conds if c not in ("E0", "REF"))),
           ("table", dict(label="mrates", caption="Per-document mean and median UFR and CR in the main study, with paired mean differences and two-sided Wilcoxon p-values against E0 and against E1 (negative differences favour the row condition).",
-                         columns=["Metric", "Condition", "Mean", "Median", "Δ vs E0 (p)", "Δ vs E1 (p)"], widths=[0.6, 2.4, 0.7, 0.7, 1.05, 1.05], font=9.5, rows=rows)),
+                         columns=["Metric", "Condition", "Mean", "Median", "Δ vs E0 (p)", "Δ vs E1 (p)"], widths=[0.55, 2.9, 0.6, 0.65, 0.9, 0.9], font=9, rows=rows)),
           ("figure", dict(label="mbox", path="results/fig_mimic_box.png", width=6.5, caption="Per-document UFR (left) and CR (right) in the main study under each condition and for the doctor-written instructions."))]
     if ref is not None and "REF" in base.index:
         b += [P(f"The doctor-written instructions provide a human reference point on the same documents: under the same judge they receive a mean UFR of "
@@ -174,7 +174,7 @@ def blocks(R: Results) -> list:
         rows = []
         for v in [x for x in VAR if x != "base"]:
             r = {m: abl[(abl.metric == m) & (abl.variant == v)] for m in ("UFR", "CR", "coverage_ref", "citation_accuracy")}
-            rows.append([VAR[v]] + [(f"{signed(r[m].delta_mean.iloc[0])} ({fpn(r[m].p.iloc[0])})" if len(r[m]) else "—") for m in ("UFR", "CR", "coverage_ref", "citation_accuracy")])
+            rows.append([VAR[v]] + [(f"{signed(r[m].delta_mean.iloc[0])} ({fpn(r[m].p.iloc[0])})" if len(r[m]) and not np.isnan(r[m].p.iloc[0]) else "—") for m in ("UFR", "CR", "coverage_ref", "citation_accuracy")])
         def sigs(metric):
             out = []
             for v in [x for x in VAR if x != "base"]:
@@ -183,16 +183,22 @@ def blocks(R: Results) -> list:
                     out.append((v, r.delta_mean.iloc[0], r.p.iloc[0]))
             return out
         su, sc, scov, scit = sigs("UFR"), sigs("CR"), sigs("coverage_ref"), sigs("citation_accuracy")
+        PHRASE = {"chunk3": "three-sentence chunks", "chunk8": "eight-sentence chunks", "top2": "two retrieved chunks", "top5": "five retrieved chunks",
+                  "bm25": "BM25 retrieval", "nocite": "dropping the citation requirement"}
+        WORD = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six"}
         def lst(items, pos, neg):
-            return "; ".join(f"{VAR[v]} {pos if d > 0 else neg} it by {abs(d):.3f} ({fp(pv)})" for v, d, pv in items)
+            return "; ".join(f"{PHRASE.get(v, VAR[v])} {pos if d > 0 else neg} it by {abs(d):.3f} ({fp(pv)})" for v, d, pv in items)
         b += [P("Six variants of E1 change one retrieval setting at a time (Section 4.11). [[tab:mabl]] reports the paired difference of each "
                 "variant from the base configuration. "
-                + (f"No variant changed UFR significantly" if not su else "UFR changed significantly in " + str(len(su)) + (" variant: " if len(su) == 1 else " variants: ") + lst(su, "raised", "lowered"))
-                + (", and none changed CR. " if not sc else (", and only " if len(sc) == 1 else ", and ") + f"{len(sc)} changed CR: " + lst(sc, "raised", "lowered") + ". ")
+                + (f"No variant changed UFR significantly" if not su else "UFR changed significantly in " + WORD.get(len(su), str(len(su))) + (" variant: " if len(su) == 1 else " variants: ") + lst(su, "raised", "lowered"))
+                + (", and none changed CR. " if not sc else (", and only one variant changed CR: " if len(sc) == 1 else f", and {WORD.get(len(sc), len(sc))} variants changed CR: ") + lst(sc, "raised", "lowered") + ". ")
                 + (f"Coverage of the clinician's instructions followed the amount of retrieved text: {lst(scov, 'raised', 'lowered')}. " if scov else "Coverage did not change significantly. ")
-                + (f"Citation accuracy changed in {len(scit)} variant{'s' if len(scit) > 1 else ''}: {lst(scit, 'raised', 'lowered')}. " if scit else "Citation accuracy did not change significantly. ")
-                + "Lexical BM25 retrieval and dense retrieval produced summaries with indistinguishable rates, so the choice of retriever "
-                "matters less than how much of the course is shown to the model."),
+                + (f"Citation accuracy changed in {WORD.get(len(scit), len(scit))} variant{'s' if len(scit) > 1 else ''}: {lst(scit, 'raised', 'lowered')}. " if scit else "Citation accuracy did not change significantly. ")
+                + ("Lexical BM25 retrieval and dense retrieval produced summaries with indistinguishable rates, so the choice of retriever "
+                   "matters less than how much of the course is shown to the model" if not any(v == "bm25" for v, _, _ in su + sc + scov) else
+                   "BM25 and dense retrieval differed in at least one measure, see [[tab:mabl]]")
+                + (", and whether the model must cite: without the citation requirement the unsupported fact rate rose, so the requirement itself "
+                   "keeps the model closer to the retrieved text." if any(v == "nocite" and d > 0 for v, d, _ in su) else ".")),
               ("table", dict(label="mabl", caption="Retrieval ablations: paired mean difference from the E1 base configuration (5-sentence chunks, top-3, dense retrieval, citations required) with Wilcoxon p-values. Negative UFR and CR differences and positive coverage and citation differences favour the variant.",
                              columns=["Variant", "Δ UFR (p)", "Δ CR (p)", "Δ coverage (p)", "Δ citation accuracy (p)"], widths=[2.3, 1.05, 1.05, 1.05, 1.05], font=9.5, rows=rows))]
     if qa is not None and len(qa):
@@ -216,28 +222,36 @@ def blocks(R: Results) -> list:
              (qa[(qa.condition == "QA-E0") & (qa.question == "warning_signs")].iloc[0], qa[(qa.condition == "QA-E1") & (qa.question == "warning_signs")].iloc[0])
              if ((qa.condition == "QA-E0") & (qa.question == "warning_signs")).any() and ((qa.condition == "QA-E1") & (qa.question == "warning_signs")).any() else ""),
               ("table", dict(label="mqa", caption="Question-answering pilot: abstention rate, judge rates on answered questions, and agreement with the clinician's discharge instructions, by question type and condition.",
-                             columns=["Condition", "Question", "n", "Abstained", "UFR", "CR", "Supported by clinician's instructions", "Words"],
-                             widths=[0.9, 1.1, 0.5, 0.8, 0.6, 0.6, 1.4, 0.6], font=9.5,
+                             columns=["Condition", "Question", "n", "Abstained", "UFR", "CR", "Supported by clinician", "Words"],
+                             widths=[0.85, 1.3, 0.45, 0.75, 0.6, 0.6, 1.35, 0.6], font=9.5,
                              rows=[[r.condition, r.question.replace("_", " "), str(int(r.n)), pct0(r.abstention_rate), f3(r.UFR_mean), f3(r.CR_mean), pct0(r.ref_support_mean), f"{r.words_mean:.0f}"] for _, r in qa.sort_values(["condition", "question"]).iterrows()]))]
     alt_s, alt_t = _csv("mimic_tau05/mimic_summary.csv"), _csv("mimic_tau05/mimic_pairwise_tests.csv")
     if alt_s is not None and alt_t is not None and abs(tau - 0.5) > 1e-6:
         alt = alt_s[alt_s.variant == "base"].set_index("condition")
+        diffs = []
         def agree(metric):
             same = tot = 0
             for c in [x for x in conds if x not in ("E0", "REF")]:
                 a = T(metric, f"{c} vs E0"); r = alt_t[(alt_t.metric == metric) & (alt_t.comparison == f"{c} vs E0")]
                 if a is None or not len(r):
                     continue
-                tot += 1; same += int((a.p < 0.05) == (r.p.iloc[0] < 0.05) and (a.delta_mean < 0) == (r.delta_mean.iloc[0] < 0))
+                tot += 1
+                sa, sb = a.p < 0.05, r.p.iloc[0] < 0.05
+                ok = (not sa and not sb) or (sa and sb and (a.delta_mean < 0) == (r.delta_mean.iloc[0] < 0))
+                same += int(ok)
+                if not ok:
+                    diffs.append(f"{c}'s {'higher' if r.delta_mean.iloc[0] > 0 else 'lower'} {metric.replace('coverage_ref', 'coverage')} relative to E0 is significant at "
+                                 f"{'0.5' if sb else f'{tau:.2f}'} ({fp(r.p.iloc[0]) if sb else fp(a.p)}) but not at {f'{tau:.2f}' if sb else '0.5'} ({fp(a.p) if sb else fp(r.p.iloc[0])})")
             return same, tot
-        su, sc, scv = agree("UFR"), agree("CR"), agree("coverage_ref")
+        su_, sc_, scv_ = agree("UFR"), agree("CR"), agree("coverage_ref")
         b += [("h2", "7.8 Robustness to the Judge's Threshold")]
         b += [P(f"The main results use the support threshold of {tau:.2f} selected in Chapter 6. Because the pilot pipeline used 0.5, and because the "
                 f"selected judge's kappa is almost the same at both values (Section 6.2), every summary was also scored at 0.5. [[tab:mtau]] compares "
                 f"the two. Absolute rates {'rise' if alt.loc['E0','UFR_mean'] > base.loc['E0','UFR_mean'] else 'fall'} at the stricter threshold, as they "
-                f"must, but the ordering of the conditions is unchanged, and the paired comparisons against E0 agree in direction and significance "
-                f"for {su[0]} of {su[1]} UFR comparisons, {sc[0]} of {sc[1]} CR comparisons and {scv[0]} of {scv[1]} coverage comparisons. The conclusions "
-                f"of this chapter therefore do not depend on the threshold."),
+                f"must, but the ordering of the conditions is unchanged, and the paired comparisons against E0 agree in significance and direction "
+                f"for {su_[0]} of {su_[1]} UFR comparisons, {sc_[0]} of {sc_[1]} CR comparisons and {scv_[0]} of {scv_[1]} coverage comparisons"
+                + (f"; the only difference{'s are' if len(diffs) > 1 else ' is'} that {'; '.join(diffs)}" if diffs else "")
+                + ". The conclusions of this chapter therefore do not depend on the threshold."),
               ("table", dict(label="mtau", caption=f"Main-study means at the selected threshold ({tau:.2f}) and at the pilot pipeline's threshold (0.5).",
                              columns=["Condition", f"UFR (τ={tau:.2f})", "UFR (τ=0.5)", f"CR (τ={tau:.2f})", "CR (τ=0.5)", f"Coverage (τ={tau:.2f})", "Coverage (τ=0.5)"],
                              widths=[1.9, 0.75, 0.75, 0.75, 0.75, 0.8, 0.8], font=9.5,

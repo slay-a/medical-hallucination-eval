@@ -237,10 +237,12 @@ def blocks(R: Results) -> list:
                 f"instructions received a UFR of {f3(M.mean('REF','UFR'))} under the same judge, higher than every LLM condition, because they "
                 f"contain medication changes, appointments and advice that the hospital course never states. A metric of support by the "
                 f"source is a metric of source-faithfulness, not of clinical correctness, and a summarizer that only paraphrases the course "
-                f"will always beat a clinician on it. The retrieval ablations sharpen the picture from the pilot: no change of chunk size, "
-                f"number of chunks, retriever or citation requirement moved UFR or CR significantly, whereas coverage rose and fell with the "
-                f"amount of retrieved text and citation accuracy fell when five chunks were retrieved. How much of the course the model sees "
-                f"is the lever; how it is retrieved is not."),
+                f"will always beat a clinician on it. The retrieval ablations sharpen the picture from the pilot. "
+                f"{M.faithfulness_phrase()[0].upper() + M.faithfulness_phrase()[1:]}, whereas coverage rose and fell with the amount of retrieved "
+                f"text and citation accuracy fell when five chunks were retrieved. "
+                + ("Requiring the model to cite an excerpt after every sentence is therefore itself a grounding device: it costs nothing and "
+                   "kept the model closer to the retrieved text. " if any(v == "nocite" and d > 0 for v, d, _ in M.sig_ablations("UFR")) else "")
+                + f"How much of the course the model sees governs omission; how it is retrieved matters little."),
               P(f"The question-answering pilot points the same way from a different angle. Questions whose answers are usually in the course "
                 f"(medications) were answered faithfully; questions about warning signs, which a hospital course rarely states, drew the most "
                 f"abstentions and, when answered, the highest unsupported rates, because the model supplied the standard advice from its "
@@ -370,7 +372,7 @@ def blocks(R: Results) -> list:
                   f"author's laptop, measured omission against the discharge instructions the clinicians actually wrote, and added citation "
                   f"accuracy, six retrieval ablations and a question-answering pilot. Retrieval, retrieval with the whole course and "
                   f"verification each lowered the unsupported fact rate by about {M.rel(M.test('UFR','E1b'))}; only retrieval with the whole "
-                  f"course did so without losing coverage; no retrieval setting changed faithfulness, and the clinicians' own instructions "
+                  f"course did so without losing coverage; {M.faithfulness_short()}; and the clinicians' own instructions "
                   f"scored worse than every model under a metric of support by the source.")] if M.ok else [])
     b += [H2("9.2 Key Findings")]
     b += [("numbers", [
@@ -400,7 +402,7 @@ def blocks(R: Results) -> list:
             f"Coverage of the clinician's instructions: E0 {pct0(M.mean('E0','coverage_ref'))}, E1b {pct0(M.mean('E1b','coverage_ref'))} "
             f"({fp(M.test('coverage_ref','E1b').p)} versus E0), E1 {pct0(M.mean('E1','coverage_ref'))} and E3 {pct0(M.mean('E3','coverage_ref'))} "
             f"(both {fp(max(M.test('coverage_ref', c).p for c in ('E1','E3')))}); citation accuracy {pct0(M.mean('E1','citation_accuracy'))} for E1 and "
-            f"{pct0(M.mean('E1b','citation_accuracy'))} for E1b; no retrieval ablation changed UFR or CR, while coverage followed the amount of retrieved text.",
+            f"{pct0(M.mean('E1b','citation_accuracy'))} for E1b; {M.faithfulness_phrase()}, while coverage followed the amount of retrieved text.",
             f"Question answering with abstention: the model abstained on {pct0(M.qa_tot.loc['QA-E0','abstention_rate'])} of questions from the full course "
             f"and {pct0(M.qa_tot.loc['QA-E1','abstention_rate'])} from excerpts, most often for warning signs, which the course rarely states; UFR of "
             f"answered questions {f3(M.qa_tot.loc['QA-E0','UFR_mean'])} and {f3(M.qa_tot.loc['QA-E1','UFR_mean'])}." if M.qa_tot is not None else ""]
