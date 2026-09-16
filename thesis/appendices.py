@@ -14,16 +14,30 @@ def blocks(R: Results) -> list:
     import hallucination_eval as he
     import e1b_fullnote_rag_eval as e1b
     import e3_cove_eval as e3
+    import mimic_generate as mg
+    import mimic_qa as mq
     b = []
     # ── Appendix A: prompts
     b += [("h1", "Appendix A: Prompts"),
           ("pni", "The prompts below are reproduced verbatim from the source code. Placeholders in braces are filled at run time. "
-                  "All calls use GPT-4o-mini with a maximum of 450 output tokens; temperature is 0.3 for generation and 0 for the E3 verifier."),
+                  "Pilot-study calls (A.1 to A.4) use GPT-4o-mini with a maximum of 450 output tokens; temperature is 0.3 for generation and 0 for the E3 verifier. "
+                  "Main-study calls (A.5 and A.6) use Qwen2.5-7B-Instruct served locally with the same limits; the E3 verifier prompts of A.4 are reused unchanged."),
           ("h2", "A.1 E0: Zero-Context Summarization"), ("pni", "System prompt:"), ("code", he.BASELINE_SYSTEM), ("pni", "User prompt:"), ("code", he.BASELINE_USER),
           ("h2", "A.2 E1: Retrieval-Augmented Generation (Excerpts Only)"), ("pni", "System prompt:"), ("code", he.RAG_SYSTEM), ("pni", "User prompt:"), ("code", he.RAG_USER),
           ("h2", "A.3 E1b: Retrieval-Augmented Generation with the Full Note"), ("pni", "System prompt:"), ("code", e1b.E1B_SYSTEM), ("pni", "User prompt:"), ("code", e1b.E1B_USER),
           ("h2", "A.4 E3: Retrieval-Augmented Generation with Chain-of-Verification"), ("pni", "Verifier system prompt:"), ("code", e3.VERIFY_SYSTEM), ("pni", "Verifier user prompt (one call per claim):"), ("code", e3.VERIFY_USER),
-          ("pni", "Revision system prompt:"), ("code", e3.REVISE_SYSTEM), ("pni", "Revision user prompt:"), ("code", e3.REVISE_USER)]
+          ("pni", "Revision system prompt:"), ("code", e3.REVISE_SYSTEM), ("pni", "Revision user prompt:"), ("code", e3.REVISE_USER),
+          ("h2", "A.5 Main Study: Prompts for the Local Model"),
+          ("pni", "E0 system prompt:"), ("code", mg.SYSTEM_FULL), ("pni", "E0 user prompt:"), ("code", mg.USER_FULL),
+          ("pni", "E1 system prompt (the citation instruction below is appended in every variant except 'citations not required'):"), ("code", mg.SYSTEM_EXCERPTS + "\n\n[Citation instruction]" + mg.CITE_INSTR),
+          ("pni", "E1 user prompt:"), ("code", mg.USER_EXCERPTS),
+          ("pni", "E1b system prompt:"), ("code", mg.SYSTEM_BOTH), ("pni", "E1b user prompt:"), ("code", mg.USER_BOTH),
+          ("pni", "E3 revision user prompt for the local model (the verifier prompts are those of A.4):"), ("code", mg.REVISE_USER_LOCAL),
+          ("pni", f"Retrieval query for E1, E1b and their variants: the fixed section list \"{mg.SECTION_QUERY}\" followed by the first 300 characters of the hospital course."),
+          ("h2", "A.6 Question-Answering Pilot"),
+          ("pni", "System prompt:"), ("code", mq.SYSTEM), ("pni", "User prompt, full course (QA-E0):"), ("code", mq.USER_FULL),
+          ("pni", "User prompt, retrieved excerpts (QA-E1):"), ("code", mq.USER_EXCERPTS),
+          ("pni", "The three questions:"), ("code", "\n".join(f"{k}: {v}" for k, v in mq.QUESTIONS.items()))]
     # ── Appendix B: per-document results
     rows = []
     for _, r in R.cmp.sort_values("doc_id").iterrows():
@@ -68,11 +82,16 @@ def blocks(R: Results) -> list:
                                ["recompute_metrics.py", "Per-document metrics, paired Wilcoxon tests, bootstrap CIs, effect sizes, header-filter tables"],
                                ["ablations.py", "Threshold, top-k and cleaned-evidence ablations; coverage proxy; negation analysis; error taxonomy"],
                                ["calibration_annptsumm.py, calibration_variants.py", "Judge validation against ann-pt-summ expert annotations (local models only)"],
+                               ["judge_candidates.py", "Judge selection study: five candidate judges in two evidence modes scored against the expert annotations (Chapter 6)"],
+                               ["finetune_mednli.py", "MedNLI fine-tuning of the strongest general NLI model; the model is saved outside the repository"],
+                               ["mimic_generate.py", "Main-study generation with the local Qwen2.5-7B-Instruct server: E0, E1 and its six retrieval variants, E1b, E2, E3 on the 110 hospital courses (resumable)"],
+                               ["mimic_evaluate.py", "Main-study evaluation with the selected judge: UFR, CR, coverage of the clinician's instructions, citation accuracy, reference scoring, paired tests and ablation tests"],
+                               ["mimic_qa.py", "Question-answering pilot: answer generation with abstention (QA-E0, QA-E1) and its evaluation"],
                                ["analyze.py", "All figures and the qualitative example tables"],
-                               ["thesis/build_thesis.py", "Generates this document from the result files"],
-                               ["run.sh, setup.sh, requirements.txt", "Environment and end-to-end reproduction (bash run.sh --offline reproduces every reported number without API calls)"]])),
+                               ["thesis/build_thesis.py", "Generates this document from the result files (content modules ch1_4, ch5_pilot, ch_judge, ch_mimic, ch8_9, appendices)"],
+                               ["run.sh, setup.sh, requirements.txt", "Environment and end-to-end reproduction (bash run.sh --offline reproduces every pilot number without API calls; bash run.sh --main-study runs the judge study and the main study on a machine that holds the credentialed data)"]])),
           ("pni", "Reproduction from a clean machine:"),
-          ("code", "git clone https://github.com/slay-a/medical-hallucination-eval.git\ncd medical-hallucination-eval\nbash setup.sh\n# place mtsamples.csv one directory above the repository\nexport OPENAI_API_KEY='sk-...'   # only for generation\nbash run.sh            # full chain\nbash run.sh --offline  # recompute everything from the stored results\npython thesis/build_thesis.py")]
+          ("code", "git clone https://github.com/slay-a/medical-hallucination-eval.git\ncd medical-hallucination-eval\nbash setup.sh\n# place mtsamples.csv one directory above the repository\nexport OPENAI_API_KEY='sk-...'   # only for generation\nbash run.sh            # full chain\nbash run.sh --offline  # recompute every pilot result from the stored results\nbash run.sh --main-study  # judge study, MedNLI fine-tuning, MIMIC-IV main study, QA pilot (credentialed data, local models)\npython thesis/build_thesis.py")]
     # ── Appendix E: calibration threshold sweep
     if R.cal_sweep is not None:
         sw = R.cal_sweep[R.cal_sweep.group == "all"]

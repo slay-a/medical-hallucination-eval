@@ -326,6 +326,51 @@ def fig_taxonomy(tc):
     save(fig, "fig_taxonomy.png")
 
 
+def fig_judges(jc):
+    a = jc[jc.group == "all"].copy()
+    names = {"minilm_nli": "MiniLM\n(pilot)", "deberta_large_nli": "DeBERTa-L\nNLI", "ce_deberta_large_nli": "CE DeBERTa-L\nNLI", "minicheck_deberta": "MiniCheck\nDeBERTa-L",
+             "minicheck_roberta": "MiniCheck\nRoBERTa-L", "mednli_deberta_large": "DeBERTa-L\n+ MedNLI"}
+    order = [k for k in names if k in set(a.judge)]
+    fig, axes = plt.subplots(1, 2, figsize=(10, 3.9))
+    for ax, metric, title in zip(axes, ("auroc", "kappa"), ("AUROC of the support score", "Cohen's kappa (threshold from other subset)")):
+        x = np.arange(len(order)); w = 0.38
+        for i, (mode, colr) in enumerate((("top3", "#4C8BB5"), ("doc", "#E07B54"))):
+            vals = [a[(a.judge == k) & (a["mode"] == mode)][metric].iloc[0] if len(a[(a.judge == k) & (a["mode"] == mode)]) else np.nan for k in order]
+            ax.bar(x + (i - 0.5) * w, vals, w, color=colr, label={"top3": "top-3 sentences", "doc": "whole course, windowed"}[mode], edgecolor="black", lw=0.4)
+        ax.set_xticks(x); ax.set_xticklabels([names[k] for k in order], fontsize=8.5); ax.set_title(title); ax.yaxis.grid(True, ls="--", alpha=0.35); ax.set_axisbelow(True)
+        if metric == "auroc":
+            ax.axhline(0.5, color="grey", ls=":", lw=1); ax.set_ylim(0.4, 1.0)
+        else:
+            ax.axhline(0, color="grey", lw=0.8)
+    axes[0].legend(frameon=False, fontsize=8.5)
+    save(fig, "fig_judges.png")
+
+
+def fig_mimic(per):
+    order = [c for c in ["E0", "E1", "E1b", "E3", "E2", "REF"] if c in set(per.condition)]
+    colm = dict(COL, REF="#999999"); names = dict(NAME, REF="Doctor-written")
+    base = per[per.variant == "base"]
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4.2))
+    for ax, metric, lab in zip(axes, ("UFR", "CR"), ("Unsupported Fact Rate", "Contradiction Rate")):
+        data = [base.loc[base.condition == c, metric].dropna().values for c in order]
+        bp = ax.boxplot(data, patch_artist=True, widths=0.5, medianprops=dict(color="black", lw=2), flierprops=dict(marker="o", markersize=3, alpha=0.5))
+        for patch, c in zip(bp["boxes"], order):
+            patch.set_facecolor(colm.get(c, "#999999")); patch.set_alpha(0.75)
+        ax.set_xticks(range(1, len(order) + 1)); ax.set_xticklabels([names.get(c, c).replace(" (", "\n(") for c in order], fontsize=8); ax.set_ylabel(lab)
+        ax.set_ylim(-0.03, 1.03); ax.yaxis.grid(True, ls="--", alpha=0.35); ax.set_axisbelow(True)
+    axes[0].set_title("Main study: UFR per document"); axes[1].set_title("Main study: CR per document")
+    save(fig, "fig_mimic_box.png")
+    fig, ax = plt.subplots(figsize=(6.2, 4.0))
+    order2 = [c for c in order if c != "REF"]
+    data = [base.loc[base.condition == c, "coverage_ref"].dropna().values for c in order2]
+    bp = ax.boxplot(data, patch_artist=True, widths=0.5, medianprops=dict(color="black", lw=2))
+    for patch, c in zip(bp["boxes"], order2):
+        patch.set_facecolor(colm.get(c, "#999999")); patch.set_alpha(0.75)
+    ax.set_xticks(range(1, len(order2) + 1)); ax.set_xticklabels(order2); ax.set_ylabel("Share of clinician's sentences supported"); ax.set_ylim(-0.03, 1.03)
+    ax.set_title("Coverage of the doctor-written discharge instructions"); ax.yaxis.grid(True, ls="--", alpha=0.35); ax.set_axisbelow(True)
+    save(fig, "fig_mimic_coverage.png")
+
+
 # ───────────────────────── examples ─────────────────────────
 def _tok(s):
     return set(re.findall(r"[a-z0-9]+", str(s).lower()))
@@ -370,6 +415,9 @@ def main():
     var = csv("calibration_variants.csv"); fig_variants(var) if var is not None else print("  skip variants (not run)")
     cov = csv("coverage_per_sample.csv");    fig_coverage(cov) if cov is not None else print("  skip coverage (not run)")
     tc = csv("error_taxonomy_counts.csv");   fig_taxonomy(tc) if tc is not None else print("  skip taxonomy (not run)")
+    jc = csv("judge_candidates.csv");        fig_judges(jc) if jc is not None else print("  skip judges (not run)")
+    per_path = HERE / "results_private" / "mimic_per_summary.csv"
+    fig_mimic(pd.read_csv(per_path)) if per_path.exists() else print("  skip main-study figures (not evaluated)")
     examples(claims)
     print("done")
 
