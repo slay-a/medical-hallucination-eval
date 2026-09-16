@@ -71,6 +71,10 @@ server (Python 3.13, `pip install mlx-lm`):
 .venv-llm/bin/python -m mlx_lm.server --model mlx-community/Qwen2.5-7B-Instruct-4bit --host 127.0.0.1 --port 8080
 ```
 
+The Bespoke-MiniCheck-7B judge candidate is converted once with `mlx_lm.convert --hf-path <HF snapshot dir> --mlx-path <dir> -q --q-bits 8 --trust-remote-code`;
+copy `tokenizer.json`, `tokenizer.model` and `tokenizer_config.json` from the Hugging Face snapshot into the converted directory afterwards
+(the converter re-saves a broken tokenizer under transformers 5), then serve it with `.venv-llm/bin/python minicheck_server.py --model <dir> --port 8081`.
+
 Random seed 42 is fixed for document sampling; the LLMs are called with temperature 0.3, so regenerated summaries
 differ slightly from the stored ones, but the stored `results/summaries.csv` reproduces every pilot number exactly
 through `recompute_metrics.py`. Main-study generations contain MIMIC-derived text and are stored only in the

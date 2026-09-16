@@ -172,6 +172,7 @@ def blocks(R: Results) -> list:
         def jrow(j, m):
             return A.loc[(j, m)] if (j, m) in A.index else None
         mini, deb, med = jrow("minilm_nli", "top3"), jrow("deberta_large_nli", "doc"), jrow("mednli_deberta_large", "doc")
+        bmc = jrow("bespoke_minicheck_7b", "doc")
         ftj = M.finetune_summary()
         b += [P(f"The judge selection study of Chapter 6 sharpens this diagnosis. Replacing the six-layer cross-encoder with a 24-layer "
                 f"DeBERTa-v3-large model trained on five NLI and fact-verification datasets raised kappa from {f2(mini.kappa)} to {f2(deb.kappa)} and "
@@ -181,9 +182,13 @@ def blocks(R: Results) -> list:
                    f"{pct(ftj['dev_accuracy'])} but {'lowered' if med.kappa < deb.kappa else 'raised'} its agreement with the experts (kappa {f2(med.kappa)} versus "
                    f"{f2(deb.kappa)}), which argues that clinical vocabulary is not what limits the judge on this task; the granularity mismatch is."
                    if med is not None and ftj is not None and "zero_shot_dev_accuracy" in ftj else "")
-                + f" Even the selected judge flags {pct0(deb.flag_rate)} of sentences where the experts flag {pct0(deb.expert_rate)}, agrees with them at a "
-                f"kappa of {f2(deb.kappa)} and misses {100 - round(100 * deb.recall)} of every 100 expert-flagged sentences, so the main study's rates are "
-                f"estimates from a moderately valid instrument, and Chapter 7 reads them as such.")]
+                + ((f" A seven-billion-parameter language model fine-tuned for grounding checks (Bespoke-MiniCheck-7B), which reads the whole "
+                    f"course in one pass and leads the general fact-checking leaderboards, reached kappa {f2(bmc.kappa)} and AUROC {f2(bmc.auroc)} on the "
+                    f"same sentences, {'above' if bmc.kappa > deb.kappa else 'below'} the encoder NLI model; ") if bmc is not None else " ")
+                + f"{'the selected judge' if bmc is None else ('it' if bmc.kappa > deb.kappa else 'even the best candidate')} flags "
+                f"{pct0(jr.flag_rate) if jr is not None else pct0(deb.flag_rate)} of sentences where the experts flag {pct0(deb.expert_rate)}, agrees with them at a "
+                f"kappa of {f2(jr.kappa) if jr is not None else f2(deb.kappa)} and misses {100 - round(100 * (jr.recall if jr is not None else deb.recall))} of every 100 "
+                f"expert-flagged sentences, so the main study's rates are estimates from a moderately valid instrument, and Chapter 7 reads them as such.")]
     b += [H2("8.3 Interpreting the Effects of Retrieval and Verification")]
     b += [P(f"The RAG effect must be read in the light of Sections 5.4 and 5.5. It is modest (a {rel(t10c)} relative reduction of "
             f"CR, d(z) = {f2(t10c.d_z)}), it disappears when the judge is made more conservative, and part of the change it "
@@ -365,7 +370,7 @@ def blocks(R: Results) -> list:
             f"sentence granularity is not a valid hallucination detector for patient-facing clinical summaries, and it provides "
             f"the tools, the controls and the validation protocol needed to evaluate better judges and better summarizers.")
           ] + ([P(f"The thesis then acted on that finding. A judge selection study scored six off-the-shelf judges and a MedNLI-adapted "
-                  f"model against the same expert annotations and selected a DeBERTa-v3-large NLI model with whole-course evidence, which "
+                  f"model against the same expert annotations and selected {M.judge_name()} with whole-course evidence, which "
                   f"agrees with the experts at kappa {f2(jr.kappa) if jr is not None else '—'} and AUROC {f2(jr.auroc) if jr is not None else '—'}; the "
                   f"clinical adaptation raised MedNLI accuracy by nine points but not agreement with the experts. With that judge, the main "
                   f"study repeated the five conditions on {M.n_docs} MIMIC-IV hospital courses with an open-weight model running on the "
