@@ -69,6 +69,9 @@ REFS = {
  "cohen1960": 'J. Cohen, "A coefficient of agreement for nominal scales," *Educational and Psychological Measurement*, vol. 20, no. 1, pp. 37–46, 1960, doi: 10.1177/001316446002000104.',
  "hanley1982": 'J. A. Hanley and B. J. McNeil, "The meaning and use of the area under a receiver operating characteristic (ROC) curve," *Radiology*, vol. 143, no. 1, pp. 29–36, 1982, doi: 10.1148/radiology.143.1.7063747.',
  "radev2004": 'D. R. Radev, H. Jing, M. Styś, and D. Tam, "Centroid-based summarization of multiple documents," *Information Processing and Management*, vol. 40, no. 6, pp. 919–938, 2004, doi: 10.1016/j.ipm.2003.10.006.',
+ "tang2024minicheck": 'L. Tang, P. Laban, and G. Durrett, "MiniCheck: Efficient fact-checking of LLMs on grounding documents," in *Proc. Conference on Empirical Methods in Natural Language Processing*, 2024, pp. 8818–8847, doi: 10.18653/v1/2024.emnlp-main.499.',
+ "qwen2025": 'Qwen Team, "Qwen2.5 technical report," 2025, doi: 10.48550/arXiv.2412.15115.',
+ "robertson2009": 'S. Robertson and H. Zaragoza, "The probabilistic relevance framework: BM25 and beyond," *Foundations and Trends in Information Retrieval*, vol. 3, no. 4, pp. 333–389, 2009, doi: 10.1561/1500000019.',
  "hipaa": 'U.S. Department of Health and Human Services, "Standards for privacy of individually identifiable health information: De-identification of protected health information, 45 C.F.R. § 164.514," *Code of Federal Regulations*, 2013. [Online]. Available: https://www.ecfr.gov/current/title-45/section-164.514',
 }
 

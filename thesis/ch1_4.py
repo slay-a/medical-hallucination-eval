@@ -125,7 +125,13 @@ def blocks(R: Results) -> list:
             "Rate (UFR) and the Contradiction Rate (CR). Conditions are compared with paired non-parametric tests and "
             "bootstrap confidence intervals. The judge is then validated against 210 patient summaries annotated by two "
             "medical experts in the ann-pt-summ dataset [[cite:hegselmann2025data]], its robustness to its own design "
-            "choices is examined in a series of ablations, and a coverage proxy quantifies the omission cost of retrieval.")]
+            "choices is examined in a series of ablations, and a coverage proxy quantifies the omission cost of retrieval. "
+            "This pilot study on public data is followed by two further studies. A judge-selection study scores five candidate "
+            "judges, including one adapted to clinical language with MedNLI [[cite:romanov2018]], against the same expert "
+            "annotations and selects the best. The main study then repeats the five conditions on 110 MIMIC-IV hospital courses "
+            "with a language model that runs on the author's computer, requires citations from the retrieval conditions, measures "
+            "omission against the discharge instructions that the treating clinicians actually wrote, runs the retrieval ablations "
+            "of the proposal, and pilots document-grounded question answering with abstention.")]
     b += [H2("1.5 Contributions")]
     b += [("numbers", [
               "An open, fully reproducible claim-level evaluation pipeline for source-grounded summaries, built from "
@@ -140,28 +146,33 @@ def blocks(R: Results) -> list:
               "far an off-the-shelf NLI judge can and cannot be trusted for this task.",
               "A quantitative analysis of the coverage cost of excerpt-only RAG, and a keyword-assisted taxonomy of the "
               "statements that remain unsupported under every condition.",
-              "Open, documented implementations of every condition, including RAG with the full note (E1b) and RAG with "
-              "Chain-of-Verification (E3), so that each can be re-run or extended with a single command."])]
+              "A judge-selection study that scores five candidate judges, including a MedNLI-adapted clinical NLI model, against "
+              "medical-expert annotations, and a main study on real MIMIC-IV hospital courses with a locally run open-weight model, "
+              "citation accuracy, coverage against clinician-written discharge instructions, retrieval ablations and a "
+              "question-answering pilot.",
+              "Open, documented implementations of every condition and every study, so that each can be re-run or extended with "
+              "a single command and without sending protected text to any external service."])]
     b += [H2("1.6 Scope and Delimitations")]
     b += [P("The scope of the empirical work is deliberately narrow so that every comparison is controlled. A single "
             "generator, GPT-4o-mini [[cite:openai2024]], is used for all LLM conditions. Generation experiments use the public "
-            "MTSamples corpus rather than protected health records, because the OpenAI API cannot receive credentialed "
-            "MIMIC text without a zero-data-retention agreement; MIMIC-derived data are used only to validate the judge, "
-            "with models that run locally. The thesis proposal also described a document-grounded question-answering task; "
-            "that task was not implemented and is left to future work, and the title of this thesis has been narrowed "
-            "accordingly. Every condition was generated once per document at a fixed temperature; sampling variance is not "
-            "measured."),
+            "MTSamples corpus with GPT-4o-mini because the OpenAI API cannot receive credentialed MIMIC text without a "
+            "zero-data-retention agreement; the main study uses MIMIC-IV hospital courses with Qwen2.5-7B-Instruct running "
+            "locally, so the two studies differ in generator as well as in corpus and are compared qualitatively, not "
+            "numerically. The proposal's question-answering task is implemented as a pilot with three fixed questions per "
+            "hospital course rather than as a full benchmark. Every condition was generated once per document at a fixed "
+            "temperature; sampling variance is not measured."),
           P("Within this scope the thesis makes no claim about the clinical acceptability of any summary. The metrics "
             "measure whether statements are supported by the note as judged by an automatic model, and Chapter 5 shows "
             "precisely how that judgment relates to the judgment of medical experts.")]
     b += [H2("1.7 Organization of the Thesis")]
     b += [P("Chapter 2 reviews the literature on hallucination, faithfulness evaluation, NLI models, LLM-based clinical "
-            "summarization, retrieval-augmented generation and verification methods. Chapter 3 describes the three data "
+            "summarization, retrieval-augmented generation and verification methods. Chapter 3 describes the four data "
             "sources, the preprocessing steps, the two artifacts that were discovered and corrected, and the ethical and "
             "governance measures under which the data were handled. Chapter 4 specifies the evaluation framework, the "
             "three approaches, the statistical analysis, the judge validation protocol and the robustness analyses. "
-            "Chapter 5 reports the results, Chapter 6 discusses them in the light of the research questions and states the "
-            "limitations, and Chapter 7 concludes and outlines future work. The appendices contain the exact prompts, the "
+            "Chapter 5 reports the pilot study on MTSamples, Chapter 6 reports the study that selects a valid judge, Chapter 7 "
+            "reports the main study on MIMIC-IV hospital courses, Chapter 8 discusses all results in the light of the research "
+            "questions and states the limitations, and Chapter 9 concludes and outlines future work. The appendices contain the exact prompts, the "
             "per-document results, worked examples with every claim label, and a description of the code repository.")]
 
     # ══════════════════════════════════ CHAPTER 2 ══════════════════════════════════
@@ -184,7 +195,7 @@ def blocks(R: Results) -> list:
             "[[cite:kryscinski2019]], and Tam et al. found that even instruction-tuned LLMs frequently produce factually "
             "inconsistent news summaries [[cite:tam2023]]. Second, extrinsic content is not always wrong; a patient "
             "summary that adds standard safety advice may be extrinsic yet appropriate. Whether such content should count as "
-            "hallucination is a question of the intended use, and Section 6.2 returns to it.")]
+            "hallucination is a question of the intended use, and Section 8.2 returns to it.")]
     b += [H2("2.2 Limitations of Overlap-Based Evaluation")]
     b += [P("ROUGE measures n-gram recall or longest-common-subsequence overlap between a candidate and one or more "
             "reference summaries [[cite:lin2004]]; BLEU measures n-gram precision and was designed for machine translation "
@@ -319,11 +330,13 @@ def blocks(R: Results) -> list:
 
     # ══════════════════════════════════ CHAPTER 3 ══════════════════════════════════
     b += [H1("Chapter 3 Data and Preprocessing"), H2("3.1 Overview of the Data Sources")]
-    b += [P("Three data sources play distinct roles ([[tab:datasources]]). MTSamples supplies the fifty notes on which the "
-            "five summarization conditions are generated and compared. The ann-pt-summ expert annotations supply an "
-            "independent reference standard for validating the judge. MIMIC-IV-Note was obtained under PhysioNet "
-            "credentialing and is staged for the future migration of the generation experiments to real clinical notes, but "
-            "it is not used to generate summaries in this thesis, for the governance reasons given in Section 3.7."),
+    b += [P("Four data sources play distinct roles ([[tab:datasources]]). MTSamples supplies the fifty notes of the pilot study, "
+            "on which the five summarization conditions are first generated and compared with GPT-4o-mini. The ann-pt-summ "
+            "expert annotations supply the reference standard for validating and selecting the judge, and their 110 hospital "
+            "courses, each paired with the discharge instructions written by the treating clinician, are the documents of the "
+            "main study. MIMIC-IV-Note, from which those courses are drawn, was obtained under PhysioNet credentialing. MedNLI, "
+            "also credentialed, is used to adapt a candidate judge to clinical language. The governance rules under which the "
+            "credentialed sources are handled are given in Section 3.7."),
           ("table", dict(label="datasources", caption="Data sources used in this thesis, their access conditions and their roles.",
                          columns=["Source", "Access", "Content", "Size", "Role in this thesis"],
                          widths=[1.1, 1.0, 2.1, 0.8, 1.5], font=9.5, align=["left", "left", "left", "center", "left"],
@@ -333,7 +346,9 @@ def blocks(R: Results) -> list:
                                 "annotations of unsupported facts (100 doctor-written, 100 LLM-generated, 10 validation)", "2.3 MB used",
                                 "Validation of the NLI judge with local models only"],
                                ["MIMIC-IV-Note v2.2 [[cite:johnson2023note]]", "PhysioNet credentialed, DUA", "331,794 de-identified discharge summaries and "
-                                "2.3 million radiology reports", "1.8 GB", "Staged for future migration of the generation experiments; not used for generation here"]]))]
+                                "2.3 million radiology reports", "1.8 GB", "Source of the ann-pt-summ hospital courses; the 110 annotated courses are the documents of the main study"],
+                               ["MedNLI v1.0.0 [[cite:romanov2018]]", "PhysioNet credentialed, DUA", "14,049 clinician-written premise and hypothesis pairs from MIMIC-III notes (11,232 train, 1,395 dev, 1,422 test), labels entailment, contradiction, neutral", "1.5 MB",
+                                "Adaptation of the candidate judge to clinical language (Chapter 6)"]]))]
     b += [H2("3.2 MTSamples")]
     b += [P(f"MTSamples is distributed as a single comma-separated file with one row per transcription and the columns "
             f"description, medical specialty, sample name, transcription and keywords [[cite:mtsamples]]. The copy used "
@@ -369,7 +384,7 @@ def blocks(R: Results) -> list:
             "the notes are real patient records, the data use agreement prohibits sharing them with third parties, which "
             "includes commercial API providers unless a compliant data-handling agreement is in place. The generation "
             "experiments were therefore run on MTSamples, and MIMIC-IV-Note is reserved for a future re-run with a locally "
-            "hosted open-weight generator or a zero-data-retention API arrangement (Section 7.3).")]
+            "hosted open-weight generator or a zero-data-retention API arrangement (Section 9.3).")]
     b += [H2("3.4 Expert Annotations: ann-pt-summ")]
     lab_rows = []
     lab_desc = {"word_unsupported": "A word or short phrase without support in the hospital course", "condition_unsupported": "A diagnosis, symptom or condition not supported by the source",
@@ -393,7 +408,10 @@ def blocks(R: Results) -> list:
             f"one of the labels in [[tab:expertlabels]]. The portion of the archive used here comprises 100 doctor-written "
             f"summaries, 100 LLM-generated summaries (20 hospital courses times five systems) and 10 validation summaries, "
             f"with {n_spans} annotated spans in total. Every span offset was verified to match its quoted text exactly "
-            "before use."),
+            "before use. In the main study the 110 hospital courses are the source documents and the clinician-written "
+            "discharge instructions are the reference against which omission is measured; the instructions were written for "
+            "the same admission by the discharging clinician, so a generated summary that omits what the clinician chose to "
+            "tell the patient has omitted something a clinician judged important."),
           ("table", dict(label="expertlabels", caption="Expert annotation labels in ann-pt-summ and the number of agreed spans of each type in the 210 summaries used. Descriptions paraphrase the label names of the published annotation protocol.",
                          columns=["Label", "Spans", "Description"], widths=[1.7, 0.7, 4.1], font=9.5, align=["left", "center", "left"], rows=lab_rows)),
           P("The archive downloaded from PhysioNet in May 2026 was incomplete: the download stopped after 934 MB of an "
@@ -463,8 +481,10 @@ def blocks(R: Results) -> list:
             "Research\" and \"Conflicts of Interest\" on April 10, 2026, credentialing was approved on April 28, 2026, and the "
             "data use agreements for both datasets were accepted before download. Under those agreements the data may not be "
             "shared, redistributed or used in any attempt at re-identification, and they may not be transmitted to third "
-            "parties. Consequently, no MIMIC-derived text was ever sent to the OpenAI API; the judge validation in this thesis "
-            "runs entirely with models executed on the author's computer. Per-sentence outputs that contain MIMIC-derived "
+            "parties. Consequently, no MIMIC-derived text was ever sent to the OpenAI API. The judge validation, the judge "
+            "selection study, the MedNLI adaptation and the entire main study run with models executed on the author's "
+            "computer: the generator of the main study is an open-weight language model served on the local machine, and the "
+            "MedNLI data use agreement was accepted before that dataset was downloaded. Per-sentence outputs that contain MIMIC-derived "
             "text are written to a directory excluded from version control, and only aggregate statistics are published. "
             "The credentialed files are stored on a single encrypted personal computer and are not placed in shared cloud "
             "storage."),
@@ -652,16 +672,76 @@ def blocks(R: Results) -> list:
             "priority order, so that a claim about a medication and a follow-up counts as medication. The author reviewed "
             "the examples of every category; the counts should be read as a coarse characterization, not as a validated "
             "clinical error typology.")]
-    b += [H2("4.9 Tools, Software and Computational Environment")]
-    b += [P("All experiments were run on an Apple MacBook Air with Apple silicon, on the CPU only; no GPU acceleration was "
-            "used. The evaluation of one summary takes a few seconds, the complete offline recomputation of every result in "
-            "this thesis about five minutes, and the judge validation with five aggregation variants about fifteen minutes. "
-            "[[tab:tools]] lists the software. Models are downloaded once from the Hugging Face hub and cached locally; "
-            "every subsequent run is offline except for the generation calls to the OpenAI API."),
+    b += [H2("4.10 Judge Selection Study")]
+    b += [P("Chapter 5 validates the pilot judge and finds it wanting. The judge selection study therefore scores five candidate "
+            "judges, all runnable on a laptop, against the same 1,781 expert-annotated sentences with the protocol of Section 4.7. "
+            "The candidates are the pilot judge (cross-encoder/nli-MiniLM2-L6-H768); two general-domain DeBERTa-v3-large NLI models, "
+            "one trained on MultiNLI, FEVER-NLI, ANLI, LingNLI and WANLI and one from the sentence-transformers cross-encoder "
+            "collection [[cite:reimers2019]]; and two MiniCheck models, DeBERTa-v3-large and RoBERTa-large classifiers trained "
+            "specifically to decide whether a sentence is grounded in a document [[cite:tang2024minicheck]]. Each candidate is run in "
+            "two evidence modes: the three retrieved sentences concatenated into one premise, and the whole hospital course split "
+            "into windows of at most 400 tokens of consecutive sentences with the maximum support probability over windows. The "
+            "support score is the entailment probability for NLI models and the supported-class probability for MiniCheck."),
+          P("Thresholds are never tuned on the sentences they are evaluated on: for the LLM-generated summaries the threshold that "
+            "maximizes kappa is chosen on the doctor-written summaries and vice versa, and for the pooled figure the two subsets "
+            "are pooled. AUROC, precision, recall, specificity, F1 and kappa are reported for every candidate and mode."),
+          P("The strongest general model is then adapted to clinical language by fine-tuning on MedNLI [[cite:romanov2018]] "
+            "(Section 3.4): two epochs, learning rate 1e-5 with linear warm-up over six percent of the steps and linear decay, "
+            "an effective batch size of 16 (micro-batches of four with gradient accumulation over four, because the optimizer "
+            "state of a 435-million-parameter model and a batch of sixteen do not fit together in the laptop's 24 GB of unified "
+            "memory), maximum sequence length 256, AdamW with weight decay 0.01, gradient clipping at 1.0, seed 42, on the "
+            "laptop's GPU through PyTorch's Metal backend. The 128,000-token input embedding matrix is frozen and the "
+            "pre-trained three-way classification head is kept with its labels mapped onto MedNLI's. The checkpoint with the best MedNLI development accuracy is kept and scored against the "
+            "expert annotations exactly like the other candidates. The decision rule, fixed before the comparison, selects the "
+            "candidate and evidence mode with the highest kappa on all sentences.")]
+    b += [H2("4.11 Main Study on MIMIC-IV Hospital Courses")]
+    b += [P("The main study repeats the five conditions on the 110 hospital courses of ann-pt-summ (Section 3.4) with three changes "
+            "dictated by the data use agreement and by the proposal. First, the generator is Qwen2.5-7B-Instruct, an open-weight "
+            "instruction-tuned model [[cite:qwen2025]] quantized to four bits and served on the author's computer with Apple's MLX "
+            "framework through an OpenAI-compatible local interface, so that the pipeline code of the pilot runs unchanged while no "
+            "protected text leaves the machine. Second, the prompts ask for a patient-facing summary of the hospital course in four "
+            "parts (why the patient was in the hospital, key findings, treatments or procedures, medications and follow-up) and "
+            "instruct the model to write \"Not stated in the note.\" for a section without support; the retrieval conditions E1 "
+            "and E1b must in addition cite, after every sentence, the excerpt numbers it is based on. Third, because the MIMIC "
+            "documents have no description field, the retrieval query is a fixed list of the four section topics followed by the "
+            "first 300 characters of the course. E2 and E3 are unchanged. Decoding uses temperature 0.3 and at most 450 tokens; the "
+            "E3 verifier uses temperature 0."),
+          P("Every summary is scored by the judge selected in Chapter 6 with its selected evidence mode and threshold, and so are "
+            "the clinician-written discharge instructions, which gives a human reference point on the same documents. Three "
+            "measures are added to UFR and CR. *Coverage of the clinician's instructions* is the share of sentences of the "
+            "doctor-written instructions that the generated summary supports, obtained by running the judge in the reverse "
+            "direction with the whole generated summary as premise and each instruction sentence as hypothesis; it replaces the "
+            "embedding proxy of the pilot with a reference-based omission measure, as the proposal required. *Citation accuracy* "
+            "is the share of cited claims whose cited excerpts support the claim under the judge. *Abstentions* are counted per "
+            "summary. Paired Wilcoxon tests and bootstrap intervals are computed as in Section 4.2.5 against E0, against E1 and "
+            "against the clinician's instructions."),
+          P("Six retrieval ablations vary one setting of E1 at a time: chunks of three or eight sentences instead of five, two or "
+            "five retrieved chunks instead of three, BM25 lexical retrieval [[cite:robertson2009]] instead of dense retrieval, and "
+            "citations not required. Each variant is compared with the base configuration on the same documents.")]
+    b += [H2("4.12 Question-Answering Pilot")]
+    b += [P("The proposal's second task is piloted with three fixed questions per hospital course, about medications after "
+            "discharge, follow-up appointments or tests, and warning signs that should prompt care. The local model answers each "
+            "question in at most three sentences from the full course (QA-E0) or from the three chunks retrieved with the question "
+            "as query (QA-E1), with the instruction to reply \"Not stated in the note.\" when the course does not contain the "
+            "answer. Three quantities are reported per condition and question type: the abstention rate; UFR and CR of the answered "
+            "questions under the judge, with the hospital course as source; and the share of answer sentences supported by the "
+            "clinician's own discharge instructions, which measures agreement with what the clinician actually told the patient.")]
+    b += [H2("4.13 Tools, Software and Computational Environment")]
+    b += [P("All experiments were run on an Apple MacBook Air (Apple M5, 10 cores, 24 GB unified memory). The pilot pipeline "
+            "runs on the CPU; the candidate judges, the MedNLI fine-tuning and the local language model use the GPU through "
+            "PyTorch's Metal backend and Apple's MLX framework. The evaluation of one summary with the pilot judge takes a few "
+            "seconds, the complete offline recomputation of every pilot result about five minutes, the scoring of one large "
+            "candidate judge against the expert annotations about one to one and a half hours when the GPU is shared with the "
+            "generator, and the generation of all main-study conditions and ablations about nine hours. [[tab:tools]] lists "
+            "the software. Models are downloaded once from the Hugging Face hub and cached locally; every subsequent run is "
+            "offline except for the pilot study's generation calls to the OpenAI API."),
           ("table", dict(label="tools", caption="Software, models and versions used.",
                          columns=["Component", "Package or model", "Version"], widths=[2.2, 2.8, 1.5], font=9.5, align=["left", "left", "left"],
-                         rows=[["Language", "Python", "3.9.6 (virtual environment)"],
-                               ["LLM generator", "OpenAI GPT-4o-mini via openai", "gpt-4o-mini; openai 2.31.0"],
+                         rows=[["Language", "Python", "3.9.6 (pipeline) and 3.13 (local model server)"],
+                               ["LLM generator, pilot study", "OpenAI GPT-4o-mini via openai", "gpt-4o-mini; openai 2.31.0"],
+                               ["LLM generator, main study", "Qwen2.5-7B-Instruct, 4-bit, served locally with mlx-lm", "mlx 0.32; mlx-lm server on localhost"],
+                               ["Candidate judges", "DeBERTa-v3-large NLI models; MiniCheck DeBERTa/RoBERTa-large; transformers", "transformers 4.57.6"],
+                               ["Lexical retrieval (ablation)", "rank-bm25", "0.2.2"],
                                ["Sentence segmentation", "spaCy, en_core_web_sm [[cite:honnibal2020]]", "3.7.4"],
                                ["Bi-encoder for retrieval", "sentence-transformers/all-MiniLM-L6-v2 [[cite:reimers2019]]", "sentence-transformers 5.1.2"],
                                ["NLI cross-encoder", "cross-encoder/nli-MiniLM2-L6-H768", "sentence-transformers 5.1.2"],

@@ -37,7 +37,7 @@ META = dict(
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--passes", type=int, default=2)
-    ap.add_argument("--chapters", default="ch1_4,ch5_7,appendices", help="comma-separated content modules to include")
+    ap.add_argument("--chapters", default="ch1_4,ch5_pilot,ch_judge,ch_mimic,ch8_9,appendices", help="comma-separated content modules to include")
     ap.add_argument("--out", default="Ponangi_Thesis_Fall2026")
     args = ap.parse_args()
 
