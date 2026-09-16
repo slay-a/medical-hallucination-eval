@@ -728,6 +728,12 @@ def blocks(R: Results) -> list:
           P("Six retrieval ablations vary one setting of E1 at a time: chunks of three or eight sentences instead of five, two or "
             "five retrieved chunks instead of three, BM25 lexical retrieval [[cite:robertson2009]] instead of dense retrieval, and "
             "citations not required. Each variant is compared with the base configuration on the same documents.")]
+    if (ROOT / "results" / "mimic_judge_agreement.csv").exists():
+        b += [P("Two robustness checks accompany the main results. Every summary is also scored at the pilot pipeline's threshold of 0.5, "
+                "and every base-condition claim is also scored by the strongest candidate of a different model family from the judge "
+                "selection study, in its best evidence mode and at the threshold chosen there; agreement, kappa, the share of the selected "
+                "judge's flags that the second judge confirms, and the unsupported rate under both judges (conjunction) and under either "
+                "(disjunction) are reported per condition.")]
     if (ROOT / "results" / "audit_summary.csv").exists():
         b += [P("Finally, the judge's flags on the main-study summaries are audited by hand. A stratified random sample of claims, equal "
                 "numbers flagged and accepted by the judge from each LLM condition, is labeled by the author as supported or unsupported by "

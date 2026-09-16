@@ -36,6 +36,8 @@ def blocks(R: Results) -> list:
     b = []
     C = R.conds
     M = Mimic(); jr = M.judge_row()
+    _agr = _csv("mimic_judge_agreement.csv")
+    agr_all = _agr.set_index("condition").loc["all"] if _agr is not None and "all" in set(_agr.condition) else None
     t10u, t10c = R.test("UFR", "E0", "E1"), R.test("CR", "E0", "E1")
     t20u, t20c = R.test("UFR", "E0", "E2"), R.test("CR", "E0", "E2")
     t21u, t21c = R.test("UFR", "E1", "E2"), R.test("CR", "E1", "E2")
@@ -291,7 +293,10 @@ def blocks(R: Results) -> list:
         "it flags were not flagged by the experts, and it misses a sizeable share of what they flagged. Every rate in Chapter 7 is "
         "therefore an estimate produced by an instrument with a known, but non-negligible, error profile. The between-condition "
         "comparisons remain informative because every condition is scored on the same documents by the same instrument, but the "
-        "magnitude of any true effect carries this measurement error.",
+        "magnitude of any true effect carries this measurement error."
+        + ((lambda g: f" Two checks bound it: a second judge of a different model family confirms {pct0(g.first_flags_confirmed)} of the selected "
+                      f"judge's flags on the main-study claims (kappa {f2(g.kappa)} between the judges, Section 7.8), and the ordering of the "
+                      f"conditions is unchanged under the second judge and under the conjunction of the two.")(agr_all) if agr_all is not None else ""),
         "**Transfer of the validation.** For the pilot, the judge was validated on MIMIC-IV summaries and applied to MTSamples notes. The "
         "main study removes that gap, since the judge is applied to the very hospital courses the expert annotations concern, but the "
         "annotations cover doctor-written instructions and summaries written by GPT-4 and Llama models, not the output of the local "

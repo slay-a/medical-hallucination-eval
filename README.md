@@ -48,6 +48,8 @@ source note ─┬─ E0  LLM, full note ─────────────
 | `mimic_generate.py` | Main study generation with the local model server; `--ablations` adds the six E1 variants; resumable | mlx-lm server, ann-pt-summ |
 | `mimic_qa.py generate` / `evaluate` | Question-answering pilot with abstention (QA-E0, QA-E1) | mlx-lm server, ann-pt-summ |
 | `mimic_evaluate.py` | Main study evaluation with the best judge: UFR, CR, coverage vs. clinician's instructions, citation accuracy, tests, ablations | ann-pt-summ |
+| `mimic_second_judge.py` | Scores every base-condition claim with a second judge (Bespoke-MiniCheck-7B) and reports agreement with the selected judge → `results/mimic_judge_agreement.csv` | MiniCheck server |
+| `audit_sample.py`, `audit_summary.py` | Manual precision audit: draws a stratified sample of claims for hand labeling (`results_private/audit_sample.csv`), then computes precision, kappa and a corrected unsupported rate → `results/audit_summary.csv` | – |
 | `analyze.py` | Figures (`results/fig_*.png`) and example tables | – |
 | `preprocessing.py` | Shared header filter, abstention filter, MTSamples line-break repair | – |
 | `thesis/build_thesis.py` | Builds the thesis (.docx and .pdf, CSUN format) from the results | LibreOffice |
@@ -93,6 +95,14 @@ git-ignored `results_private/`; the aggregate tables in `results/mimic_*.csv` ar
 
 No credentialed text is committed, uploaded to shared storage, or sent to any external API.
 
+## Manual audit of the judge
+
+`python audit_sample.py` writes `results_private/audit_sample.csv` (320 claims: 40 flagged and 40 accepted by the judge from each of
+E0, E1, E1b and E3, in random order, with the hospital course next to each claim). Sort by `order`, read the course, and fill
+`human_label` with `S` (the claim is supported by the course), `U` (not stated or contradicted) or `?` (unsure); do not look at the
+`judge_label` and `p_support` columns while labeling. `python audit_summary.py` then writes `results/audit_summary.csv`, and the thesis
+picks it up as Section 7.8 on the next build.
+
 ## Results files
 
 Pilot: `results/claims_all.csv` (one row per claim: condition, claim, evidence, NLI label, probabilities,
@@ -100,4 +110,4 @@ is_header, is_abstention), `results/summaries.csv`, `results/comparison_per_samp
 `results/aggregate_statistics.csv`, `results/pairwise_tests.csv`, ablation and calibration CSVs.
 Judge study: `results/judge_candidates.csv`. Main study: `results/mimic_summary.csv`,
 `results/mimic_pairwise_tests.csv`, `results/mimic_ablations.csv`, `results/mimic_reference.csv`,
-`results/mimic_qa_summary.csv`. Figures: `results/fig_*.png`.
+`results/mimic_qa_summary.csv`, `results/mimic_judge_agreement.csv`, `results/audit_summary.csv` (when labeled). Figures: `results/fig_*.png`.

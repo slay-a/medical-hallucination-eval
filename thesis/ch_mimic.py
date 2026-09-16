@@ -264,7 +264,7 @@ def blocks(R: Results) -> list:
                                  f"{'0.5' if sb else f'{tau:.2f}'} ({fp(r.p.iloc[0]) if sb else fp(a.p)}) but not at {f'{tau:.2f}' if sb else '0.5'} ({fp(a.p) if sb else fp(r.p.iloc[0])})")
             return same, tot
         su_, sc_, scv_ = agree("UFR"), agree("CR"), agree("coverage_ref")
-        b += [("h2", f"{NEXT[0]} Robustness to the Judge's Threshold")]
+        b += [("h2", f"{NEXT[0]} Robustness to the Judge: Threshold and a Second Judge")]
         b += [P(f"The main results use the support threshold of {tau:.2f} selected in Chapter 6. Because the pilot pipeline used 0.5, and because the "
                 f"selected judge's kappa is almost the same at both values (Section 6.2), every summary was also scored at 0.5. [[tab:mtau]] compares "
                 f"the two. Absolute rates {'rise' if alt.loc['E0','UFR_mean'] > base.loc['E0','UFR_mean'] else 'fall'} at the stricter threshold, as they "
@@ -278,6 +278,27 @@ def blocks(R: Results) -> list:
                              rows=[[NAME.get(c, c), f3(base.loc[c, 'UFR_mean']), f3(alt.loc[c, 'UFR_mean']), f3(base.loc[c, 'CR_mean']), f3(alt.loc[c, 'CR_mean']),
                                     (pct(base.loc[c, 'coverage_ref_mean']) if c != 'REF' else '—'), (pct(alt.loc[c, 'coverage_ref_mean']) if c != 'REF' else '—')]
                                    for c in conds if c in alt.index]))]
+        agr = _csv("mimic_judge_agreement.csv")
+        if agr is not None and len(agr) and "all" in set(agr.condition):
+            G = agr.set_index("condition"); g_all = G.loc["all"]
+            sj = JUDGE_NAMES.get(g_all.second_judge, g_all.second_judge)
+            b += [P(f"A second, independent judge gives a further check. Every claim of the base conditions was also scored by {sj}, the "
+                    f"strongest candidate of a different model family in Chapter 6, in its best evidence mode ({'three retrieved sentences' if g_all.second_mode == 'top3' else 'whole course'}) "
+                    f"and at the threshold that study chose ({g_all.second_tau:.2f}). The two judges agree on {pct0(g_all.agreement)} of the "
+                    f"{int(g_all.n_claims):,} claims (kappa {f2(g_all.kappa)}); the second judge confirms {pct0(g_all.first_flags_confirmed)} of the "
+                    f"selected judge's flags and flags {pct0(g_all.flag_rate_second)} of claims itself against {pct0(g_all.flag_rate_first)}. "
+                    f"[[tab:magree]] reports, per condition, the UFR under each judge, the rate of claims flagged by both, which is a conservative "
+                    f"estimate of unsupported content, and the rate flagged by either. "
+                    + (f"The ordering of the conditions is the same under both judges and under their conjunction: "
+                       f"{_join([NAME.get(c, c) for c in [x for x in ('E1', 'E1b', 'E3', 'E2') if x in G.index]])} stay far below E0, and the "
+                       f"clinician's instructions stay above every model." if all(G.loc[c, 'UFR_both'] < G.loc['E0', 'UFR_both'] for c in G.index if c not in ('E0', 'REF', 'all')) else
+                       "The ordering of the conditions under the second judge is reported in the table.")),
+                  ("table", dict(label="magree", caption="Agreement between the selected judge and a second judge on the base-condition claims: flag rates, agreement, kappa, share of the selected judge's flags confirmed, and per-document UFR under each judge, under both (conjunction) and under either (disjunction).",
+                                 columns=["Condition", "Claims", "Flagged by selected", "Flagged by second", "Agreement", "Kappa", "Selected flags confirmed", "UFR selected", "UFR second", "UFR both", "UFR either"],
+                                 widths=[0.95, 0.5, 0.6, 0.6, 0.6, 0.45, 0.65, 0.55, 0.55, 0.5, 0.55], font=8,
+                                 rows=[[NAME.get(c, c) if c != "all" else "All", str(int(r.n_claims)), pct0(r.flag_rate_first), pct0(r.flag_rate_second), pct0(r.agreement), f2(r.kappa),
+                                        pct0(r.first_flags_confirmed), f3(r.UFR_first), f3(r.UFR_second), f3(r.UFR_both), f3(r.UFR_either)]
+                                       for c, r in G.iterrows() if c in list(ORDER) + ["all"]]))]
         b += [("h2", f"{NEXT[1]} Summary of the Main Study")]
     else:
         b += [("h2", f"{NEXT[0]} Summary of the Main Study")]
