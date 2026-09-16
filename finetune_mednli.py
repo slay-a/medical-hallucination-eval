@@ -9,7 +9,7 @@ Default base model: MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli (al
 the fine-tuned model is saved OUTSIDE the repository (~/Desktop/Thesis/models/...) and can then be scored against
 the ann-pt-summ expert labels with:  python judge_candidates.py --only mednli_deberta_large
 
-Usage: python finetune_mednli.py [--base MODEL] [--epochs 2] [--lr 1e-5] [--batch 4] [--grad-accum 4] [--max-len 256] [--freeze-embeddings]
+Usage: python finetune_mednli.py [--base MODEL] [--epochs 1] [--lr 2e-5] [--optimizer adafactor|adamw] [--batch 4] [--grad-accum 4] [--max-len 128]
 """
 import argparse
 import glob
@@ -73,9 +73,11 @@ def main():
     ap.add_argument("--out", default=str(OUT_DEFAULT))
     ap.add_argument("--epochs", type=int, default=2)
     ap.add_argument("--lr", type=float, default=1e-5)
+    ap.add_argument("--optimizer", choices=["adamw", "adafactor"], default="adafactor",
+                    help="adafactor keeps a factored second moment only (a few MB of state) and fits next to the model server; adamw needs ~3.5 GB of state")
     ap.add_argument("--batch", type=int, default=4, help="micro-batch size (memory-bound on a 24 GB Apple GPU)")
     ap.add_argument("--grad-accum", type=int, default=4, help="micro-batches per optimizer step (effective batch = batch x grad-accum)")
-    ap.add_argument("--freeze-embeddings", action="store_true", help="do not update the 128k-token embedding matrix (saves ~1.5 GB of optimizer state)")
+    ap.add_argument("--freeze-embeddings", action="store_true", help="freeze the embedding matrix and its LayerNorm (saves ~0.5 GB of gradients plus optimizer state)")
     ap.add_argument("--max-len", type=int, default=256)
     ap.add_argument("--seed", type=int, default=42)
     args = ap.parse_args()
@@ -101,10 +103,17 @@ def main():
     print(f"zero-shot dev accuracy: {evaluate(model, dv):.4f}  test: {evaluate(model, te):.4f}", flush=True)
 
     if args.freeze_embeddings:
-        for prm in model.get_input_embeddings().parameters():
-            prm.requires_grad_(False)
+        # freeze the 128k-token embedding matrix AND the embedding LayerNorm: on the MPS backend (torch 2.8) freezing the
+        # matrix alone leaves a NaN gradient in the LayerNorm weight, which then poisons every parameter through clipping
+        for n, prm in model.named_parameters():
+            if n.startswith("deberta.embeddings."):
+                prm.requires_grad_(False)
     params = [prm for prm in model.parameters() if prm.requires_grad]
-    opt = torch.optim.AdamW(params, lr=args.lr, weight_decay=0.01)
+    if args.optimizer == "adamw":
+        opt = torch.optim.AdamW(params, lr=args.lr, weight_decay=0.01)
+    else:
+        from transformers.optimization import Adafactor
+        opt = Adafactor(params, lr=args.lr, scale_parameter=False, relative_step=False, warmup_init=False, beta1=None, weight_decay=0.01, clip_threshold=1.0)
     accum = max(1, args.grad_accum)
     steps = args.epochs * math.ceil(len(tr) / accum)          # optimizer steps
     sched = get_linear_schedule_with_warmup(opt, int(0.06 * steps), steps)
@@ -120,13 +129,18 @@ def main():
             if micro % accum == 0 or i == n_micro - 1:
                 torch.nn.utils.clip_grad_norm_(params, 1.0)
                 opt.step(); sched.step(); opt.zero_grad(set_to_none=True); step += 1
+                if DEVICE == "mps" and step % 10 == 0:
+                    torch.mps.empty_cache()   # return cached blocks so that the language-model server is not starved
                 if step % 50 == 0:
-                    print(f"  epoch {ep+1} step {step}/{steps} loss {loss.item() * accum:.4f} ({time.time()-t0:.0f}s)", flush=True)
+                    cur = loss.item() * accum
+                    print(f"  epoch {ep+1} step {step}/{steps} loss {cur:.4f} ({time.time()-t0:.0f}s)", flush=True)
+                    if not math.isfinite(cur):
+                        raise RuntimeError("non-finite training loss; aborting so that no corrupted checkpoint is saved")
         acc_dev, acc_test = evaluate(model, dv), evaluate(model, te)
         print(f"epoch {ep+1}: dev accuracy {acc_dev:.4f}  test accuracy {acc_test:.4f}", flush=True)
-        if acc_dev > best:
+        if math.isfinite(acc_dev) and acc_dev > best:
             best = acc_dev; model.save_pretrained(out); tok.save_pretrained(out)
-            json.dump(dict(base=args.base, epochs=ep + 1, dev_accuracy=acc_dev, test_accuracy=acc_test, lr=args.lr,
+            json.dump(dict(base=args.base, epochs=ep + 1, dev_accuracy=acc_dev, test_accuracy=acc_test, lr=args.lr, optimizer=args.optimizer,
                            batch=args.batch * accum, micro_batch=args.batch, grad_accum=accum, freeze_embeddings=args.freeze_embeddings,
                            train_minutes=round((time.time() - t0) / 60, 1)),
                       open(out / "mednli_finetune_summary.json", "w"), indent=1)

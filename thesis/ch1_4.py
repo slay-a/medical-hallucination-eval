@@ -126,8 +126,8 @@ def blocks(R: Results) -> list:
             "bootstrap confidence intervals. The judge is then validated against 210 patient summaries annotated by two "
             "medical experts in the ann-pt-summ dataset [[cite:hegselmann2025data]], its robustness to its own design "
             "choices is examined in a series of ablations, and a coverage proxy quantifies the omission cost of retrieval. "
-            "This pilot study on public data is followed by two further studies. A judge-selection study scores five candidate "
-            "judges, including one adapted to clinical language with MedNLI [[cite:romanov2018]], against the same expert "
+            "This pilot study on public data is followed by two further studies. A judge-selection study scores five off-the-shelf "
+            "candidate judges and a sixth adapted to clinical language with MedNLI [[cite:romanov2018]] against the same expert "
             "annotations and selects the best. The main study then repeats the five conditions on 110 MIMIC-IV hospital courses "
             "with a language model that runs on the author's computer, requires citations from the retrieval conditions, measures "
             "omission against the discharge instructions that the treating clinicians actually wrote, runs the retrieval ablations "
@@ -146,7 +146,7 @@ def blocks(R: Results) -> list:
               "far an off-the-shelf NLI judge can and cannot be trusted for this task.",
               "A quantitative analysis of the coverage cost of excerpt-only RAG, and a keyword-assisted taxonomy of the "
               "statements that remain unsupported under every condition.",
-              "A judge-selection study that scores five candidate judges, including a MedNLI-adapted clinical NLI model, against "
+              "A judge-selection study that scores five off-the-shelf candidate judges and a MedNLI-adapted clinical NLI model against "
               "medical-expert annotations, and a main study on real MIMIC-IV hospital courses with a locally run open-weight model, "
               "citation accuracy, coverage against clinician-written discharge instructions, retrieval ablations and a "
               "question-answering pilot.",
@@ -686,12 +686,15 @@ def blocks(R: Results) -> list:
             "maximizes kappa is chosen on the doctor-written summaries and vice versa, and for the pooled figure the two subsets "
             "are pooled. AUROC, precision, recall, specificity, F1 and kappa are reported for every candidate and mode."),
           P("The strongest general model is then adapted to clinical language by fine-tuning on MedNLI [[cite:romanov2018]] "
-            "(Section 3.4): two epochs, learning rate 1e-5 with linear warm-up over six percent of the steps and linear decay, "
-            "an effective batch size of 16 (micro-batches of four with gradient accumulation over four, because the optimizer "
-            "state of a 435-million-parameter model and a batch of sixteen do not fit together in the laptop's 24 GB of unified "
-            "memory), maximum sequence length 256, AdamW with weight decay 0.01, gradient clipping at 1.0, seed 42, on the "
-            "laptop's GPU through PyTorch's Metal backend. The 128,000-token input embedding matrix is frozen and the "
-            "pre-trained three-way classification head is kept with its labels mapped onto MedNLI's. The checkpoint with the best MedNLI development accuracy is kept and scored against the "
+            "(Section 3.4): one epoch over the 11,232 training pairs, learning rate 2e-5 with linear warm-up over six percent of the "
+            "steps and linear decay, an effective batch size of 16 (micro-batches of four with gradient accumulation over four), "
+            "maximum sequence length 128 (99 percent of MedNLI pairs are at most 120 tokens), the Adafactor optimizer "
+            "[[cite:shazeer2018]] with a fixed learning rate, no first-moment accumulation and weight decay 0.01, gradient "
+            "clipping at 1.0, seed 42, on the laptop's GPU through PyTorch's Metal backend, with the 128,000-token input embedding "
+            "matrix and its layer normalization frozen. Adafactor was chosen because it stores a factored second moment of a few "
+            "megabytes instead of AdamW's two full copies of the 435 million parameters, which did not fit in the GPU memory left "
+            "beside the language-model server; the frozen embedding block saves a further half gigabyte of gradients. The pre-trained three-way classification head is kept with its "
+            "labels mapped onto MedNLI's. The checkpoint with the best MedNLI development accuracy is kept and scored against the "
             "expert annotations exactly like the other candidates. The decision rule, fixed before the comparison, selects the "
             "candidate and evidence mode with the highest kappa on all sentences.")]
     b += [H2("4.11 Main Study on MIMIC-IV Hospital Courses")]
