@@ -22,6 +22,12 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import mlx.core as mx
 from mlx_lm import load
 from mlx_lm.models.cache import make_prompt_cache, trim_prompt_cache
+from tokenizers import Tokenizer
+
+# InternLM2 chat format (identical to the model's chat template); the BOS token is added by the tokenizer's post-processor.
+# The tokenizer is read directly from tokenizer.json with the `tokenizers` library because the model's remote tokenizer
+# class splits text into single characters under transformers 5.
+CHAT_TEMPLATE = "<|im_start|>system\n{system}<|im_end|>\n<|im_start|>user\n{user}<|im_end|>\n<|im_start|>assistant\n"
 
 SYSTEM_PROMPT = ("Determine whether the provided claim is consistent with the corresponding document. Consistency in this context "
                  "implies that all information presented in the claim is substantiated by the document. If not, it should be "
@@ -34,26 +40,28 @@ PREFILL_CHUNK = 512
 
 class Scorer:
     def __init__(self, path):
-        self.model, self.tok = load(path, tokenizer_config={"trust_remote_code": True})
-        hf = getattr(self.tok, "_tokenizer", self.tok)
+        self.model, _ = load(path, tokenizer_config={"trust_remote_code": True})
+        self.tk = Tokenizer.from_file(str(path).rstrip("/") + "/tokenizer.json")
         self.yes_ids, self.no_ids = [], []
-        for tid in range(len(hf.get_vocab())):
-            d = hf.decode([tid]).strip().lower()
+        for tid in range(self.tk.get_vocab_size()):
+            d = self.tk.decode([tid]).strip().lower()
             if d == "yes":
                 self.yes_ids.append(tid)
             elif d == "no":
                 self.no_ids.append(tid)
         self.yes_ids, self.no_ids = mx.array(self.yes_ids), mx.array(self.no_ids)
-        print(f"model loaded; {len(self.yes_ids)} 'yes' tokens, {len(self.no_ids)} 'no' tokens", flush=True)
+        probe = self.prompt_ids("The patient was given aspirin.", "The patient received aspirin.")
+        print(f"model loaded; {len(self.yes_ids)} 'yes' tokens, {len(self.no_ids)} 'no' tokens; probe prompt {len(probe)} tokens, "
+              f"tail {self.tk.decode(probe[-12:])!r}", flush=True)
 
     def prompt_ids(self, doc, claim):
-        msgs = [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": USER_PROMPT.format(doc=doc, claim=claim)}]
-        return list(self.tok.apply_chat_template(msgs, add_generation_prompt=True))
+        text = CHAT_TEMPLATE.format(system=SYSTEM_PROMPT, user=USER_PROMPT.format(doc=doc, claim=claim))
+        return list(self.tk.encode(text).ids)
 
     def truncate_doc(self, doc):
-        ids = self.tok.encode(doc)
+        ids = self.tk.encode(doc, add_special_tokens=False).ids
         if len(ids) > MAX_DOC_TOKENS:
-            return self.tok.decode(ids[:MAX_DOC_TOKENS])
+            return self.tk.decode(ids[:MAX_DOC_TOKENS])
         return doc
 
     def _forward(self, ids, cache):

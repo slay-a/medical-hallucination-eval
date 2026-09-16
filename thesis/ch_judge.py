@@ -77,6 +77,19 @@ def blocks(R: Results) -> list:
             f"of the small model changes little. And for the large models the whole-course evidence mode, which lets the model "
             f"see every sentence of the hospital course in windows, is competitive with or better than three retrieved "
             f"sentences, because paraphrased patient-facing sentences draw on several parts of the course at once.")]
+    bmc = jc[(jc.judge == "bespoke_minicheck_7b") & (jc.group == "all")]
+    if len(bmc):
+        bd = bmc[bmc["mode"] == "doc"]; bt = bmc[bmc["mode"] == "top3"]; deb = jc[(jc.judge == "deberta_large_nli") & (jc["mode"] == "doc") & (jc.group == "all")].iloc[0]
+        bdr = bd.iloc[0] if len(bd) else None
+        b += [P(f"The language-model checker behaves differently from the encoders. Bespoke-MiniCheck-7B, which reads the whole hospital course in "
+                f"one pass and answers yes or no, reaches an AUROC of {f2(bdr.auroc) if bdr is not None else '—'} and a kappa of "
+                f"{f2(bdr.kappa) if bdr is not None else '—'} with whole-course evidence (precision {f2(bdr.precision) if bdr is not None else '—'}, recall "
+                f"{f2(bdr.recall) if bdr is not None else '—'}, flag rate {pct0(bdr.flag_rate) if bdr is not None else '—'}) and "
+                f"{f2(bt.iloc[0].kappa) if len(bt) else '—'} with three retrieved sentences. "
+                + (f"That is {'above' if bdr.kappa > deb.kappa else 'below'} the best encoder ({f2(deb.kappa)}), so "
+                   + ("the pre-specified rule selects it for the main study." if bdr.kappa > deb.kappa else
+                      "a model that tops the general fact-checking leaderboards does not agree with medical experts better than a strong NLI encoder on "
+                      "patient-facing sentences; the disagreement is not a matter of model size or reading the whole document.") if bdr is not None else ""))]
     b += [("h2", "6.3 Adaptation to Clinical Language with MedNLI")]
     if ftj is not None:
         mr = jc[(jc.judge == "mednli_deberta_large") & (jc.group == "all")]
