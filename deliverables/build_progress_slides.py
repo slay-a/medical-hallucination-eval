@@ -149,7 +149,7 @@ def slides(R: Results):
             f"Omission separates them: excerpt-only RAG covered {pct0(M.mean('E1','coverage_ref'))} of the clinician's sentences and verification {pct0(M.mean('E3','coverage_ref'))}, against {pct0(M.mean('E0','coverage_ref'))} for E0; RAG with the whole course kept {pct0(M.mean('E1b','coverage_ref'))} ({fp(M.test('coverage_ref','E1b').p)} versus E0)",
             f"Verbatim extraction scores UFR {f3(M.mean('E2','UFR'))}: the judge's error floor; the grounded LLM conditions sit within a few hundredths of it",
             f"The clinicians' own instructions score UFR {f3(M.mean('REF','UFR'))} under the same judge: support by the hospital course measures source-faithfulness, not clinical correctness",
-            f"Citations: {pct0(M.mean('E1','citation_accuracy'))} accurate for excerpt-only RAG but {pct0(M.mean('E1b','citation_accuracy'))} for RAG with the whole course; no retrieval setting changed UFR or CR, coverage followed the amount of retrieved text",
+            f"Citations: {pct0(M.mean('E1','citation_accuracy'))} accurate for excerpt-only RAG but {pct0(M.mean('E1b','citation_accuracy'))} for RAG with the whole course; {M.faithfulness_short()}; coverage followed the amount of retrieved text",
             (f"Question answering: abstention {pct0(M.qa_tot.loc['QA-E0','abstention_rate'])} (full course) versus {pct0(M.qa_tot.loc['QA-E1','abstention_rate'])} (excerpts), highest for warning signs, which the course rarely states; retrieval lowers unsupported answers partly by abstaining more" if M.qa_tot is not None else "")]))
         if M.abl is not None and len(M.abl):
             rows = []

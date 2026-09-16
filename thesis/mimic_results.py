@@ -13,6 +13,9 @@ NAME = {"E0": "E0 zero-context LLM", "E1": "E1 RAG (excerpts only, cited)", "E1b
 SHORT = {"E0": "E0", "E1": "E1", "E1b": "E1b", "E3": "E3", "E2": "E2", "REF": "clinician"}
 VAR = {"base": "E1 base (5-sentence chunks, top-3, dense, cited)", "chunk3": "3-sentence chunks", "chunk8": "8-sentence chunks", "top2": "top-2 chunks",
        "top5": "top-5 chunks", "bm25": "BM25 retrieval", "nocite": "citations not required"}
+VPHRASE = {"chunk3": "three-sentence chunks", "chunk8": "eight-sentence chunks", "top2": "two retrieved chunks", "top5": "five retrieved chunks",
+           "bm25": "BM25 retrieval", "nocite": "dropping the citation requirement"}
+WORD = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six"}
 JUDGE_NAMES = {"minilm_nli": "MiniLM cross-encoder", "deberta_large_nli": "DeBERTa-v3-large NLI", "ce_deberta_large_nli": "DeBERTa-v3-large cross-encoder NLI",
                "minicheck_deberta": "MiniCheck DeBERTa-v3-large", "minicheck_roberta": "MiniCheck RoBERTa-large", "mednli_deberta_large": "DeBERTa-v3-large NLI fine-tuned on MedNLI"}
 
@@ -77,6 +80,47 @@ class Mimic:
     @staticmethod
     def rel(t):
         return f"{abs(t.rel_change_mean):.0f} percent" if t is not None and not np.isnan(t.rel_change_mean) else "—"
+
+    # ---- retrieval ablations: which variants changed a metric significantly
+    def sig_ablations(self, metric):
+        if self.abl is None:
+            return []
+        out = []
+        for v in [x for x in VAR if x != "base"]:
+            r = self.abl[(self.abl.metric == metric) & (self.abl.variant == v)]
+            if len(r) and not np.isnan(r.p.iloc[0]) and r.p.iloc[0] < 0.05:
+                out.append((v, float(r.delta_mean.iloc[0]), float(r.p.iloc[0])))
+        return out
+
+    def faithfulness_phrase(self):
+        """Sentence fragment about which retrieval variants changed UFR or CR (for Chapters 8 and 9)."""
+        from results_loader import fp
+        su, sc = self.sig_ablations("UFR"), self.sig_ablations("CR")
+        parts = [f"{VPHRASE[v]} {'raised' if d > 0 else 'lowered'} UFR by {abs(d):.3f} ({fp(pv)})" for v, d, pv in su]
+        parts += [f"{VPHRASE[v]} {'raised' if d > 0 else 'lowered'} CR by {abs(d):.3f} ({fp(pv)})" for v, d, pv in sc]
+        if not parts:
+            return "no retrieval variant changed UFR or CR"
+        n = len(parts)
+        return f"{WORD.get(n, n)} of the six retrieval variants affected faithfulness: " + "; ".join(parts) + "; the others changed neither rate"
+
+    def faithfulness_short(self):
+        """Compact version for the abstract and slides."""
+        su, sc = self.sig_ablations("UFR"), self.sig_ablations("CR")
+        if [v for v, d, _ in su if d > 0] == ["nocite"] and not [v for v, d, _ in su if v != "nocite"]:
+            extra = "" if not sc else f" and {VPHRASE[sc[0][0]]} {'raised' if sc[0][1] > 0 else 'lowered'} CR"
+            return f"requiring citations lowered UFR (dropping the requirement raised it by {abs(su[0][1]):.3f}){extra}, while other retrieval settings changed only coverage"
+        if not su and not sc:
+            return "no retrieval setting changed faithfulness"
+        return "only " + " and ".join(VPHRASE[v] for v, _, _ in su + sc) + " changed faithfulness"
+
+    def faithfulness_abstract(self):
+        """Shortest version for the abstract."""
+        su, sc = self.sig_ablations("UFR"), self.sig_ablations("CR")
+        if [v for v, d, _ in su if d > 0] == ["nocite"] and not [v for v, d, _ in su if v != "nocite"]:
+            return "requiring citations lowered UFR, and other retrieval settings changed mainly coverage"
+        if not su and not sc:
+            return "no retrieval setting changed faithfulness"
+        return "only " + " and ".join(VPHRASE[v] for v, _, _ in su + sc) + " changed faithfulness"
 
     @staticmethod
     def finetune_summary():
