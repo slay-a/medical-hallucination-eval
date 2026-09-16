@@ -19,6 +19,7 @@ Usage:   python judge_candidates.py [--only name,name] [--data-dir DIR]
 """
 import argparse
 import gc
+import json
 import sys
 import time
 from pathlib import Path
@@ -45,6 +46,9 @@ CANDIDATES = {
     "minicheck_roberta": dict(kind="minicheck", name="lytang/MiniCheck-RoBERTa-Large"),
     # local fine-tuned clinical NLI model produced by finetune_mednli.py (outside the repository)
     "mednli_deberta_large": dict(kind="nli3", name=str(Path.home() / "Desktop" / "Thesis" / "models" / "mednli-deberta-v3-large"), order=None),
+    # Bespoke-MiniCheck-7B (InternLM2.5-7B fine-tuned for grounding checks; top of the LLM-AggreFact leaderboard), served locally
+    # by minicheck_server.py (MLX, 8-bit) and queried over localhost; reads the whole hospital course in one pass
+    "bespoke_minicheck_7b": dict(kind="llm_yesno", name="bespokelabs/Bespoke-MiniCheck-7B", url="http://127.0.0.1:8081"),
 }
 
 
@@ -62,6 +66,14 @@ def load_items(data_dir: Path):
 class Judge:
     def __init__(self, key, spec):
         self.key, self.kind = key, spec["kind"]
+        if self.kind == "llm_yesno":
+            import urllib.request
+            self.url = spec["url"]
+            with urllib.request.urlopen(self.url + "/health", timeout=10) as r:
+                info = json.loads(r.read())
+            print(f"[{key}] using local scoring server: {info.get('model')}", flush=True)
+            self.tok = None; self.model = None; self.max_len = None
+            return
         self.tok = AutoTokenizer.from_pretrained(spec["name"])
         self.model = AutoModelForSequenceClassification.from_pretrained(spec["name"]).to(DEVICE).eval()
         id2label = {int(k): v.lower() for k, v in self.model.config.id2label.items()}
@@ -89,12 +101,24 @@ class Judge:
 
     def support_scores(self, premises, hypotheses):
         """Return (p_support, p_contra) arrays."""
+        if self.kind == "llm_yesno":
+            import urllib.request
+            py = np.zeros(len(premises))
+            for s in range(0, len(premises), 512):
+                body = json.dumps({"docs": list(premises[s:s + 512]), "claims": list(hypotheses[s:s + 512])}).encode()
+                req = urllib.request.Request(self.url + "/score", data=body, headers={"Content-Type": "application/json"})
+                with urllib.request.urlopen(req, timeout=36000) as r:
+                    out = json.loads(r.read())
+                py[s:s + 512] = out["p_yes"]
+            return py, np.zeros(len(premises))          # a binary grounding checker has no contradiction channel
         p = self.probs(premises, hypotheses)
         if self.kind == "nli3":
             return p[:, self.i_ent], p[:, self.i_con]
         return p[:, 1], np.zeros(len(premises))          # MiniCheck: label 1 = supported
 
     def windows(self, sentences, max_tokens=400):
+        if self.kind == "llm_yesno":                     # the 32k-context checker reads the whole course at once
+            return [" ".join(sentences)]
         wins, cur, cur_len = [], [], 0
         for s in sentences:
             n = len(self.tok.tokenize(s))
@@ -187,7 +211,7 @@ def main():
         print(f"[{key}] done in {time.time()-t0:.0f}s; pairs={len(df) + len(premises)}", flush=True)
         a = pd.DataFrame(agg)
         print(a[(a.judge == key) & (a.group == "all")][["mode", "auroc", "kappa", "precision", "recall", "flag_rate", "tau_from_other_subset"]].round(3).to_string(index=False), flush=True)
-        del J; gc.collect(); torch.mps.empty_cache() if DEVICE == "mps" else None
+        del J; gc.collect(); (torch.mps.empty_cache() if DEVICE == "mps" else None)
         out = pd.concat([prev, pd.DataFrame(agg)], ignore_index=True) if prev is not None else pd.DataFrame(agg)
         out.to_csv(RESULTS / "judge_candidates.csv", index=False)
         df.drop(columns=["ctx_sents"]).to_csv(PRIVATE / "judge_candidates_sentences.csv", index=False)

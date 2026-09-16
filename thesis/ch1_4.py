@@ -3,6 +3,8 @@
 Every number comes from the Results object (thesis/results_loader.py); nothing is typed in by hand.
 Citations use [[cite:key]] (thesis/references.py); cross-references use [[tab:label]] / [[fig:label]].
 """
+from pathlib import Path as _P
+ROOT = _P(__file__).resolve().parent.parent
 from results_loader import Results, f3, f2, pct, pct0, fp, fpn, COND_NAME
 
 FIG = "results"
@@ -126,8 +128,8 @@ def blocks(R: Results) -> list:
             "bootstrap confidence intervals. The judge is then validated against 210 patient summaries annotated by two "
             "medical experts in the ann-pt-summ dataset [[cite:hegselmann2025data]], its robustness to its own design "
             "choices is examined in a series of ablations, and a coverage proxy quantifies the omission cost of retrieval. "
-            "This pilot study on public data is followed by two further studies. A judge-selection study scores five off-the-shelf "
-            "candidate judges and a sixth adapted to clinical language with MedNLI [[cite:romanov2018]] against the same expert "
+            "This pilot study on public data is followed by two further studies. A judge-selection study scores six off-the-shelf "
+            "candidate judges and a seventh adapted to clinical language with MedNLI [[cite:romanov2018]] against the same expert "
             "annotations and selects the best. The main study then repeats the five conditions on 110 MIMIC-IV hospital courses "
             "with a language model that runs on the author's computer, requires citations from the retrieval conditions, measures "
             "omission against the discharge instructions that the treating clinicians actually wrote, runs the retrieval ablations "
@@ -146,7 +148,7 @@ def blocks(R: Results) -> list:
               "far an off-the-shelf NLI judge can and cannot be trusted for this task.",
               "A quantitative analysis of the coverage cost of excerpt-only RAG, and a keyword-assisted taxonomy of the "
               "statements that remain unsupported under every condition.",
-              "A judge-selection study that scores five off-the-shelf candidate judges and a MedNLI-adapted clinical NLI model against "
+              "A judge-selection study that scores six off-the-shelf candidate judges and a MedNLI-adapted clinical NLI model against "
               "medical-expert annotations, and a main study on real MIMIC-IV hospital courses with a locally run open-weight model, "
               "citation accuracy, coverage against clinician-written discharge instructions, retrieval ablations and a "
               "question-answering pilot.",
@@ -673,15 +675,20 @@ def blocks(R: Results) -> list:
             "the examples of every category; the counts should be read as a coarse characterization, not as a validated "
             "clinical error typology.")]
     b += [H2("4.10 Judge Selection Study")]
-    b += [P("Chapter 5 validates the pilot judge and finds it wanting. The judge selection study therefore scores five candidate "
+    b += [P("Chapter 5 validates the pilot judge and finds it wanting. The judge selection study therefore scores six candidate "
             "judges, all runnable on a laptop, against the same 1,781 expert-annotated sentences with the protocol of Section 4.7. "
             "The candidates are the pilot judge (cross-encoder/nli-MiniLM2-L6-H768); two general-domain DeBERTa-v3-large NLI models, "
             "one trained on MultiNLI, FEVER-NLI, ANLI, LingNLI and WANLI and one from the sentence-transformers cross-encoder "
             "collection [[cite:reimers2019]]; and two MiniCheck models, DeBERTa-v3-large and RoBERTa-large classifiers trained "
-            "specifically to decide whether a sentence is grounded in a document [[cite:tang2024minicheck]]. Each candidate is run in "
-            "two evidence modes: the three retrieved sentences concatenated into one premise, and the whole hospital course split "
-            "into windows of at most 400 tokens of consecutive sentences with the maximum support probability over windows. The "
-            "support score is the entailment probability for NLI models and the supported-class probability for MiniCheck."),
+            "specifically to decide whether a sentence is grounded in a document [[cite:tang2024minicheck]]. A sixth off-the-shelf "
+            "candidate, added after the first comparison, is Bespoke-MiniCheck-7B [[cite:bespoke2024]], a seven-billion-parameter "
+            "instruction-tuned language model fine-tuned for the same grounding decision that leads the LLM-AggreFact fact-checking "
+            "leaderboard [[cite:tang2024minicheck]]; it is served locally in eight-bit precision through Apple's MLX framework and "
+            "answers \"Yes\" or \"No\" to a fixed prompt, and its support score is the probability of \"Yes\" at the first generated "
+            "token. Each candidate is run in two evidence modes: the three retrieved sentences concatenated into one premise, and the "
+            "whole hospital course, which the encoder models see in windows of at most 400 tokens of consecutive sentences with the "
+            "maximum support probability over windows and which the 32,000-token language-model checker reads in one pass. The "
+            "support score is the entailment probability for NLI models and the supported-class probability for the MiniCheck models."),
           P("Thresholds are never tuned on the sentences they are evaluated on: for the LLM-generated summaries the threshold that "
             "maximizes kappa is chosen on the doctor-written summaries and vice versa, and for the pooled figure the two subsets "
             "are pooled. AUROC, precision, recall, specificity, F1 and kappa are reported for every candidate and mode."),
@@ -721,6 +728,12 @@ def blocks(R: Results) -> list:
           P("Six retrieval ablations vary one setting of E1 at a time: chunks of three or eight sentences instead of five, two or "
             "five retrieved chunks instead of three, BM25 lexical retrieval [[cite:robertson2009]] instead of dense retrieval, and "
             "citations not required. Each variant is compared with the base configuration on the same documents.")]
+    if (ROOT / "results" / "audit_summary.csv").exists():
+        b += [P("Finally, the judge's flags on the main-study summaries are audited by hand. A stratified random sample of claims, equal "
+                "numbers flagged and accepted by the judge from each LLM condition, is labeled by the author as supported or unsupported by "
+                "the hospital course with the judge's label hidden; precision of the flags, the unsupported share among accepted claims, "
+                "and Cohen's kappa are reported, and a corrected unsupported rate is estimated by weighting the two error rates by each "
+                "condition's flag rate. The audit checks textual support, not clinical correctness.")]
     b += [H2("4.12 Question-Answering Pilot")]
     b += [P("The proposal's second task is piloted with three fixed questions per hospital course, about medications after "
             "discharge, follow-up appointments or tests, and warning signs that should prompt care. The local model answers each "

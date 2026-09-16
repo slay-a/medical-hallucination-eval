@@ -82,7 +82,7 @@ def blocks(R: Results) -> list:
                                ["recompute_metrics.py", "Per-document metrics, paired Wilcoxon tests, bootstrap CIs, effect sizes, header-filter tables"],
                                ["ablations.py", "Threshold, top-k and cleaned-evidence ablations; coverage proxy; negation analysis; error taxonomy"],
                                ["calibration_annptsumm.py, calibration_variants.py", "Judge validation against ann-pt-summ expert annotations (local models only)"],
-                               ["judge_candidates.py", "Judge selection study: five candidate judges in two evidence modes scored against the expert annotations (Chapter 6)"],
+                               ["judge_candidates.py", "Judge selection study: six candidate judges in two evidence modes scored against the expert annotations (Chapter 6)"],
                                ["finetune_mednli.py", "MedNLI fine-tuning of the strongest general NLI model; the model is saved outside the repository"],
                                ["mimic_generate.py", "Main-study generation with the local Qwen2.5-7B-Instruct server: E0, E1 and its six retrieval variants, E1b, E2, E3 on the 110 hospital courses (resumable)"],
                                ["mimic_evaluate.py", "Main-study evaluation with the selected judge: UFR, CR, coverage of the clinician's instructions, citation accuracy, reference scoring, paired tests and ablation tests"],

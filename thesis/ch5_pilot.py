@@ -462,7 +462,7 @@ def abstract(R: Results) -> list:
            f"medical experts, that judge flagged "
            f"{pct0(cal.judge_UFR)} of sentences where the experts flagged {pct0(cal.expert_flag_rate)}, with Cohen's kappa {f2(cal.any_kappa)}: it is not a "
            f"valid hallucination detector for this task. "
-           + (f"A judge selection study of five off-the-shelf judges and a MedNLI-adapted model then selected a DeBERTa-v3-large NLI model "
+           + (f"A judge selection study of six off-the-shelf judges and a MedNLI-adapted model then selected a DeBERTa-v3-large NLI model "
               f"(kappa {f2(jr.kappa)}, AUROC {f2(jr.auroc)}); clinical fine-tuning raised MedNLI accuracy by nine points but not "
               f"agreement with the experts. With that judge, a main study repeated the five conditions on {M.n_docs} MIMIC-IV hospital courses with "
               f"an open-weight model running locally, measuring omission against the clinicians' own discharge instructions. Retrieval, retrieval "

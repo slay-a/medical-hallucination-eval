@@ -17,7 +17,8 @@ VPHRASE = {"chunk3": "three-sentence chunks", "chunk8": "eight-sentence chunks",
            "bm25": "BM25 retrieval", "nocite": "dropping the citation requirement"}
 WORD = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six"}
 JUDGE_NAMES = {"minilm_nli": "MiniLM cross-encoder", "deberta_large_nli": "DeBERTa-v3-large NLI", "ce_deberta_large_nli": "DeBERTa-v3-large cross-encoder NLI",
-               "minicheck_deberta": "MiniCheck DeBERTa-v3-large", "minicheck_roberta": "MiniCheck RoBERTa-large", "mednli_deberta_large": "DeBERTa-v3-large NLI fine-tuned on MedNLI"}
+               "minicheck_deberta": "MiniCheck DeBERTa-v3-large", "minicheck_roberta": "MiniCheck RoBERTa-large", "mednli_deberta_large": "DeBERTa-v3-large NLI fine-tuned on MedNLI",
+               "bespoke_minicheck_7b": "Bespoke-MiniCheck-7B (LLM checker)"}
 
 
 def _csv(name):

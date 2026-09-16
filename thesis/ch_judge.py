@@ -9,7 +9,8 @@ from results_loader import Results, f2, f3, pct, pct0, fp
 ROOT = Path(__file__).resolve().parent.parent
 JUDGE_NAMES = {"minilm_nli": "MiniLM cross-encoder (pilot judge)", "deberta_large_nli": "DeBERTa-v3-large NLI",
                "ce_deberta_large_nli": "DeBERTa-v3-large cross-encoder", "minicheck_deberta": "MiniCheck DeBERTa-v3-large",
-               "minicheck_roberta": "MiniCheck RoBERTa-large", "mednli_deberta_large": "DeBERTa-v3-large NLI + MedNLI"}
+               "minicheck_roberta": "MiniCheck RoBERTa-large", "mednli_deberta_large": "DeBERTa-v3-large NLI + MedNLI",
+               "bespoke_minicheck_7b": "Bespoke-MiniCheck-7B (LLM checker)"}
 MODE_NAMES = {"top3": "top-3 sentences", "doc": "whole course"}
 MODE_PHRASE = {"top3": "top-3 sentence evidence", "doc": "whole-course evidence"}
 

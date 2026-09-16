@@ -225,6 +225,26 @@ def blocks(R: Results) -> list:
                              columns=["Condition", "Question", "n", "Abstained", "UFR", "CR", "Supported by clinician", "Words"],
                              widths=[0.85, 1.3, 0.45, 0.75, 0.6, 0.6, 1.35, 0.6], font=9.5,
                              rows=[[r.condition, r.question.replace("_", " "), str(int(r.n)), pct0(r.abstention_rate), f3(r.UFR_mean), f3(r.CR_mean), pct0(r.ref_support_mean), f"{r.words_mean:.0f}"] for _, r in qa.sort_values(["condition", "question"]).iterrows()]))]
+    aud = _csv("audit_summary.csv")
+    if aud is not None and len(aud) and "all" in set(aud.condition):
+        A = aud.set_index("condition"); a_all = A.loc["all"]
+        b += [("h2", "7.8 Manual Audit of the Judge on the Main-Study Outputs")]
+        b += [P(f"To measure how many of the judge's flags on the main-study summaries are real, a stratified random sample of "
+                f"{int(a_all.n_labeled)} claims ({int(a_all.n_flagged)} flagged by the judge and {int(a_all.n_labeled - a_all.n_flagged)} accepted, "
+                f"drawn in equal numbers from {', '.join(c for c in A.index if c != 'all')}) was labeled by the author as supported or unsupported by the "
+                f"hospital course, with the judge's label hidden (Section 4.11). The audit checks textual support, not clinical correctness, "
+                f"and a single non-clinician annotator is its limitation. [[tab:maudit]] reports the result. Of the claims the judge flagged, "
+                f"{pct0(a_all.precision)} were unsupported on manual reading; of the claims it accepted, {pct0(1 - a_all.npv)} were in fact "
+                f"unsupported. Weighting these rates by each condition's flag rate gives a corrected estimate of the unsupported share, "
+                f"reported in the last column."),
+              ("table", dict(label="maudit", caption="Manual audit of the judge on the main-study claims: precision of its flags, share of accepted claims that were unsupported, kappa with the author's labels, and the flag-rate-weighted corrected unsupported rate.",
+                             columns=["Condition", "Labeled", "Flagged", "Precision of flags", "Unsupported among accepted", "Kappa", "Judge UFR", "Corrected unsupported rate"],
+                             widths=[0.9, 0.7, 0.7, 0.9, 1.0, 0.6, 0.8, 0.9], font=9,
+                             rows=[[c, str(int(r.n_labeled)), str(int(r.n_flagged)), pct0(r.precision), pct0(1 - r.npv), f2(r.kappa), f3(r.judge_flag_rate), f3(r.corrected_unsupported_rate)]
+                                   for c, r in A.iterrows()]))]
+        NEXT = ["7.9", "7.10"]
+    else:
+        NEXT = ["7.8", "7.9"]
     alt_s, alt_t = _csv("mimic_tau05/mimic_summary.csv"), _csv("mimic_tau05/mimic_pairwise_tests.csv")
     if alt_s is not None and alt_t is not None and abs(tau - 0.5) > 1e-6:
         alt = alt_s[alt_s.variant == "base"].set_index("condition")
@@ -244,7 +264,7 @@ def blocks(R: Results) -> list:
                                  f"{'0.5' if sb else f'{tau:.2f}'} ({fp(r.p.iloc[0]) if sb else fp(a.p)}) but not at {f'{tau:.2f}' if sb else '0.5'} ({fp(a.p) if sb else fp(r.p.iloc[0])})")
             return same, tot
         su_, sc_, scv_ = agree("UFR"), agree("CR"), agree("coverage_ref")
-        b += [("h2", "7.8 Robustness to the Judge's Threshold")]
+        b += [("h2", f"{NEXT[0]} Robustness to the Judge's Threshold")]
         b += [P(f"The main results use the support threshold of {tau:.2f} selected in Chapter 6. Because the pilot pipeline used 0.5, and because the "
                 f"selected judge's kappa is almost the same at both values (Section 6.2), every summary was also scored at 0.5. [[tab:mtau]] compares "
                 f"the two. Absolute rates {'rise' if alt.loc['E0','UFR_mean'] > base.loc['E0','UFR_mean'] else 'fall'} at the stricter threshold, as they "
@@ -258,9 +278,9 @@ def blocks(R: Results) -> list:
                              rows=[[NAME.get(c, c), f3(base.loc[c, 'UFR_mean']), f3(alt.loc[c, 'UFR_mean']), f3(base.loc[c, 'CR_mean']), f3(alt.loc[c, 'CR_mean']),
                                     (pct(base.loc[c, 'coverage_ref_mean']) if c != 'REF' else '—'), (pct(alt.loc[c, 'coverage_ref_mean']) if c != 'REF' else '—')]
                                    for c in conds if c in alt.index]))]
-        b += [("h2", "7.9 Summary of the Main Study")]
+        b += [("h2", f"{NEXT[1]} Summary of the Main Study")]
     else:
-        b += [("h2", "7.8 Summary of the Main Study")]
+        b += [("h2", f"{NEXT[0]} Summary of the Main Study")]
     lines = []
     for c in [x for x in ("E1", "E1b", "E3", "E2") if x in base.index]:
         tu, tc, tcov = T("UFR", f"{c} vs E0"), T("CR", f"{c} vs E0"), T("coverage_ref", f"{c} vs E0")

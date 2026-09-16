@@ -66,6 +66,7 @@ def main():
     ap.add_argument("--judge", default=None); ap.add_argument("--mode", default=None); ap.add_argument("--tau", type=float, default=None)
     ap.add_argument("--data-dir", default=str(DEFAULT_DATA))
     ap.add_argument("--reuse-forward", action="store_true", help="reuse the per-claim support scores saved by a previous run (results_private/mimic_claims.csv) when the claim texts are unchanged")
+    ap.add_argument("--contra-from", default=None, help="claims CSV of an NLI judge whose p_contra provides the contradiction channel when the selected judge is a binary grounding checker")
     args = ap.parse_args()
     jname, jmode = best_judge()
     jname = args.judge or jname; jmode = args.mode or jmode
@@ -102,6 +103,12 @@ def main():
             cached[key] = (g.claim.astype(str).tolist(), g.p_support.to_numpy(float), g.p_contra.to_numpy(float))
         print(f"reusing forward scores for {len(cached)} summaries where the claims are unchanged", flush=True)
     reused = 0
+    contra = {}
+    if args.contra_from and Path(args.contra_from).exists():
+        cprev = pd.read_csv(args.contra_from)
+        for key, g in cprev.groupby(["sid", "condition", "variant"], sort=False):
+            contra[key] = dict(zip(g.claim.astype(str), g.p_contra.astype(float)))
+        print(f"contradiction channel taken from {args.contra_from} for {len(contra)} summaries", flush=True)
     for rec in records:
         sid, cond, var = rec["sid"], rec["condition"], rec["variant"]
         if sid not in docs:
@@ -134,6 +141,10 @@ def main():
             labels = ["Supported" if p >= tau else ("Contradicted" if (q >= 0.5 and q > p) else "Not-Supported") for p, q in zip(ps, pc)]
         else:
             ps = pc = np.array([]); labels = []
+        if claims and contra and getattr(J, "kind", "") == "llm_yesno":
+            cmap = contra.get((sid, cond, var), {})
+            pc = np.array([cmap.get(c, 0.0) for c, _ in claims])
+            labels = ["Supported" if p >= tau else ("Contradicted" if (q >= 0.5 and q > p) else "Not-Supported") for p, q in zip(ps, pc)]
         # ---- citations: cited excerpt(s) vs claim
         cite_ok = cite_tot = 0; pcs = np.array([])
         if rec.get("excerpts"):
