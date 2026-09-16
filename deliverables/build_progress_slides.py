@@ -150,7 +150,9 @@ def slides(R: Results):
             f"Verbatim extraction scores UFR {f3(M.mean('E2','UFR'))}: the judge's error floor; the grounded LLM conditions sit within a few hundredths of it",
             f"The clinicians' own instructions score UFR {f3(M.mean('REF','UFR'))} under the same judge: support by the hospital course measures source-faithfulness, not clinical correctness",
             f"Citations: {pct0(M.mean('E1','citation_accuracy'))} accurate for excerpt-only RAG but {pct0(M.mean('E1b','citation_accuracy'))} for RAG with the whole course; {M.faithfulness_short()}; coverage followed the amount of retrieved text",
-            (f"Question answering: abstention {pct0(M.qa_tot.loc['QA-E0','abstention_rate'])} (full course) versus {pct0(M.qa_tot.loc['QA-E1','abstention_rate'])} (excerpts), highest for warning signs, which the course rarely states; retrieval lowers unsupported answers partly by abstaining more" if M.qa_tot is not None else "")]))
+            (f"Question answering: abstention {pct0(M.qa_tot.loc['QA-E0','abstention_rate'])} (full course) versus {pct0(M.qa_tot.loc['QA-E1','abstention_rate'])} (excerpts), highest for warning signs, which the course rarely states; retrieval lowers unsupported answers partly by abstaining more" if M.qa_tot is not None else "")]
+            + ([(lambda g: f"Second judge (Bespoke-MiniCheck-7B, a 7B LLM checker): same ordering of conditions; flags {pct(g.loc['E2','flag_rate_second'])} of verbatim extracts, so the NLI judge's {f3(g.loc['E2','UFR_first'])} floor is judge error; confirms {pct0(g.loc['all','first_flags_confirmed'])} of the selected judge's flags; grounded conditions' unsupported share bounded between {f3(min(g.loc[c,'UFR_both'] for c in ('E1','E1b','E3')))} and {f3(max(g.loc[c,'UFR_either'] for c in ('E1','E1b','E3')))}")(pd.read_csv(RES / "mimic_judge_agreement.csv").set_index("condition"))]
+               if (RES / "mimic_judge_agreement.csv").exists() else [])))
         if M.abl is not None and len(M.abl):
             rows = []
             for v in [x for x in MVAR if x != "base"]:

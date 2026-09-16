@@ -402,6 +402,8 @@ class Renderer:
             widths = [w * TEXT_WIDTH_IN / total for w in widths]
         aligns = d.get("align") or ["left"] + ["center"] * (len(cols) - 1)
         amap = {"left": WD_ALIGN_PARAGRAPH.LEFT, "center": WD_ALIGN_PARAGRAPH.CENTER, "right": WD_ALIGN_PARAGRAPH.RIGHT}
+        for j, w in enumerate(widths):        # grid column widths: LibreOffice lays the table out from these, not from the cell widths
+            tbl.columns[j].width = Inches(w)
         for j, c in enumerate(cols):
             cell = tbl.rows[0].cells[j]; cell.width = Inches(widths[j]); _shade(cell)
             p = cell.paragraphs[0]; _pf(p, align=amap[aligns[j]], spacing="single")

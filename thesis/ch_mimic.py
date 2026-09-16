@@ -119,7 +119,7 @@ def blocks(R: Results) -> list:
             f"and [[fig:mbox]] the distributions. "
             + " ".join(rate_sentence(base, T, c, "E0") for c in conds if c not in ("E0", "REF"))),
           ("table", dict(label="mrates", caption="Per-document mean and median UFR and CR in the main study, with paired mean differences and two-sided Wilcoxon p-values against E0 and against E1 (negative differences favour the row condition).",
-                         columns=["Metric", "Condition", "Mean", "Median", "Δ vs E0 (p)", "Δ vs E1 (p)"], widths=[0.55, 2.9, 0.6, 0.65, 0.9, 0.9], font=9, rows=rows)),
+                         columns=["Metric", "Condition", "Mean", "Median", "Δ vs E0 (p)", "Δ vs E1 (p)"], widths=[0.5, 2.6, 0.55, 0.6, 1.1, 1.1], font=9, rows=rows)),
           ("figure", dict(label="mbox", path="results/fig_mimic_box.png", width=6.5, caption="Per-document UFR (left) and CR (right) in the main study under each condition and for the doctor-written instructions."))]
     if ref is not None and "REF" in base.index:
         b += [P(f"The doctor-written instructions provide a human reference point on the same documents: under the same judge they receive a mean UFR of "
@@ -292,11 +292,20 @@ def blocks(R: Results) -> list:
                     + (f"The ordering of the conditions is the same under both judges and under their conjunction: "
                        f"{_join([NAME.get(c, c) for c in [x for x in ('E1', 'E1b', 'E3', 'E2') if x in G.index]])} stay far below E0, and the "
                        f"clinician's instructions stay above every model." if all(G.loc[c, 'UFR_both'] < G.loc['E0', 'UFR_both'] for c in G.index if c not in ('E0', 'REF', 'all')) else
-                       "The ordering of the conditions under the second judge is reported in the table.")),
-                  ("table", dict(label="magree", caption="Agreement between the selected judge and a second judge on the base-condition claims: flag rates, agreement, kappa, share of the selected judge's flags confirmed, and per-document UFR under each judge, under both (conjunction) and under either (disjunction).",
-                                 columns=["Condition", "Claims", "Flagged by selected", "Flagged by second", "Agreement", "Kappa", "Selected flags confirmed", "UFR selected", "UFR second", "UFR both", "UFR either"],
-                                 widths=[0.95, 0.5, 0.6, 0.6, 0.6, 0.45, 0.65, 0.55, 0.55, 0.5, 0.55], font=8,
-                                 rows=[[NAME.get(c, c) if c != "all" else "All", str(int(r.n_claims)), pct0(r.flag_rate_first), pct0(r.flag_rate_second), pct0(r.agreement), f2(r.kappa),
+                       "The ordering of the conditions under the second judge is reported in the table.")
+                    + (f" Two differences are instructive. On the verbatim extracts of E2 the second judge flags {pct(G.loc['E2','flag_rate_second'])} of claims and "
+                       f"confirms {pct0(G.loc['E2','first_flags_confirmed'])} of the selected judge's flags, so the selected judge's floor of "
+                       f"{f3(G.loc['E2','UFR_first'])} on true, verbatim text is its own error, a reading of long or negated clinical sentences that a "
+                       f"language-model checker does not share. And the judges rank the grounded conditions differently: under the second judge "
+                       f"{NAME.get(min([c for c in ('E1','E1b','E3') if c in G.index], key=lambda c: G.loc[c,'UFR_second']), '')} has the lowest UFR "
+                       f"({f3(min(G.loc[c,'UFR_second'] for c in ('E1','E1b','E3') if c in G.index))} against {f3(max(G.loc[c,'UFR_second'] for c in ('E1','E1b','E3') if c in G.index))} "
+                       f"for the highest of the three), whereas the selected judge saw the three as equal; how much verification helps beyond retrieval is "
+                       f"therefore judge-dependent, and the conjunction and disjunction columns give the bounds within which the truth lies."
+                       if "E2" in G.index and all(c in G.index for c in ("E1", "E1b", "E3")) else "")),
+                  ("table", dict(label="magree", caption="Agreement between the selected judge (S) and the second judge (2) on the base-condition claims: share of claims flagged by each, agreement and kappa between them, share of the selected judge's flags that the second judge confirms, and per-document UFR under each judge, under both (conjunction) and under either (disjunction). Clinician denotes the doctor-written instructions.",
+                                 columns=["Condition", "Claims", "Flagged S", "Flagged 2", "Agree", "Kappa", "S flags confirmed", "UFR S", "UFR 2", "UFR both", "UFR either"],
+                                 widths=[0.85, 0.55, 0.6, 0.6, 0.5, 0.5, 0.75, 0.5, 0.5, 0.55, 0.6], font=8.5,
+                                 rows=[[{"REF": "Clinician", "all": "All"}.get(c, c), f"{int(r.n_claims):,}", pct0(r.flag_rate_first), pct0(r.flag_rate_second), pct0(r.agreement), f2(r.kappa),
                                         pct0(r.first_flags_confirmed), f3(r.UFR_first), f3(r.UFR_second), f3(r.UFR_both), f3(r.UFR_either)]
                                        for c, r in G.iterrows() if c in list(ORDER) + ["all"]]))]
         b += [("h2", f"{NEXT[1]} Summary of the Main Study")]
