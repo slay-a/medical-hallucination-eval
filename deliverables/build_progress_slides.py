@@ -144,6 +144,13 @@ def slides(R: Results):
                       note=" ".join(f"{c} vs E0: UFR {fp(M.test('UFR', c).p)}, CR {fp(M.test('CR', c).p)}, coverage {fp(M.test('coverage_ref', c).p)}." for c in mc if c not in ("E0", "REF") and M.test("UFR", c) is not None)
                            + " Paired two-sided Wilcoxon tests on the same documents."))
         S.append(dict(kind="image2", title="Main study: per-document distributions", images=[RES / "fig_mimic_box.png", RES / "fig_mimic_coverage.png"]))
+        S.append(dict(kind="bullets", title="Main study: what the results say", bullets=[
+            f"Every grounded condition cut the unsupported fact rate by about {M.rel(M.test('UFR','E1b'))} versus zero-context (E1 {f3(M.mean('E1','UFR'))}, E1b {f3(M.mean('E1b','UFR'))}, E3 {f3(M.mean('E3','UFR'))} versus E0 {f3(M.mean('E0','UFR'))}; all {fp(max(M.test('UFR', c).p for c in ('E1','E1b','E3')))}); the three do not differ from one another; CR did not change",
+            f"Omission separates them: excerpt-only RAG covered {pct0(M.mean('E1','coverage_ref'))} of the clinician's sentences and verification {pct0(M.mean('E3','coverage_ref'))}, against {pct0(M.mean('E0','coverage_ref'))} for E0; RAG with the whole course kept {pct0(M.mean('E1b','coverage_ref'))} ({fp(M.test('coverage_ref','E1b').p)} versus E0)",
+            f"Verbatim extraction scores UFR {f3(M.mean('E2','UFR'))}: the judge's error floor; the grounded LLM conditions sit within a few hundredths of it",
+            f"The clinicians' own instructions score UFR {f3(M.mean('REF','UFR'))} under the same judge: support by the hospital course measures source-faithfulness, not clinical correctness",
+            f"Citations: {pct0(M.mean('E1','citation_accuracy'))} accurate for excerpt-only RAG but {pct0(M.mean('E1b','citation_accuracy'))} for RAG with the whole course; no retrieval setting changed UFR or CR, coverage followed the amount of retrieved text",
+            (f"Question answering: abstention {pct0(M.qa_tot.loc['QA-E0','abstention_rate'])} (full course) versus {pct0(M.qa_tot.loc['QA-E1','abstention_rate'])} (excerpts), highest for warning signs, which the course rarely states; retrieval lowers unsupported answers partly by abstaining more" if M.qa_tot is not None else "")]))
         if M.abl is not None and len(M.abl):
             rows = []
             for v in [x for x in MVAR if x != "base"]:

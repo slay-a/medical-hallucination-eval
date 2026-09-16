@@ -735,7 +735,9 @@ def blocks(R: Results) -> list:
             "PyTorch's Metal backend and Apple's MLX framework. The evaluation of one summary with the pilot judge takes a few "
             "seconds, the complete offline recomputation of every pilot result about five minutes, the scoring of one large "
             "candidate judge against the expert annotations about one to one and a half hours when the GPU is shared with the "
-            "generator, and the generation of all main-study conditions and ablations about nine hours. [[tab:tools]] lists "
+            "generator, the MedNLI fine-tuning two hours under the same sharing, and the generation of the 1,210 main-study "
+            "summaries about 3.7 minutes per hospital course for its eleven outputs when the GPU is not shared, roughly seven "
+            "hours in total, and about twice that when a judge or the fine-tuning shares the GPU. [[tab:tools]] lists "
             "the software. Models are downloaded once from the Hugging Face hub and cached locally; every subsequent run is "
             "offline except for the pilot study's generation calls to the OpenAI API."),
           ("table", dict(label="tools", caption="Software, models and versions used.",

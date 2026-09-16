@@ -125,6 +125,23 @@ def blocks(R: Results) -> list:
         b += [P(f"The doctor-written instructions provide a human reference point on the same documents: under the same judge they receive a mean UFR of "
                 f"{f3(base.loc['REF','UFR_mean'])} and CR of {f3(base.loc['REF','CR_mean'])}, while the medical experts marked {ref.expert_spans.sum()} unsupported spans in them. "
                 + "Under the same judge, " + grouped_vs_ref(base, T, [c for c in conds if c != "REF"], "UFR"))]
+        if base.loc["REF", "UFR_mean"] > max(base.loc[c, "UFR_mean"] for c in conds if c != "REF"):
+            b += [P(f"That the clinician's own instructions receive the highest UFR is not evidence that clinicians hallucinate. Discharge "
+                    f"instructions contain medication changes, appointments and advice that the hospital course does not state (the experts "
+                    f"marked {ref.expert_spans.sum()} such spans in these {len(ref)} documents, {ref.expert_spans.mean():.1f} per document, and the "
+                    f"instructions average {ref.n_ref_sents.mean():.1f} sentences), and the metric counts every statement that the course does not "
+                    f"support. The comparison shows instead that support by the hospital course is a conservative target that penalizes "
+                    f"legitimate clinical knowledge, and that the LLM conditions, which see nothing but the course, are more source-faithful "
+                    f"than the clinician's text by construction. It also bounds what can be expected of any summarizer under this metric: a "
+                    f"system that reproduced the clinician's instructions exactly would score {f3(base.loc['REF','UFR_mean'])}.")]
+    if "E2" in conds:
+        near = [c for c in conds if c not in ("E2", "REF", "E0") and base.loc[c, "UFR_mean"] <= base.loc["E2", "UFR_mean"] + 0.02]
+        b += [P(f"E2 copies sentences of the course verbatim, so its UFR of {f3(base.loc['E2','UFR_mean'])} and CR of {f3(base.loc['E2','CR_mean'])} measure "
+                f"the judge's error floor on this corpus rather than any hallucination: they arise where a whole sentence, split from its "
+                f"context or containing a negated list, is not entailed by any 400-token window at the threshold, or is called a "
+                f"contradiction by the model."
+                + (f" {_join(near)} lie within 0.02 of that floor, so most of the unsupported claims the judge finds in them cannot be "
+                   f"distinguished from judge error, whereas E0 sits {f3(base.loc['E0','UFR_mean'] - base.loc['E2','UFR_mean'])} above it." if near else ""))]
     b += [("h2", "7.4 Coverage of the Clinician's Instructions")]
     rows = [[NAME.get(c, c), pct(base.loc[c, "coverage_ref_mean"]), (f"{signed(T('coverage_ref', f'{c} vs E0').delta_mean)} ({fpn(T('coverage_ref', f'{c} vs E0').p)})" if T('coverage_ref', f'{c} vs E0') is not None else "—"),
              (f"{signed(T('coverage_ref', f'{c} vs E1').delta_mean)} ({fpn(T('coverage_ref', f'{c} vs E1').p)})" if T('coverage_ref', f'{c} vs E1') is not None else "—")] for c in conds if c != "REF"]
@@ -132,6 +149,12 @@ def blocks(R: Results) -> list:
             f"the clinician's sentences that the generated summary supports, judged by the same model in the reverse direction "
             f"(Section 4.11). [[tab:mcov]] and [[fig:mcov]] report it. "
             + " ".join(f"{NAME.get(c,c)} covered {pct(base.loc[c,'coverage_ref_mean'])} of the clinician's sentences" + (f" ({direction(T('coverage_ref', f'{c} vs E0'), False).replace('was lower than','less than').replace('was higher than','more than')} E0, {fp(T('coverage_ref', f'{c} vs E0').p)})" if T('coverage_ref', f'{c} vs E0') is not None else "") + "." for c in conds if c != "REF")),
+          P((lambda t, tu: f"E1b, which shows the model the course as well as the excerpts, {adj(t).replace('a ', 'had ') if False else ''}"
+                       f"{'kept' if t is None or t.p >= 0.05 else ('raised' if t.delta_mean > 0 else 'lowered')} coverage relative to E1 "
+                       f"({signed(t.delta_mean) if t is not None else '—'}, {fp(t.p) if t is not None else ''}) while its UFR "
+                       f"{'did not differ from' if tu is None or tu.p >= 0.05 else ('was lower than' if tu.delta_mean < 0 else 'was higher than')} E1's "
+                       f"({fp(tu.p) if tu is not None else ''}); focusing attention on the excerpts and withholding the rest of the course are therefore "
+                       f"separable, and it is the withholding that costs coverage.")(T("coverage_ref", "E1b vs E1"), T("UFR", "E1b vs E1")) if "E1b" in conds else ""),
           ("table", dict(label="mcov", caption="Coverage of the doctor-written discharge instructions: mean share of the clinician's sentences supported by the generated summary, with paired differences against E0 and E1.",
                          columns=["Condition", "Coverage", "Δ vs E0 (p)", "Δ vs E1 (p)"], widths=[2.8, 1.0, 1.35, 1.35], font=10, rows=rows)),
           ("figure", dict(label="mcov", path="results/fig_mimic_coverage.png", width=5.6, caption="Coverage of the clinician's discharge instructions per document under each condition."))]
@@ -141,16 +164,35 @@ def blocks(R: Results) -> list:
         b += [P("Retrieval conditions were required to cite, after every sentence, the excerpt on which it is based. Citation accuracy "
                 "is the share of cited claims whose cited excerpts support the claim according to the judge. "
                 + " ".join(f"{NAME.get(c,c)} cited {int(base.loc[c,'cited_claims'])} claims with accuracy {pct(base.loc[c,'citation_accuracy_mean'])}." for c in cited.index)
+                + (f" E1b's citations are far less accurate than E1's because E1b may draw on the whole course while it can cite only the three "
+                   f"excerpts, so many of its citations point to a passage that does not contain the statement."
+                   if "E1b" in cited.index and "E1" in cited.index and base.loc["E1b", "citation_accuracy_mean"] < base.loc["E1", "citation_accuracy_mean"] - 0.1 else "")
                 + " Citations make the judge's task easier, because the model names the passage it used, and they make review by a "
-                "clinician faster; an inaccurate citation is itself a detectable error.")]
+                "clinician faster; an inaccurate citation is itself a detectable error, but it is also a misleading pointer for the reader.")]
     if abl is not None and len(abl):
         b += [("h2", "7.6 Retrieval Ablations")]
         rows = []
         for v in [x for x in VAR if x != "base"]:
             r = {m: abl[(abl.metric == m) & (abl.variant == v)] for m in ("UFR", "CR", "coverage_ref", "citation_accuracy")}
             rows.append([VAR[v]] + [(f"{signed(r[m].delta_mean.iloc[0])} ({fpn(r[m].p.iloc[0])})" if len(r[m]) else "—") for m in ("UFR", "CR", "coverage_ref", "citation_accuracy")])
+        def sigs(metric):
+            out = []
+            for v in [x for x in VAR if x != "base"]:
+                r = abl[(abl.metric == metric) & (abl.variant == v)]
+                if len(r) and not np.isnan(r.p.iloc[0]) and r.p.iloc[0] < 0.05:
+                    out.append((v, r.delta_mean.iloc[0], r.p.iloc[0]))
+            return out
+        su, sc, scov, scit = sigs("UFR"), sigs("CR"), sigs("coverage_ref"), sigs("citation_accuracy")
+        def lst(items, pos, neg):
+            return "; ".join(f"{VAR[v]} {pos if d > 0 else neg} it by {abs(d):.3f} ({fp(pv)})" for v, d, pv in items)
         b += [P("Six variants of E1 change one retrieval setting at a time (Section 4.11). [[tab:mabl]] reports the paired difference of each "
-                "variant from the base configuration."),
+                "variant from the base configuration. "
+                + (f"No variant changed UFR significantly" if not su else "UFR changed significantly in " + str(len(su)) + (" variant: " if len(su) == 1 else " variants: ") + lst(su, "raised", "lowered"))
+                + (", and none changed CR. " if not sc else (", and only " if len(sc) == 1 else ", and ") + f"{len(sc)} changed CR: " + lst(sc, "raised", "lowered") + ". ")
+                + (f"Coverage of the clinician's instructions followed the amount of retrieved text: {lst(scov, 'raised', 'lowered')}. " if scov else "Coverage did not change significantly. ")
+                + (f"Citation accuracy changed in {len(scit)} variant{'s' if len(scit) > 1 else ''}: {lst(scit, 'raised', 'lowered')}. " if scit else "Citation accuracy did not change significantly. ")
+                + "Lexical BM25 retrieval and dense retrieval produced summaries with indistinguishable rates, so the choice of retriever "
+                "matters less than how much of the course is shown to the model."),
               ("table", dict(label="mabl", caption="Retrieval ablations: paired mean difference from the E1 base configuration (5-sentence chunks, top-3, dense retrieval, citations required) with Wilcoxon p-values. Negative UFR and CR differences and positive coverage and citation differences favour the variant.",
                              columns=["Variant", "Δ UFR (p)", "Δ CR (p)", "Δ coverage (p)", "Δ citation accuracy (p)"], widths=[2.3, 1.05, 1.05, 1.05, 1.05], font=9.5, rows=rows))]
     if qa is not None and len(qa):
@@ -161,11 +203,50 @@ def blocks(R: Results) -> list:
                 f"note.\" when the course is silent (Section 4.12). [[tab:mqa]] reports abstention rates, the judge's rates on the answered "
                 f"questions, and the share of answer sentences supported by the clinician's own discharge instructions. "
                 + " ".join(f"{c} abstained on {pct0(tot.loc[c,'abstention_rate'])} of questions, with UFR {f3(tot.loc[c,'UFR_mean'])} and {pct0(tot.loc[c,'ref_support_mean'])} of answer sentences supported by the clinician's instructions." for c in tot.index)),
+          P((lambda q0, q1: f"The question type dominates the results. Warning signs are rarely stated in a hospital course, so the model abstained "
+                            f"most often on that question ({pct0(q0.abstention_rate)} from the full course, {pct0(q1.abstention_rate)} from excerpts) and, "
+                            f"when it did answer, the judge could support only {pct0(1 - q0.UFR_mean)} and {pct0(1 - q1.UFR_mean)} of its sentences: the "
+                            f"answers come from the model's general knowledge of discharge advice, exactly the extrinsic content that Chapter 5 "
+                            f"found retrieval cannot remove. Medication questions, whose answers are usually in the course, were answered most "
+                            f"often and most faithfully. Retrieval {'raised' if tot.loc['QA-E1','abstention_rate'] > tot.loc['QA-E0','abstention_rate'] else 'lowered'} "
+                            f"the abstention rate and {'lowered' if tot.loc['QA-E1','UFR_mean'] < tot.loc['QA-E0','UFR_mean'] else 'raised'} the UFR of the "
+                            f"answered questions, so part of its benefit is that the model says less. Agreement with the clinician's own instructions "
+                            f"is low for every condition, because clinicians phrase and select information differently from the model and the "
+                            f"judge cannot match paraphrases across that gap; it is a proxy for correctness, not a measurement of it.")
+             (qa[(qa.condition == "QA-E0") & (qa.question == "warning_signs")].iloc[0], qa[(qa.condition == "QA-E1") & (qa.question == "warning_signs")].iloc[0])
+             if ((qa.condition == "QA-E0") & (qa.question == "warning_signs")).any() and ((qa.condition == "QA-E1") & (qa.question == "warning_signs")).any() else ""),
               ("table", dict(label="mqa", caption="Question-answering pilot: abstention rate, judge rates on answered questions, and agreement with the clinician's discharge instructions, by question type and condition.",
                              columns=["Condition", "Question", "n", "Abstained", "UFR", "CR", "Supported by clinician's instructions", "Words"],
                              widths=[0.9, 1.1, 0.5, 0.8, 0.6, 0.6, 1.4, 0.6], font=9.5,
                              rows=[[r.condition, r.question.replace("_", " "), str(int(r.n)), pct0(r.abstention_rate), f3(r.UFR_mean), f3(r.CR_mean), pct0(r.ref_support_mean), f"{r.words_mean:.0f}"] for _, r in qa.sort_values(["condition", "question"]).iterrows()]))]
-    b += [("h2", "7.8 Summary of the Main Study")]
+    alt_s, alt_t = _csv("mimic_tau05/mimic_summary.csv"), _csv("mimic_tau05/mimic_pairwise_tests.csv")
+    if alt_s is not None and alt_t is not None and abs(tau - 0.5) > 1e-6:
+        alt = alt_s[alt_s.variant == "base"].set_index("condition")
+        def agree(metric):
+            same = tot = 0
+            for c in [x for x in conds if x not in ("E0", "REF")]:
+                a = T(metric, f"{c} vs E0"); r = alt_t[(alt_t.metric == metric) & (alt_t.comparison == f"{c} vs E0")]
+                if a is None or not len(r):
+                    continue
+                tot += 1; same += int((a.p < 0.05) == (r.p.iloc[0] < 0.05) and (a.delta_mean < 0) == (r.delta_mean.iloc[0] < 0))
+            return same, tot
+        su, sc, scv = agree("UFR"), agree("CR"), agree("coverage_ref")
+        b += [("h2", "7.8 Robustness to the Judge's Threshold")]
+        b += [P(f"The main results use the support threshold of {tau:.2f} selected in Chapter 6. Because the pilot pipeline used 0.5, and because the "
+                f"selected judge's kappa is almost the same at both values (Section 6.2), every summary was also scored at 0.5. [[tab:mtau]] compares "
+                f"the two. Absolute rates {'rise' if alt.loc['E0','UFR_mean'] > base.loc['E0','UFR_mean'] else 'fall'} at the stricter threshold, as they "
+                f"must, but the ordering of the conditions is unchanged, and the paired comparisons against E0 agree in direction and significance "
+                f"for {su[0]} of {su[1]} UFR comparisons, {sc[0]} of {sc[1]} CR comparisons and {scv[0]} of {scv[1]} coverage comparisons. The conclusions "
+                f"of this chapter therefore do not depend on the threshold."),
+              ("table", dict(label="mtau", caption=f"Main-study means at the selected threshold ({tau:.2f}) and at the pilot pipeline's threshold (0.5).",
+                             columns=["Condition", f"UFR (τ={tau:.2f})", "UFR (τ=0.5)", f"CR (τ={tau:.2f})", "CR (τ=0.5)", f"Coverage (τ={tau:.2f})", "Coverage (τ=0.5)"],
+                             widths=[1.9, 0.75, 0.75, 0.75, 0.75, 0.8, 0.8], font=9.5,
+                             rows=[[NAME.get(c, c), f3(base.loc[c, 'UFR_mean']), f3(alt.loc[c, 'UFR_mean']), f3(base.loc[c, 'CR_mean']), f3(alt.loc[c, 'CR_mean']),
+                                    (pct(base.loc[c, 'coverage_ref_mean']) if c != 'REF' else '—'), (pct(alt.loc[c, 'coverage_ref_mean']) if c != 'REF' else '—')]
+                                   for c in conds if c in alt.index]))]
+        b += [("h2", "7.9 Summary of the Main Study")]
+    else:
+        b += [("h2", "7.8 Summary of the Main Study")]
     lines = []
     for c in [x for x in ("E1", "E1b", "E3", "E2") if x in base.index]:
         tu, tc, tcov = T("UFR", f"{c} vs E0"), T("CR", f"{c} vs E0"), T("coverage_ref", f"{c} vs E0")

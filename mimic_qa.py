@@ -69,7 +69,7 @@ def evaluate(args):
     from mimic_evaluate import best_judge
     jname, jmode = best_judge(); jname = args.judge or jname; jmode = args.mode or jmode
     jc = pd.read_csv(RESULTS / "judge_candidates.csv")
-    row = jc[(jc.judge == jname) & (jc.mode == jmode) & (jc.group == "all")]
+    row = jc[(jc.judge == jname) & (jc["mode"] == jmode) & (jc.group == "all")]
     tau = args.tau or (float(row.tau_from_other_subset.iloc[0]) if len(row) else 0.5)
     print(f"judge={jname} mode={jmode} tau={tau}", flush=True)
     J = Judge(jname, CANDIDATES[jname]); he.get_nlp(); enc = he.get_bi_encoder()

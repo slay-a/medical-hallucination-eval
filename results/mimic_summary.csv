@@ -1,0 +1,205 @@
+condition,variant,n_docs,UFR_mean,UFR_median,CR_mean,CR_median,claims_mean,abstentions_mean,words_mean,coverage_ref_mean,citation_accuracy_mean,cited_claims,cite_correct,judge,mode,tau
+E0,base,110,0.21169910718395463,0.2,0.05220135403937518,0.0,16.01818181818182,0.0,261.46363636363634,0.4767034480670844,,0,0,deberta_large_nli,"<bound method Series.mode of judge                                                    deberta_large_nli
+model                    MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-...
+mode                                                                   doc
+group                                                                  all
+n                                                                     1781
+expert_rate                                                       0.203818
+auroc                                                             0.776822
+tau_from_other_subset                                                  0.2
+flag_rate                                                          0.24986
+precision                                                         0.438202
+recall                                                             0.53719
+specificity                                                       0.823695
+f1                                                                0.482673
+kappa                                                              0.33291
+kappa_at_0_5                                                      0.331576
+flag_rate_at_0_5                                                  0.338012
+Name: 9, dtype: object>",0.5
+E1,base,110,0.1252111777111777,0.1111111111111111,0.05609077790895972,0.0,8.39090909090909,0.02727272727272727,150.93636363636364,0.34257054813872995,0.6907986571251877,459,315,deberta_large_nli,"<bound method Series.mode of judge                                                    deberta_large_nli
+model                    MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-...
+mode                                                                   doc
+group                                                                  all
+n                                                                     1781
+expert_rate                                                       0.203818
+auroc                                                             0.776822
+tau_from_other_subset                                                  0.2
+flag_rate                                                          0.24986
+precision                                                         0.438202
+recall                                                             0.53719
+specificity                                                       0.823695
+f1                                                                0.482673
+kappa                                                              0.33291
+kappa_at_0_5                                                      0.331576
+flag_rate_at_0_5                                                  0.338012
+Name: 9, dtype: object>",0.5
+E1,bm25,110,0.13410236228418046,0.1111111111111111,0.062166469893742624,0.0,8.945454545454545,0.02727272727272727,160.47272727272727,0.34948553971281243,0.7207362377575143,439,317,deberta_large_nli,"<bound method Series.mode of judge                                                    deberta_large_nli
+model                    MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-...
+mode                                                                   doc
+group                                                                  all
+n                                                                     1781
+expert_rate                                                       0.203818
+auroc                                                             0.776822
+tau_from_other_subset                                                  0.2
+flag_rate                                                          0.24986
+precision                                                         0.438202
+recall                                                             0.53719
+specificity                                                       0.823695
+f1                                                                0.482673
+kappa                                                              0.33291
+kappa_at_0_5                                                      0.331576
+flag_rate_at_0_5                                                  0.338012
+Name: 9, dtype: object>",0.5
+E1,chunk3,110,0.11996392496392497,0.0,0.06267676767676768,0.0,6.572727272727272,0.01818181818181818,124.5909090909091,0.28032365361910816,0.7254365079365079,340,239,deberta_large_nli,"<bound method Series.mode of judge                                                    deberta_large_nli
+model                    MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-...
+mode                                                                   doc
+group                                                                  all
+n                                                                     1781
+expert_rate                                                       0.203818
+auroc                                                             0.776822
+tau_from_other_subset                                                  0.2
+flag_rate                                                          0.24986
+precision                                                         0.438202
+recall                                                             0.53719
+specificity                                                       0.823695
+f1                                                                0.482673
+kappa                                                              0.33291
+kappa_at_0_5                                                      0.331576
+flag_rate_at_0_5                                                  0.338012
+Name: 9, dtype: object>",0.5
+E1,chunk8,110,0.13610843701752792,0.1,0.04873961896689169,0.0,10.554545454545455,0.01818181818181818,178.45454545454547,0.3865274498229043,0.6774318663792347,499,336,deberta_large_nli,"<bound method Series.mode of judge                                                    deberta_large_nli
+model                    MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-...
+mode                                                                   doc
+group                                                                  all
+n                                                                     1781
+expert_rate                                                       0.203818
+auroc                                                             0.776822
+tau_from_other_subset                                                  0.2
+flag_rate                                                          0.24986
+precision                                                         0.438202
+recall                                                             0.53719
+specificity                                                       0.823695
+f1                                                                0.482673
+kappa                                                              0.33291
+kappa_at_0_5                                                      0.331576
+flag_rate_at_0_5                                                  0.338012
+Name: 9, dtype: object>",0.5
+E1,nocite,110,0.14570745653633355,0.1213235294117647,0.03874536188707312,0.0,10.472727272727273,0.0,170.54545454545453,0.35766745880382245,,0,0,deberta_large_nli,"<bound method Series.mode of judge                                                    deberta_large_nli
+model                    MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-...
+mode                                                                   doc
+group                                                                  all
+n                                                                     1781
+expert_rate                                                       0.203818
+auroc                                                             0.776822
+tau_from_other_subset                                                  0.2
+flag_rate                                                          0.24986
+precision                                                         0.438202
+recall                                                             0.53719
+specificity                                                       0.823695
+f1                                                                0.482673
+kappa                                                              0.33291
+kappa_at_0_5                                                      0.331576
+flag_rate_at_0_5                                                  0.338012
+Name: 9, dtype: object>",0.5
+E1,top2,110,0.12799319367501186,0.1111111111111111,0.06743789039243585,0.0,7.463636363636364,0.00909090909090909,137.88181818181818,0.28464334907516725,0.7328207671957672,358,266,deberta_large_nli,"<bound method Series.mode of judge                                                    deberta_large_nli
+model                    MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-...
+mode                                                                   doc
+group                                                                  all
+n                                                                     1781
+expert_rate                                                       0.203818
+auroc                                                             0.776822
+tau_from_other_subset                                                  0.2
+flag_rate                                                          0.24986
+precision                                                         0.438202
+recall                                                             0.53719
+specificity                                                       0.823695
+f1                                                                0.482673
+kappa                                                              0.33291
+kappa_at_0_5                                                      0.331576
+flag_rate_at_0_5                                                  0.338012
+Name: 9, dtype: object>",0.5
+E1,top5,110,0.12460382383510725,0.10555555555555556,0.04501570770287348,0.0,10.263636363636364,0.03636363636363636,174.8181818181818,0.4007898666989576,0.5809763582235492,458,252,deberta_large_nli,"<bound method Series.mode of judge                                                    deberta_large_nli
+model                    MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-...
+mode                                                                   doc
+group                                                                  all
+n                                                                     1781
+expert_rate                                                       0.203818
+auroc                                                             0.776822
+tau_from_other_subset                                                  0.2
+flag_rate                                                          0.24986
+precision                                                         0.438202
+recall                                                             0.53719
+specificity                                                       0.823695
+f1                                                                0.482673
+kappa                                                              0.33291
+kappa_at_0_5                                                      0.331576
+flag_rate_at_0_5                                                  0.338012
+Name: 9, dtype: object>",0.5
+E1b,base,110,0.12554471200783562,0.10818713450292397,0.05322411667921891,0.0,13.827272727272728,0.01818181818181818,227.9181818181818,0.48443039283948375,0.3416084030635114,265,89,deberta_large_nli,"<bound method Series.mode of judge                                                    deberta_large_nli
+model                    MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-...
+mode                                                                   doc
+group                                                                  all
+n                                                                     1781
+expert_rate                                                       0.203818
+auroc                                                             0.776822
+tau_from_other_subset                                                  0.2
+flag_rate                                                          0.24986
+precision                                                         0.438202
+recall                                                             0.53719
+specificity                                                       0.823695
+f1                                                                0.482673
+kappa                                                              0.33291
+kappa_at_0_5                                                      0.331576
+flag_rate_at_0_5                                                  0.338012
+Name: 9, dtype: object>",0.5
+E2,base,110,0.1318181818181818,0.0,0.0881818181818182,0.0,4.872727272727273,0.0,86.71818181818182,0.20666632609814428,,0,0,deberta_large_nli,"<bound method Series.mode of judge                                                    deberta_large_nli
+model                    MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-...
+mode                                                                   doc
+group                                                                  all
+n                                                                     1781
+expert_rate                                                       0.203818
+auroc                                                             0.776822
+tau_from_other_subset                                                  0.2
+flag_rate                                                          0.24986
+precision                                                         0.438202
+recall                                                             0.53719
+specificity                                                       0.823695
+f1                                                                0.482673
+kappa                                                              0.33291
+kappa_at_0_5                                                      0.331576
+flag_rate_at_0_5                                                  0.338012
+Name: 9, dtype: object>",0.5
+E3,base,110,0.1218283484192575,0.09545454545454546,0.053879378197560016,0.0,7.909090909090909,0.6727272727272727,149.74545454545455,0.3002855477855478,,0,0,deberta_large_nli,"<bound method Series.mode of judge                                                    deberta_large_nli
+model                    MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-...
+mode                                                                   doc
+group                                                                  all
+n                                                                     1781
+expert_rate                                                       0.203818
+auroc                                                             0.776822
+tau_from_other_subset                                                  0.2
+flag_rate                                                          0.24986
+precision                                                         0.438202
+recall                                                             0.53719
+specificity                                                       0.823695
+f1                                                                0.482673
+kappa                                                              0.33291
+kappa_at_0_5                                                      0.331576
+flag_rate_at_0_5                                                  0.338012
+Name: 9, dtype: object>",0.5
+REF,base,110,0.39576844872299416,0.375,0.11722659915841734,0.09090909090909091,8.872727272727273,0.0,132.6090909090909,0.965921843308207,,0,0,deberta_large_nli,"<bound method Series.mode of judge                                                    deberta_large_nli
+model                    MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-...
+mode                                                                   doc
+group                                                                  all
+n                                                                     1781
+expert_rate                                                       0.203818
+auroc                                                             0.776822
+tau_from_other_subset                                                  0.2
+flag_rate                                                          0.24986
+precision                                                         0.438202
+recall                                                             0.53719
+specificity                                                       0.823695
+f1                                                                0.482673
+kappa                                                              0.33291
+kappa_at_0_5                                                      0.331576
+flag_rate_at_0_5                                                  0.338012
+Name: 9, dtype: object>",0.5
