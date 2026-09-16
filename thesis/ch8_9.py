@@ -364,7 +364,7 @@ def blocks(R: Results) -> list:
             f"therefore methodological: it shows, with quantitative evidence, that a small general-domain NLI judge applied at "
             f"sentence granularity is not a valid hallucination detector for patient-facing clinical summaries, and it provides "
             f"the tools, the controls and the validation protocol needed to evaluate better judges and better summarizers.")
-          ] + ([P(f"The thesis then acted on that finding. A judge selection study scored five off-the-shelf judges and a MedNLI-adapted "
+          ] + ([P(f"The thesis then acted on that finding. A judge selection study scored six off-the-shelf judges and a MedNLI-adapted "
                   f"model against the same expert annotations and selected a DeBERTa-v3-large NLI model with whole-course evidence, which "
                   f"agrees with the experts at kappa {f2(jr.kappa) if jr is not None else '—'} and AUROC {f2(jr.auroc) if jr is not None else '—'}; the "
                   f"clinical adaptation raised MedNLI accuracy by nine points but not agreement with the experts. With that judge, the main "

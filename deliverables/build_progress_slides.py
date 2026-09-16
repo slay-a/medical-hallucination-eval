@@ -64,7 +64,7 @@ def slides(R: Results):
         "RQ3: do retrieval-augmented generation and verification reduce unsupported and contradicted statements, compared with an extractive bound, and at what cost in coverage?",
         "Two tasks in the proposal: summarization (main task) and document-grounded question answering (piloted with abstention)",
         "Three studies: pilot on public MTSamples notes with GPT-4o-mini; judge selection against expert labels; main study on MIMIC-IV hospital courses with a locally run open-weight model"]))
-    judge_status = (f"Done: pilot judge validated (kappa {f2(cal.any_kappa)}); five candidates compared; {JUDGE_NAMES.get(best.judge, best.judge)} selected "
+    judge_status = (f"Done: pilot judge validated (kappa {f2(cal.any_kappa)}); six candidates compared; {JUDGE_NAMES.get(best.judge, best.judge)} selected "
                     f"(kappa {f2(best.kappa)}, AUROC {f2(best.auroc)})" if best is not None else "Pilot judge validated; candidate comparison running")
     if ftj is not None:
         judge_status += f"; MedNLI fine-tune: dev accuracy {pct(ftj['dev_accuracy'])}"

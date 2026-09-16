@@ -11,8 +11,8 @@ The work has three studies:
 
 1. **Pilot study** on 50 public MTSamples notes with GPT-4o-mini and a small MiniLM NLI judge, including the
    validation of that judge against medical-expert annotations (ann-pt-summ).
-2. **Judge selection study**: five candidate judges (MiniLM, two DeBERTa-v3-large NLI models, two MiniCheck
-   models) plus a MedNLI fine-tuned DeBERTa, scored against 1,781 expert-annotated sentences.
+2. **Judge selection study**: six candidate judges (MiniLM, two DeBERTa-v3-large NLI models, two MiniCheck
+   encoders, Bespoke-MiniCheck-7B) plus a MedNLI fine-tuned DeBERTa, scored against 1,781 expert-annotated sentences.
 3. **Main study** on 110 MIMIC-IV hospital courses (ann-pt-summ) with Qwen2.5-7B-Instruct running locally:
    the five conditions with citations, coverage against the clinician-written discharge instructions,
    citation accuracy, six retrieval ablations, and a question-answering pilot with abstention.
@@ -43,6 +43,7 @@ source note ─┬─ E0  LLM, full note ─────────────
 | `ablations.py` | Threshold sweep, top-k, cleaned evidence, coverage proxy, negation analysis, error taxonomy | – |
 | `calibration_annptsumm.py`, `calibration_variants.py` | Pilot judge vs. medical-expert annotations; five aggregation variants | ann-pt-summ (credentialed) |
 | `judge_candidates.py` | Judge selection study: candidates × evidence modes vs. expert labels → `results/judge_candidates.csv` | ann-pt-summ |
+| `minicheck_server.py` | Local scoring server for Bespoke-MiniCheck-7B (MLX, 8-bit; Python 3.13 environment) used as a judge candidate | `.venv-llm`, converted model |
 | `finetune_mednli.py` | MedNLI fine-tuning of the best general NLI model (saved outside the repository) | MedNLI (credentialed), GPU |
 | `mimic_generate.py` | Main study generation with the local model server; `--ablations` adds the six E1 variants; resumable | mlx-lm server, ann-pt-summ |
 | `mimic_qa.py generate` / `evaluate` | Question-answering pilot with abstention (QA-E0, QA-E1) | mlx-lm server, ann-pt-summ |
