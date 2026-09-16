@@ -31,9 +31,17 @@ for name, fn in (("TNR", "Times New Roman.ttf"), ("TNRB", "Times New Roman Bold.
 
 
 def slides(R: Results):
+    from mimic_results import Mimic, NAME as MNAME, VAR as MVAR, JUDGE_NAMES
+    M = Mimic()
     t10u, t10c, t20u, t20c = R.test("UFR", "E0", "E1"), R.test("CR", "E0", "E1"), R.test("UFR", "E0", "E2"), R.test("CR", "E0", "E2")
-    cal = R.cal_row("all"); gen = R.cal_row("generated"); cov = R.cov.set_index("condition")
+    cal = R.cal_row("all"); cov = R.cov.set_index("condition")
     var = R.cal_var[R.cal_var.group == "all"].set_index("variant") if R.cal_var is not None else None
+    jc = pd.read_csv(RES / "judge_candidates.csv") if (RES / "judge_candidates.csv").exists() else None
+    ftj = None
+    ftp = Path.home() / "Desktop" / "Thesis" / "models" / "mednli-deberta-v3-large" / "mednli_finetune_summary.json"
+    if ftp.exists():
+        import json
+        ftj = json.load(open(ftp))
     thesis_pdf = ROOT / "thesis" / "Ponangi_Thesis_Fall2026.pdf"
     pages = "—"
     try:
@@ -41,36 +49,46 @@ def slides(R: Results):
         pages = next(l.split(":")[1].strip() for l in out.splitlines() if l.startswith("Pages"))
     except Exception:  # noqa: BLE001
         pass
-    hdr0, hdr1 = R.headers_by_cond.get("E0", 0), R.headers_by_cond.get("E1", 0)
-    tb, ta = R.hdr_test("before_filter", "CR"), R.hdr_test("after_filter", "CR")
+    best = None
+    if jc is not None:
+        best = jc[jc.group == "all"].sort_values("kappa", ascending=False).iloc[0]
+    MODE = {"top3": "top-3 sentences", "doc": "whole course, windowed"}
     S = []
     S.append(dict(kind="title", title="Evaluating and Reducing Hallucinations in LLM-Based Medical Report Summarization",
                   sub=["Progress Report, Fall 2026 (COMP 698C)", "Srilaya Ponangi, M.S. Computer Science", "Advisor: Dr. Taehyung (George) Wang",
                        f"California State University, Northridge, {date.today():%B %d, %Y}"]))
-    S.append(dict(kind="bullets", title="Project and research questions", bullets=[
-        "Goal: measure hallucinations in LLM patient-facing summaries at the claim level and test whether retrieval grounding reduces them",
-        "RQ1: how often are GPT-4o-mini summary statements unsupported by or contradicting the note (claim-level NLI judge)?",
-        "RQ2: which statements are unsupported, and how does the judge itself err against medical experts?",
-        "RQ3: does document-grounded RAG reduce unsupported and contradicted statements, versus an extractive bound, and at what coverage cost?",
-        "Five conditions compared on 50 MTSamples notes: E0 zero-context LLM, E1 RAG (excerpts only), E1b RAG (note + excerpts), E3 RAG + Chain-of-Verification, E2 centroid extractive",
-        "Judge: spaCy claims, all-MiniLM-L6-v2 retrieval (top-3), cross-encoder/nli-MiniLM2-L6-H768; metrics UFR and CR per summary"]))
-    S.append(dict(kind="image", title="Pipeline (identical judge for every condition)", image=RES / "fig_pipeline.png", caption="Every summary is scored by the same claim-level NLI judge; evidence is retrieved from the same note."))
+    S.append(dict(kind="bullets", title="Goal and research questions (from the proposal)", bullets=[
+        "Goal: measure hallucinations in LLM-generated patient-facing summaries at the claim level with a judge validated against medical experts, and test whether retrieval grounding and verification reduce them on real clinical notes",
+        "RQ1: how often are LLM summary statements unsupported by, or contradicting, the source note?",
+        "RQ2: which statements are unsupported, and how well does the automatic judge agree with medical experts?",
+        "RQ3: do retrieval-augmented generation and verification reduce unsupported and contradicted statements, compared with an extractive bound, and at what cost in coverage?",
+        "Two tasks in the proposal: summarization (main task) and document-grounded question answering (piloted with abstention)",
+        "Three studies: pilot on public MTSamples notes with GPT-4o-mini; judge selection against expert labels; main study on MIMIC-IV hospital courses with a locally run open-weight model"]))
+    judge_status = (f"Done: pilot judge validated (kappa {f2(cal.any_kappa)}); five candidates compared; {JUDGE_NAMES.get(best.judge, best.judge)} selected "
+                    f"(kappa {f2(best.kappa)}, AUROC {f2(best.auroc)})" if best is not None else "Pilot judge validated; candidate comparison running")
+    if ftj is not None:
+        judge_status += f"; MedNLI fine-tune: dev accuracy {pct(ftj['dev_accuracy'])}"
+    mimic_status = (f"Done: {M.n_docs} MIMIC-IV hospital courses, Qwen2.5-7B-Instruct served locally, no protected text leaves the laptop" if M.ok
+                    else "Generation complete or in progress on 110 MIMIC-IV hospital courses with a local Qwen2.5-7B-Instruct; evaluation pending")
+    S.append(dict(kind="table", title="Proposal commitments and where they stand", columns=["Commitment in the proposal", "Status"],
+                  rows=[["Claim-level NLI judge calibrated against expert labels", judge_status],
+                        ["Experiments on MIMIC data", mimic_status],
+                        ["RAG, verification and an extractive baseline", "Done in both studies: E0 zero-context, E1 RAG (excerpts), E1b RAG (note + excerpts), E3 RAG + Chain-of-Verification, E2 extractive"],
+                        ["Coverage against a reference", "Done: share of the clinician-written discharge-instruction sentences that the generated summary supports (judge run in reverse)"],
+                        ["Citation accuracy", "Done: retrieval conditions cite an excerpt after every sentence; the judge checks each citation"],
+                        ["Retrieval ablations (chunk size, top-k, BM25 vs dense, citations)", "Done: six E1 variants on the same documents"],
+                        ["Question answering with abstention", "Pilot: three questions per course (medications, follow-up, warning signs), full course vs retrieved excerpts, 'Not stated in the note.' allowed"]],
+                  widths=[4.6, 7.5]))
+    S.append(dict(kind="image", title="Pipeline (identical judge for every condition)", image=RES / "fig_pipeline.png", caption="Every summary is scored by the same claim-level NLI judge; evidence comes from the same source document."))
     S.append(dict(kind="bullets", title="Data status", bullets=[
-        f"MTSamples (public): {R.total_rows:,} transcriptions, {R.n_eligible} eligible consult and discharge notes, {R.n_docs} sampled (seed 42); {R.n_claims_total:,} claims labeled",
-        "MIMIC-IV-Note v2.2 (PhysioNet, credentialed): downloaded May 14, 2026, integrity verified; staged for a future local-model re-run, not sent to any API",
-        "ann-pt-summ v1.0.1 (PhysioNet, DUA signed): 210 expert-annotated patient summaries, 423 unsupported-fact spans; used to validate the judge with local models",
-        "The PhysioNet archive download was incomplete (934 MB of >3.4 GB); the 14 annotation files were extracted and verified against the SHA-256 manifest",
-        "Ethics: CITI 'Data or Specimens Only Research' and 'Conflicts of Interest' completed April 10, 2026; no credentialed text leaves the laptop"]))
-    S.append(dict(kind="table", title="Corrections since the May 2026 report", columns=["Issue found", "Correction", "Effect"],
-                  rows=[["Markdown headers ('**Key Findings:**') counted as claims", f"Header filter; {hdr0} E0 and {hdr1} E1 header lines removed", f"E1 vs E0 CR effect: {tb.delta_mean:+.3f} ({fp(tb.p)}) → {ta.delta_mean:+.3f} ({fp(ta.p)})"],
-                        ["E1 described as 'note + excerpts', overlapping chunks, structured query", "Description corrected: excerpts only; non-overlapping 5-sentence chunks; query = description + first 300 chars", "Adds E1b (note + excerpts) as an implemented extension"],
-                        ["NLI rule described as argmax over a concatenated premise", "Corrected: max over 3 separate pairs, 0.5 thresholds", "Aggregation variants now tested against experts"],
-                        ["'48 percentage-point' median CR drop; Xie et al. mis-citation; APA/IEEE mix", "Arithmetic fixed; citation replaced (Asgari 2025); IEEE with DOIs", "64-entry reference list"],
-                        ["requirements.txt missing 4 packages; 'bootstrap CIs' claimed but absent", "Packages added; bootstrap CIs, effect sizes, Holm adjustment implemented", "bash run.sh --offline reproduces every number"]],
-                  widths=[3.6, 4.6, 3.9]))
+        f"MTSamples (public): {R.total_rows:,} transcriptions, {R.n_eligible} eligible consult and discharge notes, {R.n_docs} sampled (seed 42); {R.n_claims_total:,} pilot claims labeled",
+        "ann-pt-summ v1.0.1 (PhysioNet, DUA signed): 210 expert-annotated patient summaries with 423 unsupported-fact spans for judge validation and selection; its 110 MIMIC-IV hospital courses with clinician-written discharge instructions are the main-study corpus",
+        "MedNLI v1.0.0 (PhysioNet, DUA signed): 14,049 clinician-written premise and hypothesis pairs from MIMIC-III, used to adapt the judge",
+        "MIMIC-IV-Note v2.2 (PhysioNet, credentialed): downloaded and verified in May 2026; the source of the hospital courses",
+        "Ethics: CITI 'Data or Specimens Only Research' and 'Conflicts of Interest' completed April 10, 2026; every credentialed text is processed by models running on the author's laptop; nothing is sent to an API or to cloud storage"]))
     t1b0u, t30u, t30c, t31u = R.test("UFR", "E0", "E1b"), R.test("UFR", "E0", "E3"), R.test("CR", "E0", "E3"), R.test("UFR", "E1", "E3")
     conds = [c for c in ["E0", "E1", "E1b", "E3", "E2"] if c in R.conds]
-    S.append(dict(kind="table", title=f"Main results (n = {R.n_docs} documents; header lines and abstentions excluded)",
+    S.append(dict(kind="table", title=f"Pilot study: five conditions on {R.n_docs} MTSamples notes (GPT-4o-mini, MiniLM judge)",
                   columns=["Metric"] + [{"E0": "E0 zero-context", "E1": "E1 RAG excerpts", "E1b": "E1b RAG + note", "E3": "E3 RAG + CoVe", "E2": "E2 extractive"}[c] for c in conds],
                   rows=[["UFR mean"] + [f3(R.mean(c, "UFR")) for c in conds],
                         ["CR mean"] + [f3(R.mean(c, "CR")) for c in conds],
@@ -81,40 +99,89 @@ def slides(R: Results):
                   widths=[3.0] + [1.85] * len(conds),
                   note=(f"Paired Wilcoxon versus E0: E1 CR {fp(t10c.p)} (−{abs(t10c.rel_change_mean):.0f}%), E1 UFR {fp(t10u.p)}; "
                         f"E1b UFR {fp(t1b0u.p)}; E3 UFR {fp(t30u.p)} (−{abs(t30u.rel_change_mean):.0f}%; versus E1 {fp(t31u.p)}), E3 CR {fp(t30c.p)}; "
-                        f"E2 UFR {fp(t20u.p)}. Verification lowers unsupported facts the most, by deleting claims and abstaining; retrieval alone lowers contradictions modestly; "
-                        f"the extractive bound has a non-zero judge error floor.")))
-    S.append(dict(kind="image2", title="Contradiction rate: distributions and per-document pairs", images=[RES / "fig_cr_boxplot.png", RES / "fig_cr_scatter.png"]))
-    S.append(dict(kind="table", title="Headline finding: the judge disagrees with medical experts",
+                        f"E2 UFR {fp(t20u.p)}. Verification lowers unsupported facts the most; retrieval alone lowers contradictions modestly; "
+                        f"the extractive bound exposes a non-zero judge error floor. Header lines and abstentions excluded.")))
+    S.append(dict(kind="table", title="Pilot headline: the small MiniLM judge disagrees with medical experts",
                   columns=["Group", "Sentences", "Expert-flagged", "Judge-flagged (UFR)", "Precision", "Recall", "Kappa", "AUROC"],
                   rows=[[r.group.replace("_", " "), f"{int(r.n_sentences):,}", pct(r.expert_flag_rate), pct(r.judge_UFR), f2(r.any_precision), f2(r.any_recall), f2(r.any_kappa), f2(r.auroc_1_minus_p_entail)]
                         for _, r in R.cal.iterrows() if r.group in ("all", "generated", "doctor_written", "gpt4_zero_shot", "llama_70b_original")],
                   widths=[2.2, 1.2, 1.5, 1.9, 1.2, 1.1, 1.0, 1.0],
-                  note=f"On 1,781 expert-annotated sentences the judge flags {pct0(cal.judge_UFR)} where experts flag {pct0(cal.expert_flag_rate)}; kappa {f2(cal.any_kappa)} is chance level, and the judge ranks systems in nearly the reverse order of the experts. Absolute UFR/CR are not hallucination rates."))
-    S.append(dict(kind="image", title="No aggregation rule rescues the judge", image=RES / "fig_variants.png",
-                  caption=(f"Best kappa over all variants and thresholds: {f2(var.best_kappa.max())}; best AUROC {f2(var.auroc_1_minus_pe.max())}. The limiting factor is the small general-domain NLI model on paraphrased patient-facing sentences." if var is not None else "")))
-    S.append(dict(kind="image2", title="Robustness: the RAG effect holds only at the default threshold", images=[RES / "fig_threshold_ablation.png", RES / "fig_topk_ablation.png"]))
-    S.append(dict(kind="image2", title="What remains unsupported, and the judge's own errors", images=[RES / "fig_taxonomy.png", RES / "fig_e2_probs.png"]))
+                  note=f"On 1,781 expert-annotated sentences the pilot judge flags {pct0(cal.judge_UFR)} where experts flag {pct0(cal.expert_flag_rate)}; kappa {f2(cal.any_kappa)} is chance level; no aggregation variant raised kappa above {f2(var.best_kappa.max()) if var is not None else '—'}. This motivated the judge selection study."))
+    if jc is not None:
+        allr = jc[jc.group == "all"].sort_values("kappa", ascending=False)
+        S.append(dict(kind="table", title="Judge selection: candidates scored against the expert annotations (1,781 sentences)",
+                      columns=["Judge", "Evidence", "AUROC", "Precision", "Recall", "Kappa", "Flag rate"],
+                      rows=[[JUDGE_NAMES.get(r.judge, r.judge), MODE.get(r["mode"], r["mode"]), f2(r.auroc), f2(r.precision), f2(r.recall), f2(r.kappa), pct0(r.flag_rate)] for _, r in allr.iterrows()],
+                      widths=[4.0, 2.0, 1.1, 1.3, 1.1, 1.1, 1.3],
+                      note=(f"Decision rule fixed in advance: highest kappa on all sentences, threshold chosen on the other subset. Selected: {JUDGE_NAMES.get(best.judge, best.judge)} "
+                            f"({MODE.get(best['mode'])}), kappa {f2(best.kappa)}, AUROC {f2(best.auroc)}, precision {f2(best.precision)}, recall {f2(best.recall)}: moderate agreement, "
+                            f"so main-study rates are estimates from an instrument with a known error profile, and the paired comparisons carry the weight.")))
+        S.append(dict(kind="image", title="Judge selection: AUROC and kappa by candidate and evidence mode", image=RES / "fig_judges.png",
+                      caption="Model size and training data matter more than the aggregation rule; whole-course evidence helps the large models."))
+    S.append(dict(kind="bullets", title="Main study design: MIMIC-IV hospital courses", bullets=[
+        "110 de-identified Brief Hospital Course sections (ann-pt-summ), each paired with the discharge instructions the treating clinician wrote",
+        "Generator: Qwen2.5-7B-Instruct, 4-bit, served on the laptop with Apple MLX through an OpenAI-compatible interface; the pilot pipeline runs unchanged and no protected text leaves the machine",
+        "Same five conditions; retrieval conditions must cite the excerpt behind every sentence; 'Not stated in the note.' allowed for unsupported sections",
+        f"Judge: {JUDGE_NAMES.get(best.judge, best.judge) if best is not None else 'the selected candidate'} with whole-course evidence; UFR and CR per summary; the doctor-written instructions scored as a human reference",
+        "Coverage measured against the clinician's own instructions (judge in reverse); citation accuracy; six retrieval ablations (3- or 8-sentence chunks, top-2 or top-5, BM25, no citations)",
+        "Question-answering pilot: medications, follow-up and warning signs; full course versus three retrieved chunks; abstention rate, UFR/CR, and support by the clinician's instructions"]))
+    if M.ok:
+        mc = [c for c in ["E0", "E1", "E1b", "E3", "E2", "REF"] if c in M.conds]
+        HEAD = {"E0": "E0 zero-context", "E1": "E1 RAG excerpts", "E1b": "E1b RAG + course", "E3": "E3 RAG + CoVe", "E2": "E2 extractive", "REF": "Clinician-written"}
+        def cell(c, col, fmt):
+            v = M.val(c, col)
+            return "—" if v is None or (isinstance(v, float) and pd.isna(v)) else fmt(v)
+        S.append(dict(kind="table", title=f"Main study results (n = {M.n_docs} hospital courses; judge: {M.judge_name()}, τ = {M.tau:.2f})",
+                      columns=["Metric"] + [HEAD[c] for c in mc],
+                      rows=[["UFR mean"] + [cell(c, "UFR_mean", f3) for c in mc],
+                            ["CR mean"] + [cell(c, "CR_mean", f3) for c in mc],
+                            ["Coverage of the clinician's sentences"] + [cell(c, "coverage_ref_mean", pct) if c != "REF" else "—" for c in mc],
+                            ["Citation accuracy"] + [cell(c, "citation_accuracy_mean", pct) for c in mc],
+                            ["Abstentions per summary"] + [cell(c, "abstentions_mean", lambda v: f"{v:.1f}") for c in mc],
+                            ["Claims per summary"] + [cell(c, "claims_mean", lambda v: f"{v:.1f}") for c in mc],
+                            ["Words per summary"] + [cell(c, "words_mean", lambda v: f"{v:.0f}") for c in mc]],
+                      widths=[3.2] + [1.55] * len(mc),
+                      note=" ".join(f"{c} vs E0: UFR {fp(M.test('UFR', c).p)}, CR {fp(M.test('CR', c).p)}, coverage {fp(M.test('coverage_ref', c).p)}." for c in mc if c not in ("E0", "REF") and M.test("UFR", c) is not None)
+                           + " Paired two-sided Wilcoxon tests on the same documents."))
+        S.append(dict(kind="image2", title="Main study: per-document distributions", images=[RES / "fig_mimic_box.png", RES / "fig_mimic_coverage.png"]))
+        if M.abl is not None and len(M.abl):
+            rows = []
+            for v in [x for x in MVAR if x != "base"]:
+                r = {m: M.ablation(m, v) for m in ("UFR", "CR", "coverage_ref", "citation_accuracy")}
+                rows.append([MVAR[v]] + [(f"{r[m].delta_mean:+.3f} ({fp(r[m].p)})" if r[m] is not None and not pd.isna(r[m].p) else "—") for m in ("UFR", "CR", "coverage_ref", "citation_accuracy")])
+            S.append(dict(kind="table", title="Retrieval ablations: paired difference from the E1 base configuration", columns=["Variant", "Δ UFR (p)", "Δ CR (p)", "Δ coverage (p)", "Δ citation accuracy (p)"],
+                          rows=rows, widths=[3.6, 2.1, 2.1, 2.1, 2.2], note="Negative UFR and CR differences and positive coverage and citation differences favour the variant. Base: 5-sentence chunks, top-3, dense retrieval, citations required."))
+        if M.qa_tot is not None:
+            S.append(dict(kind="table", title="Question-answering pilot (three questions per course)", columns=["Condition", "Question", "n", "Abstained", "UFR", "CR", "Supported by clinician's instructions", "Words"],
+                          rows=[[r.condition, r.question.replace("_", " "), str(int(r.n)), pct0(r.abstention_rate), f3(r.UFR_mean), f3(r.CR_mean), pct0(r.ref_support_mean), f"{r.words_mean:.0f}"]
+                                for _, r in M.qa.sort_values(["condition", "question"]).iterrows()],
+                          widths=[1.3, 1.6, 0.7, 1.2, 1.0, 1.0, 3.2, 0.9],
+                          note="QA-E0 answers from the full hospital course; QA-E1 from the three chunks retrieved with the question. UFR and CR are computed on answered questions only."))
+    else:
+        S.append(dict(kind="bullets", title="Main study: status", bullets=[
+            "Generation of the five conditions and six retrieval variants on the 110 hospital courses is running on the laptop (about five minutes per course with the local model)",
+            "Evaluation with the selected judge, the question-answering pilot and the figures follow automatically; the thesis chapters read the result files when they exist"]))
     S.append(dict(kind="bullets", title="Thesis writing status", bullets=[
         f"Complete draft generated from the result files: {pages} pages in CSUN format (1-inch margins, 12-pt Times New Roman, double-spaced, roman-numbered preliminary pages, arabic body)",
-        "Chapters: 1 Introduction, 2 Literature Review, 3 Data and Preprocessing, 4 Methodology, 5 Results, 6 Discussion, 7 Conclusion and Future Work; 64 IEEE references with DOIs; Appendices A to E (prompts, per-document results, worked examples, repository, threshold sweep)",
-        "New content since May: two new conditions (E1b, E3), header-filter correction, judge validation against expert annotations, five aggregation variants, threshold/top-k/cleaned-evidence ablations, coverage proxy, negation analysis, error taxonomy, ethics and governance section",
-        "Open items: committee composition to be confirmed with the advisor; advisor review of the draft; title alignment with the ETD planning form (question answering removed from scope)",
-        "Every table and figure is regenerated by one command; the document rebuilds in about two minutes"]))
+        "Nine chapters: 1 Introduction, 2 Literature Review, 3 Data, 4 Methodology, 5 Pilot Study on MTSamples, 6 Selecting a Valid Judge, 7 Main Study on MIMIC-IV, 8 Discussion, 9 Conclusion; IEEE references with DOIs; Appendices A to E (prompts, per-document results, worked examples, repository, threshold sweep)",
+        "Since the September 4 draft: judge selection study, MedNLI adaptation, main study on MIMIC-IV with a local model (citations, coverage against the clinician's instructions, citation accuracy, ablations), question-answering pilot",
+        "Open items: committee composition to be confirmed with the advisor; advisor review of the draft; final title on the ETD planning form (with or without 'and Question Answering')",
+        "Every table and figure is regenerated by one command from the result files"]))
     S.append(dict(kind="table", title="Plan to the defense (aligned with CSUN ETD deadlines)", columns=["By", "Milestone"],
-                  rows=[["Sep 19, 2026", "Advisor review of this complete draft; committee composition discussed"],
-                        ["Sep 30, 2026", "Sampling-variance runs (several generations per note) if API budget allows; optional MIMIC re-run with a local open-weight generator"],
-                        ["Oct 9, 2026", "ETD Planning Form filed (title without question answering)"],
+                  rows=[["Sep 22, 2026", "Advisor review of the complete draft; committee composition discussed"],
+                        ["Oct 9, 2026", "ETD Planning Form filed (title and committee)"],
                         ["Oct 16, 2026", "Revised draft to advisor for approval; Canvas upload and Turnitin check after approval"],
-                        ["Oct 30, 2026", "Draft to committee (two-week review); Doodle poll with 1-hour slots over 3 to 4 weeks"],
+                        ["Oct 23, 2026", "Draft to committee (two-week review); Doodle poll with 1-hour slots over 3 to 4 weeks"],
                         ["Nov 6, 2026", "ETD preliminary format review"],
                         ["Nov 16 to 24, 2026", "Defense (40 min presentation, 10 min Q&A); slides to advisor one week before"],
                         ["Dec 4, 2026", "Final ETD upload after revisions"]], widths=[2.4, 9.7],
                   note="The December 12 defense date in the May report is after the December 4 ETD deadline and has been moved."))
     S.append(dict(kind="bullets", title="Risks and requests", bullets=[
-        "Judge validity: the central instrument agrees with experts at chance level; the thesis reports this as its main methodological finding and proposes stronger judges as future work",
-        "MIMIC generation: requires a zero-data-retention agreement or a local open-weight model; kept optional",
-        "Schedule: two weeks of committee review plus advisor approval must precede the Nov 6 format review",
-        "Request to advisor: review the complete draft, discuss the committee, and advise on the title change"]))
+        (f"Judge validity: the selected judge agrees with experts moderately (kappa {f2(best.kappa)}); main-study rates are reported with this error profile, and conclusions rest on paired comparisons" if best is not None
+         else "Judge validity: the pilot judge agrees with experts at chance level; the judge selection study addresses this"),
+        "Generator difference: the pilot used GPT-4o-mini on public notes and the main study a 7-billion-parameter local model on MIMIC-IV, so the two studies are compared qualitatively",
+        "Schedule: advisor approval, Turnitin and two weeks of committee review must all precede the November 6 format review",
+        "Requests to the advisor: review the complete draft, confirm the committee, and decide the final title for the ETD planning form"]))
     return S
 
 

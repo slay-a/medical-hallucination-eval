@@ -4,6 +4,7 @@ import pandas as pd
 from scipy.stats import spearmanr
 
 from results_loader import Results, f3, f2, pct, pct0, fp, fpn, signed, COND_NAME
+from mimic_results import Mimic
 
 FIG = "results"
 NAME = {"E0": "E0 zero-context LLM", "E1": "E1 RAG (excerpts only)", "E1b": "E1b RAG (note + excerpts)", "E3": "E3 RAG + CoVe", "E2": "E2 extractive"}
@@ -34,6 +35,7 @@ def rel(t):
 def blocks(R: Results) -> list:
     b = []
     C = R.conds
+    M = Mimic(); jr = M.judge_row()
     t10u, t10c = R.test("UFR", "E0", "E1"), R.test("CR", "E0", "E1")
     t20u, t20c = R.test("UFR", "E0", "E2"), R.test("CR", "E0", "E2")
     t21u, t21c = R.test("UFR", "E1", "E2"), R.test("CR", "E1", "E2")
@@ -189,69 +191,89 @@ def blocks(R: Results) -> list:
             "should be handed unedited: fragments, abbreviations and clinician-facing phrasing. The ordering of the conditions by "
             "the judge's metrics is consistent with their designs, which is some reassurance that the judge responds to real "
             "differences between systems when those differences are large; what it cannot do is quantify them."),
-          ("table", dict(label="compare", caption="Comparison of the five conditions. Metric values are per-document means under the NLI judge; coverage is the share of source sentences matched at cosine 0.6.",
-                         columns=["Approach", "Judge UFR / CR", "Coverage", "Words", "Strengths", "Weaknesses", "Appropriate use"],
-                         widths=[0.9, 0.75, 0.6, 0.5, 1.3, 1.3, 1.15], font=8.5, align=["left", "center", "center", "center", "left", "left", "left"],
-                         rows=[["E0 zero-context LLM", f"{f3(R.mean('E0','UFR'))} / {f3(R.mean('E0','CR'))}", pct0(covv('E0')), f"{R.words['E0'].mean():.0f}",
-                                "Fluent, patient-friendly, complete structure; simplest to deploy", "Most extrinsic content; generic advice and follow-up invented from priors; highest CR",
-                                "Drafts reviewed and edited by a clinician; low-stakes communication"],
-                               ["E1 RAG, excerpts only", f"{f3(R.mean('E1','UFR'))} / {f3(R.mean('E1','CR'))}", pct0(covv('E1')), f"{R.words['E1'].mean():.0f}",
-                                f"Fewer contradictions ({rel(t10c)} relative); fewer generic statements; shorter", "Low coverage; effect small and threshold-dependent; retrieval query crude",
-                                "Focused summaries of long notes when omission is acceptable and a reviewer checks completeness"],
-                               ["E1b RAG, note + excerpts", f"{f3(R.mean('E1b','UFR'))} / {f3(R.mean('E1b','CR'))}", pct0(covv('E1b')), f"{R.words['E1b'].mean():.0f}",
-                                "Baseline length and coverage; modestly fewer unsupported claims", "No reduction in contradictions; still adds extrinsic advice",
-                                "Drop-in replacement for zero-context prompting when the note fits the context window"],
-                               ["E3 RAG + verification", f"{f3(R.mean('E3','UFR'))} / {f3(R.mean('E3','CR'))}", pct0(covv('E3')), f"{R.words['E3'].mean():.0f}",
-                                "Largest reduction in unsupported claims; removes extrinsic advice; explicit abstentions; baseline coverage kept", "Shortest LLM summaries; abstentions are omissions; about ten API calls per note; no gain in contradictions",
-                                "High-stakes patient communication where omission is safer than invention and a clinician fills gaps"],
-                               ["E2 extractive", f"{f3(R.mean('E2','UFR'))} / {f3(R.mean('E2','CR'))}", pct0(covv('E2')), f"{R.words['E2'].mean():.0f}",
-                                "Cannot fabricate; highest coverage per word; no API cost; deterministic", "Unreadable for patients: fragments, abbreviations, no explanation; still mislabelled by the judge",
-                                "Clinician-facing digests; a grounding step before an LLM rewrites the selected sentences"]]))]
+          ("table", dict(label="compare", caption="Comparison of the five conditions across both studies. Pilot values are per-document means under the MiniLM judge on MTSamples; main-study values are per-document means under the selected judge on MIMIC-IV hospital courses; coverage is the share of the clinician's discharge-instruction sentences supported by the summary.",
+                         columns=["Approach", "Pilot UFR / CR", "Main study UFR / CR", "Coverage of clinician's sentences", "Strengths", "Weaknesses", "Appropriate use"],
+                         widths=[0.85, 0.7, 0.75, 0.75, 1.15, 1.15, 1.15], font=8, align=["left", "center", "center", "center", "left", "left", "left"],
+                         rows=[[NAME[c], f"{f3(R.mean(c,'UFR'))} / {f3(R.mean(c,'CR'))}",
+                                (f"{f3(M.mean(c,'UFR'))} / {f3(M.mean(c,'CR'))}" if M.ok and c in M.conds else "—"),
+                                (pct0(M.mean(c, "coverage_ref")) if M.ok and c in M.conds else "—"), st, wk, use]
+                               for c, st, wk, use in [
+                                   ("E0", "Fluent, patient-friendly, complete structure; simplest to deploy", "Most extrinsic content; generic advice and follow-up invented from priors",
+                                    "Drafts reviewed and edited by a clinician; low-stakes communication"),
+                                   ("E1", "Fewer generic statements; shorter; every sentence cited", "Lowest coverage of the source; effect small and threshold-dependent in the pilot; retrieval query crude",
+                                    "Focused summaries of long notes when omission is acceptable and a reviewer checks completeness"),
+                                   ("E1b", "Keeps the baseline's coverage; cited; modestly fewer unsupported claims", "Still adds extrinsic advice; longest prompts",
+                                    "Drop-in replacement for zero-context prompting when the note fits the context window"),
+                                   ("E3", "Largest reduction in unsupported claims in the pilot; removes extrinsic advice; explicit abstentions", "Shortest LLM summaries; abstentions are omissions; about ten model calls per note",
+                                    "High-stakes patient communication where omission is safer than invention and a clinician fills gaps"),
+                                   ("E2", "Cannot fabricate; no model cost; deterministic", "Unreadable for patients: fragments, abbreviations, no explanation; still mislabelled by the judge",
+                                    "Clinician-facing digests; a grounding step before an LLM rewrites the selected sentences")]]))]
     b += [H2("8.5 Threats to Validity and Limitations")]
+    jk = (f"kappa {f2(jr.kappa)}, precision {f2(jr.precision)}, recall {f2(jr.recall)}" if jr is not None else "moderate agreement")
     b += [("bullets", [
-        "**Construct validity.** The central limitation is the judge itself. Its labels agree with medical experts at near-chance "
-        "levels, so UFR and CR are indices of how an NLI model reacts to a summary, not measurements of hallucination. All "
-        "between-condition comparisons in this thesis are comparisons of that index. They remain informative because every "
-        "condition is scored on the same documents by the same instrument, but the magnitude of any true effect is unknown.",
-        "**Transfer of the validation.** The expert-annotated summaries come from MIMIC-IV hospital courses and discharge "
-        "instructions, whereas the comparison uses MTSamples consultations and discharge summaries. The judge's behavior was "
-        "similar on both (it flagged about four sentences in five in both corpora), but the calibration is formally an assumption "
-        "when transferred.",
-        f"**Sample size and power.** Fifty documents give adequate power for large paired effects (the E2 comparisons) and marginal "
-        f"power for the small E1 effect on CR (d(z) = {f2(t10c.d_z)}), which is why that effect crosses the significance boundary "
-        f"under small changes to the judge. The ten discharge summaries permit no subgroup inference.",
-        "**Single generation.** Each summary was generated once at temperature 0.3. Variation between samples of the same model was "
-        "not measured, so the per-document differences confound the effect of retrieval with sampling noise.",
-        "**External validity of the corpus.** MTSamples documents are sample transcriptions, not patient records; they are shorter "
-        "and more formulaic than MIMIC notes, their line breaks are corrupted, and the corpus is public and may be present in the "
-        "generator's training data, which could make E0 look more faithful than it would be on unseen notes.",
-        "**Single generator and configuration.** Only GPT-4o-mini, one prompt per condition, one retriever, one chunk size and one "
-        "retrieval query were tested. Different choices could change the size or even the direction of the RAG effect.",
-        "**Heuristic components.** The header filter is a regular expression, the coverage proxy is an embedding-similarity "
-        "threshold without human validation, and the error taxonomy is keyword-based with author review rather than an "
-        "annotated typology. Each is reported transparently so that it can be replaced.",
-        "**Single verification design.** E3 uses one verifier (the generator itself, at temperature 0), one prompt and the judge's "
-        "own retriever; a verifier that sees the whole note, or a different model, could keep claims that this design deleted. "
-        "Abstentions were excluded from the claim set by a rule written after their mislabeling was observed; the pre-exclusion "
-        "numbers are reported in Section 5.5.4 so that the reader can judge the effect of that decision."])]
+        "**Construct validity of the judge.** The pilot judge agrees with medical experts at near-chance levels, so the pilot's UFR and CR "
+        "are indices of how a small NLI model reacts to a summary rather than measurements of hallucination. The main-study judge was "
+        f"selected for its agreement with the same experts ({jk}), which is moderate rather than high: a sizeable share of the sentences "
+        "it flags were not flagged by the experts, and it misses a sizeable share of what they flagged. Every rate in Chapter 7 is "
+        "therefore an estimate produced by an instrument with a known, but non-negligible, error profile. The between-condition "
+        "comparisons remain informative because every condition is scored on the same documents by the same instrument, but the "
+        "magnitude of any true effect carries this measurement error.",
+        "**Transfer of the validation.** For the pilot, the judge was validated on MIMIC-IV summaries and applied to MTSamples notes. The "
+        "main study removes that gap, since the judge is applied to the very hospital courses the expert annotations concern, but the "
+        "annotations cover doctor-written instructions and summaries written by GPT-4 and Llama models, not the output of the local "
+        "model used here, so the judge's threshold and error profile are transferred across generators rather than measured on them.",
+        f"**Sample size and power.** Fifty pilot documents give adequate power for large paired effects and marginal power for small ones "
+        f"(the E1 effect on CR, d(z) = {f2(t10c.d_z)}, crosses the significance boundary under small changes to the judge). The 110 "
+        f"main-study courses give adequate power for moderate paired effects; the question-answering pilot, with three questions per course, "
+        f"supports descriptive comparison only.",
+        "**Single generation.** Each summary and each answer was generated once at temperature 0.3, so per-document differences confound "
+        "the effect of a condition with sampling noise in both studies.",
+        "**External validity of the corpora.** MTSamples documents are sample transcriptions, not patient records; they are shorter and "
+        "more formulaic than hospital notes, their line breaks are corrupted, and the corpus is public and may be present in the "
+        "generator's training data. The main-study courses come from a single institution and a single section of the discharge "
+        "summary, and the doctor-written instructions used as the coverage reference reflect one clinician's choices of what to tell "
+        "the patient; they also contain content that the hospital course does not (the experts marked such spans), so complete coverage "
+        "of them is neither attainable nor desirable.",
+        "**Two generators of different capability.** The pilot used GPT-4o-mini through an API and the main study a four-bit, "
+        "seven-billion-parameter open-weight model on a laptop, the largest model that the data use agreement and the hardware allowed. "
+        "Results are compared across the studies qualitatively, never numerically, and each study used one prompt per condition, one "
+        "retriever and one verification design.",
+        "**Heuristic components.** The header filter, the abstention rule and the citation parser are regular expressions, the pilot's "
+        "coverage proxy is an embedding-similarity threshold without human validation, and the error taxonomy is keyword-based with "
+        "author review. Each is reported transparently so that it can be replaced.",
+        "**Reference-based coverage and citation accuracy use the same judge.** Both main-study measures run the selected NLI model in a "
+        "new direction (summary as premise, instruction sentence as hypothesis; cited excerpt as premise, claim as hypothesis) for which "
+        "its agreement with experts was not separately validated.",
+        "**Verification design.** E3 uses one verifier (the generator itself, at temperature 0), one prompt and the judge's own retriever; "
+        "a claim whose support lies in an unretrieved sentence is deleted rather than confirmed, and abstentions, while honest, are "
+        "omissions. The abstention rule was written after the mislabeling of abstentions was observed in the pilot; pre-exclusion numbers "
+        "are reported in Section 5.5.4.",
+        "**Question-answering pilot.** Three fixed questions without clinician-written gold answers; agreement with the clinician's "
+        "discharge instructions is a proxy for correctness, and a correct answer that the clinician did not write is counted as unsupported."])]
     b += [H2("8.6 Implications for the Design and Evaluation of Clinical Summarization Systems")]
     b += [("numbers", [
-        "**Validate the evaluator before the system.** An automatic hallucination metric should be reported together with its "
-        "agreement with clinician annotations on the target domain; without that, a lower score cannot be interpreted. The "
-        "ann-pt-summ annotations make such a check inexpensive for any patient-summary metric.",
-        "**Prefer paired, within-document comparisons and report effect sizes.** Absolute rates from a noisy judge are not "
-        "meaningful, but the same judge applied to two systems on the same notes still ranks large differences correctly; "
-        "confidence intervals and robustness to the judge's thresholds should accompany every claim of improvement.",
-        "**Always include a verbatim extractive control.** It costs nothing, and it measures the metric's error floor directly; "
-        "any reported rate below that floor is noise.",
-        "**Measure coverage alongside faithfulness.** Retrieval that shrinks the model's view trades unsupported content for "
-        "omissions; a system that reports only hallucination rates hides half of the trade-off.",
-        "**Target the failure categories directly.** Extrinsic follow-up and advice sentences are not removed by retrieval; "
-        "abstention rules, per-claim verification against the note, or templated advice sections approved by clinicians are more "
-        "appropriate remedies.",
-        "**Use stronger or domain-adapted judges.** Larger consistency-tuned NLI models, alignment models, atomic-claim "
-        "decomposition, clinical NLI fine-tuning, or LLM-based judges calibrated against expert labels are all candidates; the "
-        "pipeline released with this thesis allows any of them to be substituted for the cross-encoder without other changes."])]
+        "**Validate the evaluator before the system.** An automatic hallucination metric should be reported together with its agreement "
+        "with clinician annotations on the target domain; without that, a lower score cannot be interpreted. In this thesis the same "
+        "check, on the same 1,781 sentences, rejected one judge and selected another, and the ann-pt-summ annotations make it "
+        "inexpensive for any patient-summary metric.",
+        "**Choose the judge by capacity and evidence mode, not by aggregation tweaks.** Changing how a small model's evidence was "
+        "aggregated changed little; a larger consistency-trained NLI model with the whole document as evidence roughly doubled kappa. "
+        "Even so, the selected judge's precision and recall leave room for error, so its rates should be published with those figures.",
+        "**Prefer paired, within-document comparisons and report effect sizes.** Absolute rates from a noisy judge are not meaningful, "
+        "but the same judge applied to two systems on the same notes still ranks large differences correctly; confidence intervals and "
+        "robustness to the judge's thresholds should accompany every claim of improvement.",
+        "**Always include a verbatim extractive control and a human reference.** The extractive control measures the metric's error "
+        "floor directly, and scoring the clinician's own text under the same judge shows what rate a faithful human writer receives; "
+        "any reported rate should be read against both.",
+        "**Measure omission against what a clinician actually told the patient.** Retrieval that shrinks the model's view trades "
+        "unsupported content for omissions; coverage of the clinician-written instructions makes that trade-off visible in a way that a "
+        "source-side proxy cannot.",
+        "**Require citations.** Sentence-level citations cost nothing at generation time, give reviewers a direct path to the evidence, "
+        "and turn an unverifiable statement into a checkable one; citation accuracy is a second, cheaper check on grounding.",
+        "**Target the failure categories directly.** Extrinsic follow-up and advice sentences are not removed by retrieval; abstention "
+        "rules, per-claim verification against the note, or templated advice sections approved by clinicians are more appropriate remedies.",
+        "**Keep protected text local.** An open-weight model on a laptop made a study on real hospital courses possible without any data "
+        "leaving the machine; the price is a smaller generator, which the evaluation must take into account."])]
 
     # ══════════════════════════════════ CHAPTER 7 ══════════════════════════════════
     b += [H1("Chapter 9 Conclusion and Future Work"), H2("9.1 Summary")]
@@ -293,24 +315,23 @@ def blocks(R: Results) -> list:
         "the categories that contain retrievable facts and not the extrinsic ones."])]
     b += [H2("9.3 Future Work")]
     b += [("numbers", [
-        "**Evaluate the verifier as a judge.** The E3 verifier is itself an LLM-based claim judge; running it on the ann-pt-summ "
-        "annotations exactly as the NLI judge was run would show whether an LLM verifier agrees with medical experts better than "
-        "the cross-encoder, and a verifier that sees the whole note rather than three retrieved sentences should be compared "
-        "with the present design so that deletions of supported claims can be counted.",
-        "**Replace the judge.** Evaluate larger consistency-tuned NLI models and alignment models [[cite:honovich2022,zha2023]], "
-        "atomic-claim decomposition [[cite:min2023]], a MedNLI-adapted classifier [[cite:romanov2018]], and an LLM-based judge, "
-        "all on the ann-pt-summ annotations first, and adopt only a judge whose kappa and AUROC justify it. The validation scripts "
-        "released here make this a one-day experiment per candidate.",
-        "**Migrate generation to MIMIC-IV-Note.** With a locally hosted open-weight generator or a zero-data-retention agreement, "
-        "the same three conditions can be run on real discharge summaries, removing the corpus-contamination and line-break "
-        "concerns of MTSamples and allowing the judge's calibration to be applied in-domain.",
-        "**Measure sampling variance.** Generate several summaries per note and condition to separate the effect of retrieval "
-        "from decoding noise, and increase the document sample once generation is cheap and local.",
-        "**Validate coverage and taxonomy with clinicians.** A small clinician study rating omissions and the clinical severity of "
-        "unsupported statements would convert the coverage proxy and the keyword taxonomy into validated measures, and would "
-        "answer whether the extrinsic advice sentences are acceptable.",
-        "**Implement the deferred question-answering task** from the proposal with the same judge and controls, since "
-        "document-grounded QA over discharge instructions is the other use case in which patients meet these models."])]
+        "**Validate the judge on the generator's own output.** A small clinician annotation of local-model summaries would let the "
+        "selected judge's threshold and error profile be measured, rather than transferred, for the system under test, and would show "
+        "whether citation accuracy and reference coverage agree with clinical judgment.",
+        "**Evaluate the verifier as a judge.** The E3 verifier is itself an LLM-based claim judge; scoring it on the ann-pt-summ "
+        "annotations exactly as the NLI candidates were scored would show whether an LLM verifier agrees with medical experts better "
+        "than the NLI model, and a verifier that sees the whole note should be compared with the retrieval-based design.",
+        "**Stronger judges.** Atomic-claim decomposition [[cite:min2023]], larger alignment models [[cite:zha2023]], LLM-based judges "
+        "calibrated against expert labels, and longer clinical NLI fine-tuning are natural next candidates for the same selection "
+        "protocol; the scripts released here make each a one-day experiment.",
+        "**Larger generators and larger samples on protected data.** A workstation-class GPU would allow open-weight models of 30 to 70 "
+        "billion parameters, several generations per course to measure sampling variance, and more institutions and note types; a "
+        "zero-data-retention agreement would allow the pilot's generator to be run on the same courses for a direct comparison.",
+        "**Clinician study of omission and severity.** A small study in which clinicians rate the omissions and the clinical severity "
+        "of unsupported statements would convert the coverage measures and the keyword taxonomy into validated measures and would "
+        "settle whether extrinsic advice sentences are acceptable.",
+        "**A full question-answering benchmark.** Clinician-written gold answers for a broader question set, calibrated abstention, and "
+        "the same judge and controls would turn the pilot of Section 7.7 into the second task the proposal described."])]
     return b
 
 
