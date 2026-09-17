@@ -4,7 +4,6 @@ venv/
 env/
 
 # IDE / editor
-.claude/
 .idea/
 .vscode/
 *.code-workspace
