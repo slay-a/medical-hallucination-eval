@@ -25,10 +25,14 @@ META = dict(
     chair="Taehyung Wang, Ph.D.",
     committee=[],   # committee members to be added after they are confirmed with the advisor
     acknowledgments=[
-        "I thank my advisor and committee chair, Dr. Taehyung Wang, for his guidance throughout this project.",
-        "I am grateful to the PhysioNet team and to Hegselmann and colleagues for making MIMIC-IV-Note and the ann-pt-summ "
-        "expert annotations available to credentialed researchers; the validation study in Chapter 5 would not have been "
-        "possible without them.",
+        "I owe this thesis to my advisor and committee chair, Dr. Taehyung Wang. He guided the work from the first idea to the "
+        "last chapter, taught me how to turn a question into an experiment and an experiment into evidence, and gave his time "
+        "generously whenever I asked for it. When the work ran into hurdles, from obtaining access to protected clinical data to "
+        "the discovery that my first evaluation method could not be trusted and had to be replaced, his advice, patience and "
+        "encouragement kept the project moving. I am deeply grateful for his teaching and his support.",
+        "I also thank the PhysioNet team and the authors of the ann-pt-summ and MedNLI datasets for making MIMIC-IV-Note, the "
+        "expert annotations of patient summaries and the clinical inference pairs available to credentialed researchers; "
+        "Chapters 5 to 7 rest on those data.",
     ],
     abstract=[],
 )
