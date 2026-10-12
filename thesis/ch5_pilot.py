@@ -113,7 +113,7 @@ def blocks(R: Results) -> list:
                          rows=[[NAME[c], f"{R.words[c].mean():.0f} ({R.words[c].std():.0f})", f"{R.claims_per[c]:.1f}", f"{tot[c]:,}",
                                 f"{int(lc.loc[c,'Supported'])} ({pct0(share[(c,'Supported')])})", f"{int(lc.loc[c,'Not-Supported'])} ({pct0(share[(c,'Not-Supported')])})",
                                 f"{int(lc.loc[c,'Contradicted'])} ({pct0(share[(c,'Contradicted')])})"] for c in C])),
-          ("figure", dict(label="lengths", path=f"{FIG}/fig_length_claims.png", width=6.3, caption="Words per summary and claims per summary (header lines excluded) under the three conditions.")),
+          ("figure", dict(label="lengths", path=f"{FIG}/fig_length_claims.png", width=6.3, caption="Words per summary and claims per summary (header lines excluded) under the five conditions.")),
           P(f"The label distributions in [[fig:labels]] already show the shape of the main result. Under the two retrieval "
             f"conditions and the baseline the judge labeled only about one claim in five as Supported ({pct0(share[('E0','Supported')])} for E0, "
             f"{pct0(share[('E1','Supported')])} for E1 and {pct0(share[('E1b','Supported')])} for E1b), most claims as Not-Supported, and "
@@ -124,7 +124,7 @@ def blocks(R: Results) -> list:
             f"Supported, {e2_ns} claims Not-Supported and {e2c_total} Contradicted; those {e2c_total + e2_ns} labels are judge "
             f"errors by construction and are analyzed in Section 5.5.4."),
           ("figure", dict(label="labels", path=f"{FIG}/fig_label_distribution.png", width=6.3, caption="Share of claims labeled Supported, Not-Supported and Contradicted by the NLI judge under each condition."))]
-    b += [H2("5.2 Primary Comparison of the Three Approaches")]
+    b += [H2("5.2 Primary Comparison of the Five Conditions")]
     b += [P(f"[[tab:agg]] reports the per-document means, standard deviations and medians of UFR and CR, and [[tab:tests]] the "
             f"paired comparisons. The Unsupported Fact Rate did not differ between the zero-context and RAG conditions: mean "
             f"{f3(t10u.mean_a)} versus {f3(t10u.mean_b)}, a difference of {signed(t10u.delta_mean)} with a 95 percent bootstrap "
@@ -166,14 +166,14 @@ def blocks(R: Results) -> list:
           ("table", dict(label="agg", caption=f"Per-document Unsupported Fact Rate and Contradiction Rate under each condition (n = {R.n_docs} documents; header lines excluded).",
                          columns=["Metric", "Condition", "Mean", "SD", "Median"], widths=[1.0, 2.4, 1.0, 1.0, 1.1], font=10,
                          rows=[[m if i == 0 else "", NAME[c], f3(R.mean(c, m)), f3(R.sd(c, m)), f3(R.median(c, m))] for m in ("UFR", "CR") for i, c in enumerate(C)])),
-          ("table", dict(label="tests", caption="Paired comparisons between conditions. Delta is the mean of per-document differences (second condition minus first); negative values favor the second condition. CI is the 95 percent percentile bootstrap interval (10,000 resamples). p is the two-sided Wilcoxon signed-rank p-value and p(Holm) its adjustment over the six tests. d(z) is the standardized mean difference and r the matched-pairs rank-biserial correlation (positive = improvement).",
+          ("table", dict(label="tests", caption="Paired comparisons between conditions. Delta is the mean of per-document differences (second condition minus first); negative values favor the second condition. CI is the 95 percent percentile bootstrap interval (10,000 resamples). p is the two-sided Wilcoxon signed-rank p-value and p(Holm) its Holm adjustment over the twenty tests of the table. d(z) is the standardized mean difference and r the matched-pairs rank-biserial correlation (positive = improvement).",
                          columns=["Comparison", "Metric", "Delta", "95% CI", "Median delta", "p", "p (Holm)", "d(z)", "r", "Improved / same / worse"],
                          widths=[0.85, 0.55, 0.65, 1.0, 0.6, 0.6, 0.6, 0.5, 0.5, 0.95], font=8.5,
                          rows=[[t.comparison, t.metric, signed(t.delta_mean), f"[{t.ci95_low:+.3f}, {t.ci95_high:+.3f}]", signed(t.delta_median), fpn(t.p), fpn(t.p_holm),
                                 f2(t.d_z), f2(t.rank_biserial), f"{t.pct_improved:.0f}% / {t.pct_unchanged:.0f}% / {t.pct_worse:.0f}%"]
                                for _, t in R.tests.iterrows()])),
-          ("figure", dict(label="ufrbox", path=f"{FIG}/fig_ufr_boxplot.png", width=5.6, caption="Distribution of the per-document Unsupported Fact Rate under the three conditions. Boxes show quartiles, the bar the median, and points individual documents.")),
-          ("figure", dict(label="crbox", path=f"{FIG}/fig_cr_boxplot.png", width=5.6, caption="Distribution of the per-document Contradiction Rate under the three conditions.")),
+          ("figure", dict(label="ufrbox", path=f"{FIG}/fig_ufr_boxplot.png", width=5.6, caption="Distribution of the per-document Unsupported Fact Rate under the five conditions. Boxes show quartiles, the bar the median, and points individual documents.")),
+          ("figure", dict(label="crbox", path=f"{FIG}/fig_cr_boxplot.png", width=5.6, caption="Distribution of the per-document Contradiction Rate under the five conditions.")),
           ("figure", dict(label="scatter", path=f"{FIG}/fig_cr_scatter.png", width=6.3, caption="Per-document Contradiction Rate of E1 (left) and E2 (right) against E0. Points below the diagonal are documents in which the condition produced a lower rate than the zero-context baseline.")),
           ("figure", dict(label="pct", path=f"{FIG}/fig_pct_improved.png", width=6.3, caption="Share of documents whose UFR (left) and CR (right) improved, were unchanged or worsened in each paired comparison."))]
     b += [H2("5.3 Effects of Note Type and Length")]
@@ -326,7 +326,7 @@ def blocks(R: Results) -> list:
             f"a negation cue ([[tab:neg]]): among E2 sentences with such a cue, {negcount('E2','True','Contradicted')} of "
             f"{e2_neg_total} were called Contradicted, against {negcount('E2','False','Contradicted')} of {e2_pos_total} without. "
             f"Sentences such as \"Denies nausea, vomiting, or diarrhea\" or \"No swelling, pain, or numbness\" are the typical "
-            f"victims: a negated list of symptoms, compared with a neighbouring sentence that mentions one of those symptoms in a "
+            f"victims: a negated list of symptoms, compared with a neighboring sentence that mentions one of those symptoms in a "
             f"different context, reads to the model like a contradiction. Negation cues raise the contradiction rate of the LLM "
             f"conditions as well ({negcount('E0','True','Contradicted')} of {negcount('E0','True','Contradicted')+negcount('E0','True','Supported')+negcount('E0','True','Not-Supported')} "
             f"E0 claims with a cue versus {negcount('E0','False','Contradicted')} of {negcount('E0','False','Contradicted')+negcount('E0','False','Supported')+negcount('E0','False','Not-Supported')} without)."),

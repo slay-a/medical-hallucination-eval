@@ -23,7 +23,7 @@ META = dict(
     program="Computer Science",
     date="December 2026",
     chair="Taehyung Wang, Ph.D.",
-    committee=[],   # committee members to be added after they are confirmed with the advisor
+    committee=["Mahdi Ebrahimi, Ph.D.", "Robert McIlhenny, Ph.D."],   # members in alphabetical order; the chair is listed last
     acknowledgments=[
         "I owe this thesis to my advisor and committee chair, Dr. Taehyung Wang. He guided the work from the first idea to the "
         "last chapter, taught me how to turn a question into an experiment and an experiment into evidence, and gave his time "

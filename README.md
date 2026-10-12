@@ -110,4 +110,4 @@ is_header, is_abstention), `results/summaries.csv`, `results/comparison_per_samp
 `results/aggregate_statistics.csv`, `results/pairwise_tests.csv`, ablation and calibration CSVs.
 Judge study: `results/judge_candidates.csv`. Main study: `results/mimic_summary.csv`,
 `results/mimic_pairwise_tests.csv`, `results/mimic_ablations.csv`, `results/mimic_reference.csv`,
-`results/mimic_qa_summary.csv`, `results/mimic_judge_agreement.csv`, `results/audit_summary.csv` (when labeled). Figures: `results/fig_*.png`.
+`results/mimic_qa_summary.csv`, `results/mimic_judge_agreement.csv`, `results/mimic_second_judge_tests.csv`, `results/audit_summary.csv` (when labeled). Figures: `results/fig_*.png`.

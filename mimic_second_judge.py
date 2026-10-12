@@ -25,11 +25,31 @@ from judge_candidates import CANDIDATES, Judge  # noqa: E402
 PRIVATE, RESULTS = HERE / "results_private", HERE / "results"
 
 
+def paired_tests():
+    """Paired Wilcoxon tests of per-document UFR under the second judge (and under both judges) against E0 and E1."""
+    from recompute_metrics import paired_stats
+    cl = pd.read_csv(PRIVATE / "mimic_claims_second.csv")
+    cl["both"] = cl.flag_first & cl.flag_second
+    rows = []
+    for col, label in (("flag_second", "UFR_second"), ("both", "UFR_both")):
+        w = cl.groupby(["sid", "condition"])[col].mean().unstack()
+        for a in ("E0", "E1"):
+            for b in [c for c in w.columns if c not in (a, "REF")]:
+                if a in w.columns:
+                    rows.append(dict(measure=label, comparison=f"{b} vs {a}", **paired_stats(w[a], w[b])))
+    out = pd.DataFrame(rows); out.to_csv(RESULTS / "mimic_second_judge_tests.csv", index=False)
+    pd.set_option("display.width", 200)
+    print(out[["measure", "comparison", "mean_a", "mean_b", "delta_mean", "p", "d_z"]].round(4).to_string(index=False))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--judge", default="bespoke_minicheck_7b"); ap.add_argument("--mode", default=None); ap.add_argument("--tau", type=float, default=None)
     ap.add_argument("--data-dir", default=str(DEFAULT_DATA))
+    ap.add_argument("--tests-only", action="store_true", help="skip scoring; compute paired tests from results_private/mimic_claims_second.csv")
     args = ap.parse_args()
+    if args.tests_only:
+        paired_tests(); return
     jc = pd.read_csv(RESULTS / "judge_candidates.csv"); rows = jc[(jc.judge == args.judge) & (jc.group == "all")].sort_values("kappa", ascending=False)
     mode = args.mode or rows.iloc[0]["mode"]; tau = args.tau if args.tau is not None else float(rows[rows["mode"] == mode].tau_from_other_subset.iloc[0])
     print(f"second judge {args.judge} mode={mode} tau={tau}", flush=True)
@@ -63,7 +83,8 @@ def main():
                         first_flags_confirmed=(a & b).sum() / a.sum() if a.sum() else np.nan, second_flags_confirmed=(a & b).sum() / b.sum() if b.sum() else np.nan,
                         UFR_first=per.u1.mean(), UFR_second=per.u2.mean(), UFR_both=per.ub.mean(), UFR_either=per.ue.mean(), second_judge=args.judge, second_mode=mode, second_tau=tau))
     res = pd.DataFrame(out); res.to_csv(RESULTS / "mimic_judge_agreement.csv", index=False)
-    pd.set_option("display.width", 250); print(res.round(3).to_string(index=False)); print("done")
+    pd.set_option("display.width", 250); print(res.round(3).to_string(index=False))
+    paired_tests(); print("done")
 
 
 if __name__ == "__main__":

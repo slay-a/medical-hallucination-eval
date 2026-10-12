@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parent.parent
 JUDGE_NAMES = {"minilm_nli": "MiniLM cross-encoder (pilot judge)", "deberta_large_nli": "DeBERTa-v3-large NLI",
                "ce_deberta_large_nli": "DeBERTa-v3-large cross-encoder", "minicheck_deberta": "MiniCheck DeBERTa-v3-large",
                "minicheck_roberta": "MiniCheck RoBERTa-large", "mednli_deberta_large": "DeBERTa-v3-large NLI + MedNLI",
-               "bespoke_minicheck_7b": "Bespoke-MiniCheck-7B (LLM checker)"}
+               "bespoke_minicheck_7b": "Bespoke-MiniCheck-7B"}
 MODE_NAMES = {"top3": "top-3 sentences", "doc": "whole course"}
 MODE_PHRASE = {"top3": "top-3 sentence evidence", "doc": "whole-course evidence"}
 
@@ -38,7 +38,7 @@ def blocks(R: Results) -> list:
     b += [P("Chapter 5 showed that the pilot judge, a six-layer MiniLM cross-encoder trained on general-domain NLI data, agrees "
             "with medical experts at chance level. The main study on MIMIC-IV hospital courses (Chapter 7) needs a judge whose "
             "labels can be interpreted, so this chapter scores candidate judges against the same 1,781 expert-annotated sentences "
-            "with the protocol of Section 4.7 and the candidates of Section 4.10, and then adapts the strongest general model to "
+            "with the protocol of Section 4.7 and the candidates of Section 4.9, and then adapts the strongest general model to "
             "clinical language with MedNLI [[cite:romanov2018]]. The decision rule was fixed in advance: the candidate with the "
             "highest Cohen's kappa on all sentences, with its decision threshold chosen on the other subset of summaries, becomes "
             "the judge of the main study; its precision, recall and AUROC are reported alongside every main-study result so that "
@@ -54,7 +54,7 @@ def blocks(R: Results) -> list:
     b += [P(f"[[tab:judges]] reports, for every candidate and evidence mode, the area under the ROC curve of the support score, "
             f"and precision, recall, F1, specificity and kappa at the threshold chosen on the other subset. [[fig:judges]] shows "
             f"the same comparison graphically. (The DeBERTa-v3-large NLI model is the one trained on MultiNLI, FEVER-NLI, ANLI, LingNLI "
-            f"and WANLI, Section 4.10.) The pilot judge reaches an AUROC of "
+            f"and WANLI, Section 4.9.) The pilot judge reaches an AUROC of "
             f"{f2(allr[(allr.judge=='minilm_nli')&(allr['mode']=='top3')].auroc.iloc[0])} and a kappa of "
             f"{f2(allr[(allr.judge=='minilm_nli')&(allr['mode']=='top3')].kappa.iloc[0])} even with a tuned threshold. The best "
             f"candidate, {JUDGE_NAMES.get(best.judge, best.judge)} with {MODE_PHRASE.get(best['mode'], best['mode'])}, reaches "
@@ -67,6 +67,10 @@ def blocks(R: Results) -> list:
                          rows=[[r.jn, r.mn, f2(r.auroc), f2(r.precision), f2(r.recall), f2(r.specificity), f2(r.f1), f2(r.kappa), pct0(r.flag_rate), f"{r.tau_from_other_subset:.2f}"] for _, r in allr.iterrows()])),
           ("figure", dict(label="judges", path="results/fig_judges.png", width=6.3, caption="AUROC and kappa of each candidate judge and evidence mode against the expert annotations, all sentences."))]
     gen = jc[jc.group == "generated"].sort_values("kappa", ascending=False); doc = jc[jc.group == "doctor_written"].sort_values("kappa", ascending=False)
+    _A = jc[(jc.group == "all") & (jc.judge != "minilm_nli")].pivot_table(index="judge", columns="mode", values="kappa")
+    _A = _A.dropna(subset=[c for c in ("doc", "top3") if c in _A.columns])
+    WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven"}
+    mode_total = WORDS.get(len(_A), str(len(_A))); mode_wins = WORDS.get(int((_A["doc"] > _A["top3"]).sum()), str(int((_A["doc"] > _A["top3"]).sum())))
     bg, bd = gen.iloc[0], doc.iloc[0]
     b += [P(f"Agreement differs between the two kinds of summaries. On LLM-generated summaries, where experts flagged "
             f"{pct0(bg.expert_rate)} of sentences, the best candidate ({JUDGE_NAMES.get(bg.judge, bg.judge)}, {MODE_PHRASE.get(bg['mode'])}) reaches "
@@ -74,8 +78,8 @@ def blocks(R: Results) -> list:
             f"the best candidate ({JUDGE_NAMES.get(bd.judge, bd.judge)}, {MODE_PHRASE.get(bd['mode'])}) reaches kappa {f2(bd.kappa)} and AUROC "
             f"{f2(bd.auroc)}. Two design lessons emerge. Model size and training data matter more than the aggregation rule: the "
             f"large models improve on the pilot judge in every mode, whereas Chapter 5 showed that changing the aggregation rule "
-            f"of the small model changes little. And for the large models the whole-course evidence mode, which lets the model "
-            f"see every sentence of the hospital course in windows, is competitive with or better than three retrieved "
+            f"of the small model changes little. And for {mode_wins} of the {mode_total} large candidates the whole-course evidence "
+            f"mode, which lets the model see every sentence of the hospital course, gives a higher kappa than three retrieved "
             f"sentences, because paraphrased patient-facing sentences draw on several parts of the course at once.")]
     bmc = jc[(jc.judge == "bespoke_minicheck_7b") & (jc.group == "all")]
     if len(bmc):
@@ -118,11 +122,11 @@ def blocks(R: Results) -> list:
                     f"not clinical vocabulary, as the factor that limits agreement with the experts.")
         b += [P(f"The strongest general model was fine-tuned on MedNLI, 11,232 clinician-written premise and hypothesis pairs from "
                 f"MIMIC-III notes (Section 3.4), for {epochs_txt} with the {opt_txt} optimizer, a learning rate of {lr_txt} and an "
-                f"effective batch size of {ftj['batch']} (Section 4.10), which took {hours:.1f} hours on the laptop's GPU while it was "
+                f"effective batch size of {ftj['batch']} (Section 4.9), which took {hours:.1f} hours on the laptop's GPU while it was "
                 f"shared with the language-model server. Its MedNLI development accuracy rose{zs} {pct(ftj['dev_accuracy'])} and its test "
                 f"accuracy{zst} {pct(ftj['test_accuracy'])}." + agree + comp)]
     else:
-        b += [P("The MedNLI adaptation is described in Section 4.10; its results are added to [[tab:judges]] when the fine-tuning run completes.")]
+        b += [P("The MedNLI adaptation is described in Section 4.9; its results are added to [[tab:judges]] when the fine-tuning run completes.")]
     b += [("h2", "6.4 Decision")]
     b += [P(f"By the pre-specified rule the judge of the main study is {JUDGE_NAMES.get(best.judge, best.judge)} with "
             f"{MODE_PHRASE.get(best['mode'], best['mode'])} and a support threshold of {best.tau_from_other_subset:.2f}."

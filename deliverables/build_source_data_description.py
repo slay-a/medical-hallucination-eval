@@ -105,7 +105,7 @@ def main():
         ("examples_fixed_by_rag.csv, examples_persistent.csv", "Qualitative example pairs."),
         ("judge_candidates.csv", "Judge selection study: AUROC, threshold, flag rate, precision, recall, specificity, F1 and kappa for every candidate judge, evidence mode and sentence subset (Chapter 6)."),
         ("mimic_summary.csv, mimic_pairwise_tests.csv, mimic_reference.csv", "Main study aggregates: per-condition means and medians of UFR, CR, coverage of the clinician's instructions, citation accuracy, words, claims and abstentions; paired tests against E0, E1 and the doctor-written instructions; the judge's rates on the doctor-written instructions next to the expert span counts (Chapter 7). No MIMIC-derived text."),
-        ("mimic_judge_agreement.csv", "Agreement between the selected judge and Bespoke-MiniCheck-7B on the 6,588 base-condition claims, per condition."),
+        ("mimic_judge_agreement.csv, mimic_second_judge_tests.csv", "Agreement between the selected judge and Bespoke-MiniCheck-7B on the 6,588 base-condition claims, per condition, and paired Wilcoxon tests of per-document UFR under the second judge and under both judges."),
         ("mimic_ablations.csv, mimic_qa_summary.csv", "Retrieval ablations (paired differences of six E1 variants from the base configuration) and the question-answering pilot aggregates by condition and question type."),
         ("fig_*.png", f"{len(list(res.glob('fig_*.png')))} figures at 200 dpi used in the thesis."),
     ]
