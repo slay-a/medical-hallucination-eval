@@ -38,6 +38,9 @@ def blocks(R: Results) -> list:
     M = Mimic(); jr = M.judge_row()
     _agr = _csv("mimic_judge_agreement.csv")
     agr_all = _agr.set_index("condition").loc["all"] if _agr is not None and "all" in set(_agr.condition) else None
+    _G2 = _agr.set_index("condition") if _agr is not None and "E2" in set(_agr.condition) else None
+    _st2 = _csv("mimic_second_judge_tests.csv")
+    _ST2 = _st2[_st2.measure == "UFR_second"].set_index("comparison") if _st2 is not None else None
     t10u, t10c = R.test("UFR", "E0", "E1"), R.test("CR", "E0", "E1")
     t20u, t20c = R.test("UFR", "E0", "E2"), R.test("CR", "E0", "E2")
     t21u, t21c = R.test("UFR", "E1", "E2"), R.test("CR", "E1", "E2")
@@ -116,10 +119,15 @@ def blocks(R: Results) -> list:
             "restatements of history and paraphrased findings. Two of these categories, follow-up and advice, are largely "
             "extrinsic: the note says nothing about them, the model supplies them from its knowledge of what patient instructions "
             "contain, and retrieval cannot remove them because they are not generated from the retrieved text. The judge itself "
-            "errs in three characteriztic ways: it cannot match a patient-facing paraphrase that aggregates several sentences of "
+            "errs in three characteristic ways: it cannot match a patient-facing paraphrase that aggregates several sentences of "
             "the note to any single sentence and therefore calls it Not-Supported; it treats negated symptom lists compared with "
             "loosely related sentences as contradictions; and it inherits sentence fragments from the corpus's line-break "
-            "artifact. The first error dominates, and no aggregation of evidence corrects it."),
+            "artifact. The first error dominates, and no aggregation of evidence corrects it."
+            + (f" The main study shows the same two patterns with a stronger judge: questions about warning signs, which a hospital "
+               f"course rarely states, drew the most abstentions and the highest unsupported rates (Section 7.7), and the selected "
+               f"judge's flags on verbatim sentences were confirmed by the second judge in "
+               f"{'none' if _G2.loc['E2','first_flags_confirmed'] == 0 else pct0(_G2.loc['E2','first_flags_confirmed'])} of the cases, which "
+               f"places that error in the judge rather than in the text (Section 7.8)." if _G2 is not None else "")),
           P(f"**RQ3.** Under the judge, excerpt-only RAG reduced contradictions by about a quarter and unsupported facts not at "
             f"all, while covering {pct(covv('E1'))} instead of {pct(covv('E0'))} of the note's sentences and producing summaries "
             f"about {R.words['E0'].mean() - R.words['E1'].mean():.0f} words shorter. Retrieval with the full note (E1b) kept the "
@@ -142,6 +150,22 @@ def blocks(R: Results) -> list:
                f"({fp(M.test('coverage_ref','E3').p)}), whereas retrieval with the whole course kept it at {pct0(M.mean('E1b','coverage_ref'))} "
                f"({fp(M.test('coverage_ref','E1b').p)}). The extractive control reached {f3(M.mean('E2','UFR'))}, so the residual rates of the three "
                f"grounded LLM conditions are within judge error of a system that cannot fabricate." if M.ok and M.test('UFR', 'E1') is not None else ""))]
+    if M.ok and jr is not None and M.test("UFR", "E1") is not None:
+        t31m = M.test("UFR", "E3", "E1"); tcr1 = M.test("CR", "E1")
+        s31 = _ST2.loc["E3 vs E1"] if _ST2 is not None and "E3 vs E1" in _ST2.index else None
+        b += [P(f"**Hypotheses.** H1 holds in its first half in both studies: zero-context summaries contain a measurable share of "
+                f"unsupported statements, {pct(M.mean('E0','UFR'))} of claims under the selected judge in the main study and "
+                f"{100 * (M.mean('E0','UFR') - M.mean('E2','UFR')):.1f} percentage points above the judge's floor. Its second half, agreement of the judge with the "
+                f"experts substantially better than chance, is rejected for the pilot judge (kappa {f2(cal_all.any_kappa)}) and supported "
+                f"only moderately for the judge selected in Chapter 6 (kappa {f2(jr.kappa)}). H2 is supported for unsupported facts in the "
+                f"main study, where excerpt-only retrieval lowered UFR by {M.rel(M.test('UFR','E1'))} ({fp(M.test('UFR','E1').p)}), and in "
+                f"the pilot only for contradictions ({rel(t10c)} relative, {fp(t10c.p)}, Holm-adjusted {fp(t10c.p_holm)}); it is rejected "
+                f"for contradictions in the main study ({fp(tcr1.p)}), where contradictions were rare under every condition. H3, that "
+                f"verification adds to retrieval, is supported in the pilot (E3 versus E1, {fp(t31u.p)}) and not under the selected judge "
+                f"in the main study (E3 versus E1, {fp(t31m.p)})"
+                + (f"; under the second judge verification again has the lowest unsupported rate of the LLM conditions "
+                   f"({f3(s31.mean_b)} versus {f3(s31.mean_a)} for E1, {fp(s31.p)}), so the evidence on H3 depends on the judge and favors "
+                   f"verification where it is detectable at all." if s31 is not None else "."))]
     b += [H2("8.2 Why the Judge Disagrees with the Experts")]
     b += [P("Four causes, in decreasing order of importance, explain the disagreement. The first is a *granularity mismatch*. A "
             "patient-facing sentence such as \"You came in because of stomach pain after meals and foul-smelling urine, and you "
@@ -225,7 +249,7 @@ def blocks(R: Results) -> list:
             f"which E3 has fewer claims than its draft include such losses.")]
     if M.ok:
         e1b_cov, e1_cov = M.test("coverage_ref", "E1b"), M.test("coverage_ref", "E1")
-        b += [P(f"The main study confirms the mechanism the pilot could only suggest, and resolves the trade-off in favour of one design. "
+        b += [P(f"The main study confirms the mechanism the pilot could only suggest, and resolves the trade-off in favor of one design. "
                 f"Every grounded condition, whether it withholds the course (E1), adds excerpts to it (E1b) or checks each sentence after "
                 f"generation (E3), cut the unsupported fact rate by about {M.rel(M.test('UFR','E1b'))} relative to the zero-context baseline, and the "
                 f"three are statistically indistinguishable. What separates them is omission. Withholding the course cost "
@@ -251,9 +275,12 @@ def blocks(R: Results) -> list:
                 f"source is a metric of source-faithfulness, not of clinical correctness, and a summarizer that only paraphrases the course "
                 f"will always beat a clinician on it. The retrieval ablations sharpen the picture from the pilot. "
                 f"{M.faithfulness_phrase()[0].upper() + M.faithfulness_phrase()[1:]}, whereas coverage rose and fell with the amount of retrieved "
-                f"text and citation accuracy fell when five chunks were retrieved. "
-                + ("Requiring the model to cite an excerpt after every sentence is therefore itself a grounding device: it costs nothing and "
-                   "kept the model closer to the retrieved text. " if any(v == "nocite" and d > 0 for v, d, _ in M.sig_ablations("UFR")) else "")
+                f"text, and these coverage effects survive the correction. "
+                + ("The largest faithfulness effect, a rise in unsupported claims when citations were not required, points to the "
+                   "citation requirement as a cheap grounding device, but it is not established by this sample. "
+                   if any(v == "nocite" and d > 0 for v, d, *_ in M.sig_ablations("UFR")) and not M.sig_ablations("UFR", True) else
+                   ("Requiring the model to cite an excerpt after every sentence is therefore itself a grounding device. "
+                    if any(v == "nocite" and d > 0 for v, d, *_ in M.sig_ablations("UFR", True)) else ""))
                 + f"How much of the course the model sees governs omission; how it is retrieved matters little."),
               P(f"The question-answering pilot points the same way from a different angle. Questions whose answers are usually in the course "
                 f"(medications) were answered faithfully; questions about warning signs, which a hospital course rarely states, drew the most "
@@ -262,16 +289,28 @@ def blocks(R: Results) -> list:
                 f"abstention and lowered the unsupported rate of the answered questions, again partly by making the model say less. The "
                 f"extrinsic categories identified in the pilot are thus the same categories that limit document-grounded question "
                 f"answering, and abstention, not retrieval, is the appropriate response to them.")]
-    b += [H2("8.4 Comparison of the Three Approaches")]
-    b += [P("[[tab:compare]] summarizes the strengths, weaknesses and appropriate uses of the five conditions in the light of "
-            "all results. No approach dominates. The zero-context LLM is the most readable and complete but adds the most "
-            "extrinsic content. Excerpt-only RAG reduces contradictions modestly, shortens summaries and loses coverage; RAG with "
-            "the full note keeps coverage and gains a little in supported content. Verification removes the most unsupported "
-            "content, including the extrinsic advice that retrieval cannot reach, but does so by deleting and abstaining. The "
-            "extractive summarizer is faithful by construction and covers the note broadly but produces text that no patient "
-            "should be handed unedited: fragments, abbreviations and clinician-facing phrasing. The ordering of the conditions by "
-            "the judge's metrics is consistent with their designs, which is some reassurance that the judge responds to real "
-            "differences between systems when those differences are large; what it cannot do is quantify them."),
+    b += [H2("8.4 Comparison of the Approaches")]
+    if M.ok:
+        cut = {c: abs(M.test("UFR", c).rel_change_mean) for c in ("E1", "E1b", "E3")}
+        loss = {c: 1 - M.mean(c, "coverage_ref") / M.mean("E0", "coverage_ref") for c in ("E1", "E1b", "E3")}
+        cmp_text = (f"[[tab:compare]] summarizes the strengths, weaknesses and appropriate uses of the five conditions in the light of both "
+                    f"studies. No approach dominates on every criterion, but the main study narrows the choice. The zero-context LLM is the "
+                    f"most fluent and the most complete, and in both studies it adds the most unsupported content. On real hospital courses "
+                    f"every form of grounding cut that content by {min(cut.values()):.0f} to {max(cut.values()):.0f} percent. Excerpt-only RAG "
+                    f"paid for the cut by covering {pct0(M.mean('E1','coverage_ref'))} of the clinician's sentences instead of "
+                    f"{pct0(M.mean('E0','coverage_ref'))}, and verification by covering {pct0(M.mean('E3','coverage_ref'))}, through deleted claims "
+                    f"and abstentions, although verification is the only condition that removed the extrinsic follow-up and advice "
+                    f"sentences in the pilot and the one that the second judge rates most faithful. RAG with the whole course in view kept "
+                    f"the baseline's coverage ({pct0(M.mean('E1b','coverage_ref'))}) at the faithfulness of the other grounded conditions, which "
+                    f"makes it the design this thesis recommends, with one caveat: only {pct0(M.mean('E1b','citation_accuracy'))} of its "
+                    f"citations point to an excerpt that supports the statement. The extractive summarizer is faithful by construction but "
+                    f"produces text that no patient should be handed unedited: fragments, abbreviations and clinician-facing phrasing. That "
+                    f"the ordering of the conditions follows their designs in both studies and under both main-study judges is some "
+                    f"reassurance that the judges respond to real differences between systems when those differences are large; what they "
+                    f"cannot do is settle the smaller differences among the grounded conditions.")
+    else:
+        cmp_text = "[[tab:compare]] summarizes the strengths, weaknesses and appropriate uses of the five conditions."
+    b += [P(cmp_text),
           ("table", dict(label="compare", caption="Comparison of the five conditions across both studies. Pilot values are per-document means under the MiniLM judge on MTSamples; main-study values are per-document means under the selected judge on MIMIC-IV hospital courses; coverage is the share of the clinician's discharge-instruction sentences supported by the summary.",
                          columns=["Approach", "Pilot UFR / CR", "Main study UFR / CR", "Coverage of clinician's sentences", "Strengths", "Weaknesses", "Appropriate use"],
                          widths=[0.85, 0.7, 0.75, 0.75, 1.15, 1.15, 1.15], font=8, align=["left", "center", "center", "center", "left", "left", "left"],
@@ -279,15 +318,18 @@ def blocks(R: Results) -> list:
                                 (f"{f3(M.mean(c,'UFR'))} / {f3(M.mean(c,'CR'))}" if M.ok and c in M.conds else "—"),
                                 (pct0(M.mean(c, "coverage_ref")) if M.ok and c in M.conds else "—"), st, wk, use]
                                for c, st, wk, use in [
-                                   ("E0", "Fluent, patient-friendly, complete structure; simplest to deploy", "Most extrinsic content; generic advice and follow-up invented from priors",
+                                   ("E0", "Fluent, patient-friendly, complete structure; simplest to deploy", "Most unsupported content in both studies; generic advice and follow-up invented from priors",
                                     "Drafts reviewed and edited by a clinician; low-stakes communication"),
-                                   ("E1", "Fewer generic statements; shorter; every sentence cited", "Lowest coverage of the source; effect small and threshold-dependent in the pilot; retrieval query crude",
+                                   ("E1", f"Halves unsupported claims on hospital courses; fewer generic statements; every sentence cited, {pct0(M.mean('E1','citation_accuracy')) if M.ok else '—'} of citations accurate",
+                                    "Loses about a third of the clinician's content; small, threshold-dependent effect in the pilot; retrieval query crude",
                                     "Focused summaries of long notes when omission is acceptable and a reviewer checks completeness"),
-                                   ("E1b", "Keeps the baseline's coverage; cited; modestly fewer unsupported claims", "Still adds extrinsic advice; longest prompts",
-                                    "Drop-in replacement for zero-context prompting when the note fits the context window"),
-                                   ("E3", "Largest reduction in unsupported claims in the pilot; removes extrinsic advice; explicit abstentions", "Shortest LLM summaries; abstentions are omissions; about ten model calls per note",
+                                   ("E1b", "Halves unsupported claims on hospital courses while keeping the baseline's coverage; cited",
+                                    f"Only {pct0(M.mean('E1b','citation_accuracy')) if M.ok else '—'} of citations accurate; still adds extrinsic advice; longest prompts",
+                                    "Recommended design: replacement for zero-context prompting when the note fits the context window"),
+                                   ("E3", "Largest reduction in the pilot and lowest rate under the second judge; removes extrinsic advice; explicit abstentions",
+                                    "Lowest coverage among the LLM conditions; abstentions are omissions; about ten model calls per note",
                                     "High-stakes patient communication where omission is safer than invention and a clinician fills gaps"),
-                                   ("E2", "Cannot fabricate; no model cost; deterministic", "Unreadable for patients: fragments, abbreviations, no explanation; still mislabelled by the judge",
+                                   ("E2", "Cannot fabricate; no model cost; deterministic", "Unreadable for patients: fragments, abbreviations, no explanation; still mislabeled by the judge",
                                     "Clinician-facing digests; a grounding step before an LLM rewrites the selected sentences")]]))]
     b += [H2("8.5 Threats to Validity and Limitations")]
     jk = (f"kappa {f2(jr.kappa)}, precision {f2(jr.precision)}, recall {f2(jr.recall)}" if jr is not None else "moderate agreement")
@@ -375,7 +417,7 @@ def blocks(R: Results) -> list:
             f"largest change of any LLM condition, by deleting unsupported claims and abstaining; and the extractive summarizer "
             f"bounded both rates from below and exposed a non-zero error floor. Against the experts, the judge flagged {pct0(cal_all.judge_UFR)} of sentences where the experts "
             f"flagged {pct0(cal_all.expert_flag_rate)}, agreed with them at chance level, and ranked systems in nearly the "
-            f"opposite order; no evidence-aggregation rule changed that conclusion. The principal contribution of the thesis is "
+            f"opposite order; no evidence-aggregation rule changed that conclusion. The first contribution of the thesis is "
             f"therefore methodological: it shows, with quantitative evidence, that a small general-domain NLI judge applied at "
             f"sentence granularity is not a valid hallucination detector for patient-facing clinical summaries, and it provides "
             f"the tools, the controls and the validation protocol needed to evaluate better judges and better summarizers.")

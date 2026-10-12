@@ -186,6 +186,47 @@ def _chapter_tag(h1_text: str, current: str) -> str:
     return current
 
 
+# ── column widths that never split a word ───────────────────────────────────────────────────────────────────────────
+_FONT_CACHE = {}
+_CELL_PAD_IN = 0.2      # Word's default left and right cell margins plus a little slack
+
+
+def _word_width_in(word, size, bold):
+    """Printed width of a word in inches, measured with the Times New Roman font the document uses."""
+    from PIL import ImageFont
+    key = (round(size * 10), bold)
+    f = _FONT_CACHE.get(key)
+    if f is None:
+        name = "Times New Roman Bold.ttf" if bold else "Times New Roman.ttf"
+        f = _FONT_CACHE[key] = ImageFont.truetype(f"/System/Library/Fonts/Supplemental/{name}", key[0])
+    return f.getlength(word) / 10 / 72
+
+
+def _longest_word_in(text, size, bold):
+    text = re.sub(r"\*\*|\*", "", str(text))
+    parts = re.split(r"\s+|(?<=[-/])", text)          # LibreOffice may break at spaces and after hyphens or slashes
+    return max((_word_width_in(w, size, bold) for w in parts if w), default=0.0)
+
+
+def _fit_widths(widths, cols, rows, fs):
+    need = []
+    for j in range(len(widths)):
+        w = _longest_word_in(cols[j], fs, True)
+        for r in rows:
+            if j < len(r):
+                w = max(w, _longest_word_in(r[j], fs, False))
+        need.append(w + _CELL_PAD_IN)
+    out = [max(w, n) for w, n in zip(widths, need)]
+    excess = sum(out) - TEXT_WIDTH_IN
+    if excess > 1e-6:                  # take the extra width from columns that have slack, in proportion to their slack
+        slack = [max(0.0, o - n) for o, n in zip(out, need)]
+        total_slack = sum(slack)
+        if total_slack > 0:
+            take = min(excess, total_slack)
+            out = [o - take * sl / total_slack for o, sl in zip(out, slack)]
+    return out
+
+
 def collect_entries(blocks):
     """Assign per-chapter table/figure numbers (e.g. Table 3.1) and gather TOC entries.
     Returns (labels, headings, tables, figures)."""
@@ -400,6 +441,7 @@ class Renderer:
         total = sum(widths)
         if total > TEXT_WIDTH_IN:          # never exceed the 1-inch margins
             widths = [w * TEXT_WIDTH_IN / total for w in widths]
+        widths = _fit_widths(widths, cols, rows, fs)   # no column narrower than its longest unbreakable word
         aligns = d.get("align") or ["left"] + ["center"] * (len(cols) - 1)
         amap = {"left": WD_ALIGN_PARAGRAPH.LEFT, "center": WD_ALIGN_PARAGRAPH.CENTER, "right": WD_ALIGN_PARAGRAPH.RIGHT}
         for j, w in enumerate(widths):        # grid column widths: LibreOffice lays the table out from these, not from the cell widths

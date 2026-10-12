@@ -18,7 +18,12 @@ VPHRASE = {"chunk3": "three-sentence chunks", "chunk8": "eight-sentence chunks",
 WORD = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six"}
 JUDGE_NAMES = {"minilm_nli": "MiniLM cross-encoder", "deberta_large_nli": "DeBERTa-v3-large NLI", "ce_deberta_large_nli": "DeBERTa-v3-large cross-encoder NLI",
                "minicheck_deberta": "MiniCheck DeBERTa-v3-large", "minicheck_roberta": "MiniCheck RoBERTa-large", "mednli_deberta_large": "DeBERTa-v3-large NLI fine-tuned on MedNLI",
-               "bespoke_minicheck_7b": "Bespoke-MiniCheck-7B (LLM checker)"}
+               "bespoke_minicheck_7b": "Bespoke-MiniCheck-7B"}
+
+
+def _join(names):
+    names = list(names)
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
 
 
 def _csv(name):
@@ -83,45 +88,68 @@ class Mimic:
         return f"{abs(t.rel_change_mean):.0f} percent" if t is not None and not np.isnan(t.rel_change_mean) else "—"
 
     # ---- retrieval ablations: which variants changed a metric significantly
-    def sig_ablations(self, metric):
+    def ablation_tests(self, metric):
+        """[(variant, delta, p, p_holm)] for every variant with a test; Holm adjustment within the metric's family."""
+        from results_loader import holm
         if self.abl is None:
             return []
-        out = []
+        rows = []
         for v in [x for x in VAR if x != "base"]:
             r = self.abl[(self.abl.metric == metric) & (self.abl.variant == v)]
-            if len(r) and not np.isnan(r.p.iloc[0]) and r.p.iloc[0] < 0.05:
-                out.append((v, float(r.delta_mean.iloc[0]), float(r.p.iloc[0])))
-        return out
+            if len(r) and not np.isnan(r.p.iloc[0]):
+                rows.append((v, float(r.delta_mean.iloc[0]), float(r.p.iloc[0])))
+        if not rows:
+            return []
+        adj = holm([pv for _, _, pv in rows])
+        return [(v, d, pv, float(a)) for (v, d, pv), a in zip(rows, adj)]
+
+    def sig_ablations(self, metric, adjusted=False):
+        """Variants whose raw (or Holm-adjusted) p-value is below 0.05: [(variant, delta, p, p_holm)]."""
+        return [t for t in self.ablation_tests(metric) if (t[3] if adjusted else t[2]) < 0.05]
 
     def faithfulness_phrase(self):
-        """Sentence fragment about which retrieval variants changed UFR or CR (for Chapters 8 and 9)."""
+        """Sentence about which retrieval variants changed UFR or CR, before and after the Holm correction (Chapters 8 and 9)."""
         from results_loader import fp
         su, sc = self.sig_ablations("UFR"), self.sig_ablations("CR")
-        parts = [f"{VPHRASE[v]} {'raised' if d > 0 else 'lowered'} UFR by {abs(d):.3f} ({fp(pv)})" for v, d, pv in su]
-        parts += [f"{VPHRASE[v]} {'raised' if d > 0 else 'lowered'} CR by {abs(d):.3f} ({fp(pv)})" for v, d, pv in sc]
-        if not parts:
+        au, ac = self.sig_ablations("UFR", True), self.sig_ablations("CR", True)
+        raw = [f"{VPHRASE[v]} {'raised' if d > 0 else 'lowered'} UFR by {abs(d):.3f} ({fp(pv)}, adjusted {fp(ph).replace('p ', 'p ')})" for v, d, pv, ph in su]
+        raw += [f"{VPHRASE[v]} {'raised' if d > 0 else 'lowered'} CR by {abs(d):.3f} ({fp(pv)}, adjusted {fp(ph)})" for v, d, pv, ph in sc]
+        if not raw:
             return "no retrieval variant changed UFR or CR"
-        n = len(parts)
-        return f"{WORD.get(n, n)} of the six retrieval variants affected faithfulness: " + "; ".join(parts) + "; the others changed neither rate"
+        if not au and not ac:
+            return ("after a Holm correction within each measure no retrieval variant changed UFR or CR; before correction, "
+                    + "; ".join(raw) + ", effects that are suggestive at most")
+        keep = [VPHRASE[v] for v, *_ in au + ac]
+        return f"{_join(keep)} changed faithfulness after a Holm correction within each measure ({'; '.join(raw)})"
 
     def faithfulness_short(self):
-        """Compact version for the abstract and slides."""
+        """Compact version for the conclusion and slides."""
+        from results_loader import fp
         su, sc = self.sig_ablations("UFR"), self.sig_ablations("CR")
-        if [v for v, d, _ in su if d > 0] == ["nocite"] and not [v for v, d, _ in su if v != "nocite"]:
-            extra = "" if not sc else f" and {VPHRASE[sc[0][0]]} {'raised' if sc[0][1] > 0 else 'lowered'} CR"
-            return f"requiring citations lowered UFR (dropping the requirement raised it by {abs(su[0][1]):.3f}){extra}, while other retrieval settings changed only coverage"
+        au, ac = self.sig_ablations("UFR", True), self.sig_ablations("CR", True)
         if not su and not sc:
             return "no retrieval setting changed faithfulness"
-        return "only " + " and ".join(VPHRASE[v] for v, _, _ in su + sc) + " changed faithfulness"
+        if not au and not ac:
+            big = max(su + sc, key=lambda t: abs(t[1]))
+            which = "UFR" if big in su else "CR"
+            return (f"no retrieval setting changed faithfulness after correction for multiple comparisons (the largest effect, "
+                    f"{VPHRASE[big[0]]}, {'raised' if big[1] > 0 else 'lowered'} {which} by {abs(big[1]):.3f}, {fp(big[2])} before correction)")
+        return f"only {_join([VPHRASE[v] for v, *_ in au + ac])} changed faithfulness after correction for multiple comparisons"
 
     def faithfulness_abstract(self):
         """Shortest version for the abstract."""
-        su, sc = self.sig_ablations("UFR"), self.sig_ablations("CR")
-        if [v for v, d, _ in su if d > 0] == ["nocite"] and not [v for v, d, _ in su if v != "nocite"]:
-            return "requiring citations lowered UFR, and other retrieval settings changed mainly coverage"
-        if not su and not sc:
-            return "no retrieval setting changed faithfulness"
-        return "only " + " and ".join(VPHRASE[v] for v, _, _ in su + sc) + " changed faithfulness"
+        au, ac = self.sig_ablations("UFR", True), self.sig_ablations("CR", True)
+        if not au and not ac:
+            return "no retrieval setting changed faithfulness after correction for multiple comparisons"
+        return f"only {_join([VPHRASE[v] for v, *_ in au + ac])} changed faithfulness"
+
+    def second_judge_test(self, metric_cond, ref="E0"):
+        """Paired test of UFR under the second judge: row of results/mimic_second_judge_tests.csv or None."""
+        t = _csv("mimic_second_judge_tests.csv")
+        if t is None:
+            return None
+        r = t[t.comparison == f"{metric_cond} vs {ref}"]
+        return r.iloc[0] if len(r) else None
 
     @staticmethod
     def finetune_summary():

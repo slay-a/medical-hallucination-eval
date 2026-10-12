@@ -55,7 +55,8 @@ def slides(R: Results):
     MODE = {"top3": "top-3 sentences", "doc": "whole course, windowed"}
     S = []
     S.append(dict(kind="title", title="Evaluating and Reducing Hallucinations in LLM-Based Medical Report Summarization",
-                  sub=["Progress Report, Fall 2026 (COMP 698C)", "Srilaya Ponangi, M.S. Computer Science", "Advisor: Dr. Taehyung (George) Wang",
+                  sub=["Second Progress Report, Fall 2026 (COMP 698C)", "Srilaya Ponangi, M.S. Computer Science",
+                       "Committee: Dr. Taehyung (George) Wang (chair), Dr. Mahdi Ebrahimi, Dr. Robert McIlhenny",
                        f"California State University, Northridge, {date.today():%B %d, %Y}"]))
     S.append(dict(kind="bullets", title="Goal and research questions (from the proposal)", bullets=[
         "Goal: measure hallucinations in LLM-generated patient-facing summaries at the claim level with a judge validated against medical experts, and test whether retrieval grounding and verification reduce them on real clinical notes",
@@ -159,7 +160,7 @@ def slides(R: Results):
                 r = {m: M.ablation(m, v) for m in ("UFR", "CR", "coverage_ref", "citation_accuracy")}
                 rows.append([MVAR[v]] + [(f"{r[m].delta_mean:+.3f} ({fp(r[m].p)})" if r[m] is not None and not pd.isna(r[m].p) else "—") for m in ("UFR", "CR", "coverage_ref", "citation_accuracy")])
             S.append(dict(kind="table", title="Retrieval ablations: paired difference from the E1 base configuration", columns=["Variant", "Δ UFR (p)", "Δ CR (p)", "Δ coverage (p)", "Δ citation accuracy (p)"],
-                          rows=rows, widths=[3.6, 2.1, 2.1, 2.1, 2.2], note="Negative UFR and CR differences and positive coverage and citation differences favour the variant. Base: 5-sentence chunks, top-3, dense retrieval, citations required."))
+                          rows=rows, widths=[3.6, 2.1, 2.1, 2.1, 2.2], note="Negative UFR and CR differences and positive coverage and citation differences favor the variant. Base: 5-sentence chunks, top-3, dense retrieval, citations required."))
         if M.qa_tot is not None:
             S.append(dict(kind="table", title="Question-answering pilot (three questions per course)", columns=["Condition", "Question", "n", "Abstained", "UFR", "CR", "Supported by clinician's instructions", "Words"],
                           rows=[[r.condition, r.question.replace("_", " "), str(int(r.n)), pct0(r.abstention_rate), f3(r.UFR_mean), f3(r.CR_mean), pct0(r.ref_support_mean), f"{r.words_mean:.0f}"]
@@ -170,27 +171,53 @@ def slides(R: Results):
         S.append(dict(kind="bullets", title="Main study: status", bullets=[
             "Generation of the five conditions and six retrieval variants on the 110 hospital courses is running on the laptop (about five minutes per course with the local model)",
             "Evaluation with the selected judge, the question-answering pilot and the figures follow automatically; the thesis chapters read the result files when they exist"]))
+    # hypotheses across both studies
+    if M.ok:
+        t10c_ = R.test("CR", "E0", "E1"); t31u_ = R.test("UFR", "E1", "E3")
+        st2 = pd.read_csv(RES / "mimic_second_judge_tests.csv") if (RES / "mimic_second_judge_tests.csv").exists() else None
+        s31 = st2[(st2.measure == "UFR_second") & (st2.comparison == "E3 vs E1")].iloc[0] if st2 is not None else None
+        S.append(dict(kind="table", title="Hypotheses: verdicts across both studies", columns=["Hypothesis", "Pilot (MTSamples, GPT-4o-mini)", "Main study (MIMIC-IV, local model)", "Verdict"],
+                      rows=[["H1: unsupported content is measurable, and the judge agrees with experts better than chance",
+                             f"UFR {f3(R.mean('E0','UFR'))} under a judge with kappa {f2(cal.any_kappa)} (chance level)",
+                             f"UFR {f3(M.mean('E0','UFR'))}, {100 * (M.mean('E0','UFR') - M.mean('E2','UFR')):.1f} points above the judge's floor; judge kappa {f2(best.kappa) if best is not None else '—'}",
+                             "First half supported; second half supported only for the selected judge, moderately"],
+                            ["H2: RAG reduces unsupported and contradicted statements",
+                             f"CR down {abs(t10c_.rel_change_mean):.0f}% ({fp(t10c_.p)}, Holm {fp(t10c_.p_holm)}); UFR unchanged",
+                             f"UFR down {M.rel(M.test('UFR','E1'))} ({fp(M.test('UFR','E1').p)}); CR unchanged ({fp(M.test('CR','E1').p)})",
+                             "Supported for unsupported facts on hospital courses; not for contradictions"],
+                            ["H3: verification adds to RAG",
+                             f"E3 vs E1 UFR {fp(t31u_.p)}",
+                             f"Selected judge: E3 = E1 ({fp(M.test('UFR','E3','E1').p)})" + (f"; second judge: {f3(s31.mean_b)} vs {f3(s31.mean_a)} ({fp(s31.p)})" if s31 is not None else ""),
+                             "Supported in the pilot; judge-dependent in the main study"]],
+                      widths=[3.0, 3.0, 3.6, 2.5],
+                      note="Paired two-sided Wilcoxon tests on the same documents. The main-study judge is DeBERTa-v3-large NLI selected against 1,781 expert-annotated sentences; the second judge is Bespoke-MiniCheck-7B."))
     S.append(dict(kind="bullets", title="Thesis writing status", bullets=[
-        f"Complete draft generated from the result files: {pages} pages in CSUN format (1-inch margins, 12-pt Times New Roman, double-spaced, roman-numbered preliminary pages, arabic body)",
+        f"Complete second draft generated from the result files: {pages} pages in CSUN format (1-inch margins, 12-pt Times New Roman, double-spaced, roman-numbered preliminary pages, arabic body); signature page with the full committee",
         "Nine chapters: 1 Introduction, 2 Literature Review, 3 Data, 4 Methodology, 5 Pilot Study on MTSamples, 6 Selecting a Valid Judge, 7 Main Study on MIMIC-IV, 8 Discussion, 9 Conclusion; IEEE references with DOIs; Appendices A to E (prompts, per-document results, worked examples, repository, threshold sweep)",
-        "Since the September 4 draft: judge selection study, MedNLI adaptation, main study on MIMIC-IV with a local model (citations, coverage against the clinician's instructions, citation accuracy, ablations), question-answering pilot",
-        "Open items: committee composition to be confirmed with the advisor; advisor review of the draft; final title on the ETD planning form (with or without 'and Question Answering')",
+        "Project status: all experiments promised in the proposal are complete (judge validation and selection, five conditions on MTSamples and on 110 MIMIC-IV hospital courses, coverage against the clinician's instructions, citation accuracy, six retrieval ablations, question-answering pilot), plus a second-judge robustness check on all 6,588 main-study claims",
+        "Administrative status: committee confirmed (Dr. Wang, chair; Dr. Ebrahimi; Dr. McIlhenny); ETD planning form submitted",
         "Every table and figure is regenerated by one command from the result files"]))
+    S.append(dict(kind="bullets", title="Revisions in the second draft", bullets=[
+        "Committee members added to the signature page; acknowledgments rewritten",
+        "Statistics corrected: the retrieval-ablation effects on faithfulness are now reported with Holm-adjusted p-values and do not survive the correction (coverage effects do); the pilot's Holm family is described correctly as all twenty pairwise tests",
+        "Hypotheses H1 to H3 answered across both studies in Chapter 8; paired tests added under the second judge (verification best under that judge, p < 0.001)",
+        "Literature review extended with grounding-specific checkers (MiniCheck), evidence on unreliable factuality metrics (Godbole and Jia 2025; FaithBench 2025) and clinical fact verification at scale (VeriFact 2026)",
+        "Consistency pass: Chapters 1 to 4 brought in line with the main study (scope, data sources, methodology overview, section numbering), the comparison of approaches in Section 8.4 rewritten for both studies, spelling and figure captions corrected"]))
     S.append(dict(kind="table", title="Plan to the defense (aligned with CSUN ETD deadlines)", columns=["By", "Milestone"],
-                  rows=[["Sep 22, 2026", "Advisor review of the complete draft; committee composition discussed"],
-                        ["Oct 9, 2026", "ETD Planning Form filed (title and committee)"],
-                        ["Oct 16, 2026", "Revised draft to advisor for approval; Canvas upload and Turnitin check after approval"],
-                        ["Oct 23, 2026", "Draft to committee (two-week review); Doodle poll with 1-hour slots over 3 to 4 weeks"],
+                  rows=[["Oct 9, 2026", "ETD Planning Form submitted; committee confirmed (done)"],
+                        ["Mid-October", "Second draft and progress report submitted; advisor review of the second draft"],
+                        ["Oct 23, 2026", "Advisor approval; Canvas upload and Turnitin similarity check (20% or lower)"],
+                        ["Oct 23 to Nov 6, 2026", "Draft to committee (at least two weeks of review); Doodle poll with 1-hour slots over 3 to 4 weeks"],
                         ["Nov 6, 2026", "ETD preliminary format review"],
-                        ["Nov 16 to 24, 2026", "Defense (40 min presentation, 10 min Q&A); slides to advisor one week before"],
-                        ["Dec 4, 2026", "Final ETD upload after revisions"]], widths=[2.4, 9.7],
-                  note="The December 12 defense date in the May report is after the December 4 ETD deadline and has been moved."))
+                        ["Nov 16 to 24, 2026", "Defense on CSUN Zoom (40 min presentation, 10 min Q&A, 10 min deliberation); slides to advisor one week before"],
+                        ["Dec 4, 2026", "Final ETD upload after revisions; committee approval in the ETD system"]], widths=[2.6, 9.5],
+                  note="The defense is planned before the December 4 ETD deadline, as the committee approves the thesis inside the ETD system."))
     S.append(dict(kind="bullets", title="Risks and requests", bullets=[
-        (f"Judge validity: the selected judge agrees with experts moderately (kappa {f2(best.kappa)}); main-study rates are reported with this error profile, and conclusions rest on paired comparisons" if best is not None
+        (f"Judge validity: the selected judge agrees with experts moderately (kappa {f2(best.kappa)}); main-study rates are reported with this error profile and bounded by a second judge, and conclusions rest on paired comparisons" if best is not None
          else "Judge validity: the pilot judge agrees with experts at chance level; the judge selection study addresses this"),
         "Generator difference: the pilot used GPT-4o-mini on public notes and the main study a 7-billion-parameter local model on MIMIC-IV, so the two studies are compared qualitatively",
-        "Schedule: advisor approval, Turnitin and two weeks of committee review must all precede the November 6 format review",
-        "Requests to the advisor: review the complete draft, confirm the committee, and decide the final title for the ETD planning form"]))
+        "Schedule: advisor approval, the Turnitin check and two weeks of committee review must all precede the November 6 format review",
+        "Requests to the advisor: review the second draft and approve it for distribution to the committee; advise on the defense window"]))
     return S
 
 
