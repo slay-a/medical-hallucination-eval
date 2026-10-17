@@ -36,7 +36,8 @@ import hallucination_eval as he  # noqa: E402
 from calibration_annptsumm import DEFAULT_DATA, SYSTEMS, read_jsonl, summary_sentences, confusion  # noqa: E402
 
 RESULTS, PRIVATE = HERE / "results", HERE / "results_private"
-DEVICE = "mps" if torch.backends.mps.is_available() else "cpu"
+import os as _os
+DEVICE = _os.environ.get("JC_DEVICE") or ("mps" if torch.backends.mps.is_available() else "cpu")
 
 CANDIDATES = {
     "minilm_nli": dict(kind="nli3", name="cross-encoder/nli-MiniLM2-L6-H768", order=["contradiction", "entailment", "neutral"]),
@@ -130,6 +131,21 @@ class Judge:
         return wins or [" ".join(sentences)]
 
 
+def save_sentence_scores(df):
+    """Write per-sentence scores, keeping the columns of candidates scored in earlier runs (rows are built deterministically)."""
+    f = PRIVATE / "judge_candidates_sentences.csv"
+    out = df.drop(columns=["ctx_sents"]).copy()
+    if f.exists():
+        old = pd.read_csv(f)
+        if len(old) == len(out) and (old.sid.values == out.sid.values).all() and (old.sentence.values == out.sentence.values).all():
+            for c in old.columns:
+                if c not in out.columns:
+                    out[c] = old[c].values
+        else:
+            print("existing per-sentence file does not align; overwriting it", flush=True)
+    out.to_csv(f, index=False)
+
+
 def evaluate(df, score_col):
     """Threshold-free and thresholded agreement for a support score (higher = more supported)."""
     rows = []
@@ -214,7 +230,7 @@ def main():
         del J; gc.collect(); (torch.mps.empty_cache() if DEVICE == "mps" else None)
         out = pd.concat([prev, pd.DataFrame(agg)], ignore_index=True) if prev is not None else pd.DataFrame(agg)
         out.to_csv(RESULTS / "judge_candidates.csv", index=False)
-        df.drop(columns=["ctx_sents"]).to_csv(PRIVATE / "judge_candidates_sentences.csv", index=False)
+        save_sentence_scores(df)
     print("\n=== summary (all sentences) ===")
     out = pd.read_csv(RESULTS / "judge_candidates.csv")
     print(out[out.group == "all"][["judge", "mode", "auroc", "kappa", "precision", "recall", "f1", "flag_rate", "expert_rate"]].round(3).to_string(index=False))

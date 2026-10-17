@@ -10,8 +10,8 @@ import pandas as pd
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 RES = ROOT / "results"
-COND_NAME = {"E0": "E0 (zero-context LLM)", "E1": "E1 (RAG, excerpts only)", "E1b": "E1b (RAG, note + excerpts)",
-             "E2": "E2 (extractive)", "E3": "E3 (RAG + CoVe)"}
+COND_NAME = {"E0": "E0 (full note, no retrieval)", "E1": "E1 (RAG, excerpts only)", "E1b": "E1b (RAG, note and excerpts)",
+             "E2": "E2 (extractive)", "E3": "E3 (RAG with verification)"}
 
 
 def _csv(name):

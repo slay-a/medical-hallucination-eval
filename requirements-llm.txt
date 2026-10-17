@@ -1,0 +1,7 @@
+# Local model-server environment (.venv-llm, Python 3.13): serves Qwen2.5-7B-Instruct (mlx_lm.server)
+# and Bespoke-MiniCheck-7B (minicheck_server.py). requirements-llm-lock.txt lists the complete environment.
+mlx==0.32.2
+mlx-lm==0.31.3
+transformers==5.17.0
+tokenizers==0.23.2
+sentencepiece==0.2.2

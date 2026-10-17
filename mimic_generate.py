@@ -155,12 +155,14 @@ class LocalLLM:
         self.client = OpenAI(base_url=base_url, api_key="local", timeout=300.0, max_retries=0); self.model = model
         self.temperature, self.max_tokens = temperature, max_tokens
 
-    def chat(self, system, user, temperature=None):
+    def chat(self, system, user, temperature=None, seed=None, max_tokens=None):
         last = None
         for attempt in range(3):
             try:
+                kw = dict(seed=seed) if seed is not None else {}
                 r = self.client.chat.completions.create(model=self.model, messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
-                                                        temperature=self.temperature if temperature is None else temperature, max_tokens=self.max_tokens)
+                                                        temperature=self.temperature if temperature is None else temperature,
+                                                        max_tokens=max_tokens or self.max_tokens, **kw)
                 text = (r.choices[0].message.content or "").strip()
                 if text:
                     return text

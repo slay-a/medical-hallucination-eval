@@ -1,0 +1,6 @@
+candidate,times_selected,share
+deberta_large_nli__doc,93,0.93
+minicheck_deberta__doc,4,0.04
+bespoke_minicheck_7b__top3,1,0.01
+mednli_deberta_large__doc,1,0.01
+bespoke_minicheck_7b__doc,1,0.01

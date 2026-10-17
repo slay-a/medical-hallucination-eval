@@ -62,7 +62,7 @@ def slides(R: Results):
         "Goal: measure hallucinations in LLM-generated patient-facing summaries at the claim level with a judge validated against medical experts, and test whether retrieval grounding and verification reduce them on real clinical notes",
         "RQ1: how often are LLM summary statements unsupported by, or contradicting, the source note?",
         "RQ2: which statements are unsupported, and how well does the automatic judge agree with medical experts?",
-        "RQ3: do retrieval-augmented generation and verification reduce unsupported and contradicted statements, compared with an extractive bound, and at what cost in coverage?",
+        "RQ3: do retrieval-augmented generation and verification reduce unsupported and contradicted statements, compared with an extractive reference, and at what cost in coverage?",
         "Two tasks in the proposal: summarization (main task) and document-grounded question answering (piloted with abstention)",
         "Three studies: pilot on public MTSamples notes with GPT-4o-mini; judge selection against expert labels; main study on MIMIC-IV hospital courses with a locally run open-weight model"]))
     judge_status = (f"Done: pilot judge validated (kappa {f2(cal.any_kappa)}); six candidates compared; {JUDGE_NAMES.get(best.judge, best.judge)} selected "
@@ -74,7 +74,7 @@ def slides(R: Results):
     S.append(dict(kind="table", title="Proposal commitments and where they stand", columns=["Commitment in the proposal", "Status"],
                   rows=[["Claim-level NLI judge calibrated against expert labels", judge_status],
                         ["Experiments on MIMIC data", mimic_status],
-                        ["RAG, verification and an extractive baseline", "Done in both studies: E0 zero-context, E1 RAG (excerpts), E1b RAG (note + excerpts), E3 RAG + Chain-of-Verification, E2 extractive"],
+                        ["RAG, verification and an extractive baseline", "Done in both studies: E0 full-note, E1 RAG (excerpts), E1b RAG (note + excerpts), E3 RAG + Chain-of-Verification, E2 extractive"],
                         ["Coverage against a reference", "Done: share of the clinician-written discharge-instruction sentences that the generated summary supports (judge run in reverse)"],
                         ["Citation accuracy", "Done: retrieval conditions cite an excerpt after every sentence; the judge checks each citation"],
                         ["Retrieval ablations (chunk size, top-k, BM25 vs dense, citations)", "Done: six E1 variants on the same documents"],
@@ -90,7 +90,7 @@ def slides(R: Results):
     t1b0u, t30u, t30c, t31u = R.test("UFR", "E0", "E1b"), R.test("UFR", "E0", "E3"), R.test("CR", "E0", "E3"), R.test("UFR", "E1", "E3")
     conds = [c for c in ["E0", "E1", "E1b", "E3", "E2"] if c in R.conds]
     S.append(dict(kind="table", title=f"Pilot study: five conditions on {R.n_docs} MTSamples notes (GPT-4o-mini, MiniLM judge)",
-                  columns=["Metric"] + [{"E0": "E0 zero-context", "E1": "E1 RAG excerpts", "E1b": "E1b RAG + note", "E3": "E3 RAG + CoVe", "E2": "E2 extractive"}[c] for c in conds],
+                  columns=["Metric"] + [{"E0": "E0 full-note", "E1": "E1 RAG excerpts", "E1b": "E1b RAG + note", "E3": "E3 RAG + CoVe", "E2": "E2 extractive"}[c] for c in conds],
                   rows=[["UFR mean"] + [f3(R.mean(c, "UFR")) for c in conds],
                         ["CR mean"] + [f3(R.mean(c, "CR")) for c in conds],
                         ["Supported share of claims"] + [pct0((R.label_counts.loc[c, "Supported"] / R.label_counts.loc[c].sum())) for c in conds],
@@ -101,7 +101,7 @@ def slides(R: Results):
                   note=(f"Paired Wilcoxon versus E0: E1 CR {fp(t10c.p)} (−{abs(t10c.rel_change_mean):.0f}%), E1 UFR {fp(t10u.p)}; "
                         f"E1b UFR {fp(t1b0u.p)}; E3 UFR {fp(t30u.p)} (−{abs(t30u.rel_change_mean):.0f}%; versus E1 {fp(t31u.p)}), E3 CR {fp(t30c.p)}; "
                         f"E2 UFR {fp(t20u.p)}. Verification lowers unsupported facts the most; retrieval alone lowers contradictions modestly; "
-                        f"the extractive bound exposes a non-zero judge error floor. Header lines and abstentions excluded.")))
+                        f"the extractive reference shows the judge errs even on verbatim text. Header lines and abstentions excluded.")))
     S.append(dict(kind="table", title="Pilot headline: the small MiniLM judge disagrees with medical experts",
                   columns=["Group", "Sentences", "Expert-flagged", "Judge-flagged (UFR)", "Precision", "Recall", "Kappa", "AUROC"],
                   rows=[[r.group.replace("_", " "), f"{int(r.n_sentences):,}", pct(r.expert_flag_rate), pct(r.judge_UFR), f2(r.any_precision), f2(r.any_recall), f2(r.any_kappa), f2(r.auroc_1_minus_p_entail)]
@@ -128,7 +128,7 @@ def slides(R: Results):
         "Question-answering pilot: medications, follow-up and warning signs; full course versus three retrieved chunks; abstention rate, UFR/CR, and support by the clinician's instructions"]))
     if M.ok:
         mc = [c for c in ["E0", "E1", "E1b", "E3", "E2", "REF"] if c in M.conds]
-        HEAD = {"E0": "E0 zero-context", "E1": "E1 RAG excerpts", "E1b": "E1b RAG + course", "E3": "E3 RAG + CoVe", "E2": "E2 extractive", "REF": "Clinician-written"}
+        HEAD = {"E0": "E0 full-note", "E1": "E1 RAG excerpts", "E1b": "E1b RAG + course", "E3": "E3 RAG + CoVe", "E2": "E2 extractive", "REF": "Clinician-written"}
         def cell(c, col, fmt):
             v = M.val(c, col)
             return "—" if v is None or (isinstance(v, float) and pd.isna(v)) else fmt(v)
@@ -146,13 +146,13 @@ def slides(R: Results):
                            + " Paired two-sided Wilcoxon tests on the same documents."))
         S.append(dict(kind="image2", title="Main study: per-document distributions", images=[RES / "fig_mimic_box.png", RES / "fig_mimic_coverage.png"]))
         S.append(dict(kind="bullets", title="Main study: what the results say", bullets=[
-            f"Every grounded condition cut the unsupported fact rate by about {M.rel(M.test('UFR','E1b'))} versus zero-context (E1 {f3(M.mean('E1','UFR'))}, E1b {f3(M.mean('E1b','UFR'))}, E3 {f3(M.mean('E3','UFR'))} versus E0 {f3(M.mean('E0','UFR'))}; all {fp(max(M.test('UFR', c).p for c in ('E1','E1b','E3')))}); the three do not differ from one another; CR did not change",
+            f"Every grounded condition cut the unsupported fact rate by about {M.rel(M.test('UFR','E1b'))} versus full-note (E1 {f3(M.mean('E1','UFR'))}, E1b {f3(M.mean('E1b','UFR'))}, E3 {f3(M.mean('E3','UFR'))} versus E0 {f3(M.mean('E0','UFR'))}; all {fp(max(M.test('UFR', c).p for c in ('E1','E1b','E3')))}); the three do not differ from one another; CR did not change",
             f"Omission separates them: excerpt-only RAG covered {pct0(M.mean('E1','coverage_ref'))} of the clinician's sentences and verification {pct0(M.mean('E3','coverage_ref'))}, against {pct0(M.mean('E0','coverage_ref'))} for E0; RAG with the whole course kept {pct0(M.mean('E1b','coverage_ref'))} ({fp(M.test('coverage_ref','E1b').p)} versus E0)",
-            f"Verbatim extraction scores UFR {f3(M.mean('E2','UFR'))}: the judge's error floor; the grounded LLM conditions sit within a few hundredths of it",
+            f"Verbatim extraction scores UFR {f3(M.mean('E2','UFR'))}: judge error on text supported by construction, a reference rather than a floor; the grounded LLM conditions sit within a few hundredths of it",
             f"The clinicians' own instructions score UFR {f3(M.mean('REF','UFR'))} under the same judge: support by the hospital course measures source-faithfulness, not clinical correctness",
             f"Citations: {pct0(M.mean('E1','citation_accuracy'))} accurate for excerpt-only RAG but {pct0(M.mean('E1b','citation_accuracy'))} for RAG with the whole course; {M.faithfulness_short()}; coverage followed the amount of retrieved text",
             (f"Question answering: abstention {pct0(M.qa_tot.loc['QA-E0','abstention_rate'])} (full course) versus {pct0(M.qa_tot.loc['QA-E1','abstention_rate'])} (excerpts), highest for warning signs, which the course rarely states; retrieval lowers unsupported answers partly by abstaining more" if M.qa_tot is not None else "")]
-            + ([(lambda g: f"Second judge (Bespoke-MiniCheck-7B, a 7B LLM checker): same ordering of conditions; flags {pct(g.loc['E2','flag_rate_second'])} of verbatim extracts, so the NLI judge's {f3(g.loc['E2','UFR_first'])} floor is judge error; confirms {pct0(g.loc['all','first_flags_confirmed'])} of the selected judge's flags; grounded conditions' unsupported share bounded between {f3(min(g.loc[c,'UFR_both'] for c in ('E1','E1b','E3')))} and {f3(max(g.loc[c,'UFR_either'] for c in ('E1','E1b','E3')))}")(pd.read_csv(RES / "mimic_judge_agreement.csv").set_index("condition"))]
+            + ([(lambda g: f"Second judge (Bespoke-MiniCheck-7B, a 7B LLM checker): same ordering of conditions; flags {pct(g.loc['E2','flag_rate_second'])} of verbatim extracts, so the NLI judge's {f3(g.loc['E2','UFR_first'])} on verbatim text is its own error; confirms {pct0(g.loc['all','first_flags_confirmed'])} of the selected judge's flags; conservative (both judges) and inclusive (either judge) flagging rules give {f3(min(g.loc[c,'UFR_both'] for c in ('E1','E1b','E3')))} to {f3(max(g.loc[c,'UFR_either'] for c in ('E1','E1b','E3')))} for the grounded conditions, alternative estimates rather than bounds")(pd.read_csv(RES / "mimic_judge_agreement.csv").set_index("condition"))]
                if (RES / "mimic_judge_agreement.csv").exists() else [])))
         if M.abl is not None and len(M.abl):
             rows = []
@@ -179,7 +179,7 @@ def slides(R: Results):
         S.append(dict(kind="table", title="Hypotheses: verdicts across both studies", columns=["Hypothesis", "Pilot (MTSamples, GPT-4o-mini)", "Main study (MIMIC-IV, local model)", "Verdict"],
                       rows=[["H1: unsupported content is measurable, and the judge agrees with experts better than chance",
                              f"UFR {f3(R.mean('E0','UFR'))} under a judge with kappa {f2(cal.any_kappa)} (chance level)",
-                             f"UFR {f3(M.mean('E0','UFR'))}, {100 * (M.mean('E0','UFR') - M.mean('E2','UFR')):.1f} points above the judge's floor; judge kappa {f2(best.kappa) if best is not None else '—'}",
+                             f"UFR {f3(M.mean('E0','UFR'))} (judge-estimated; verbatim-extraction reference {f3(M.mean('E2','UFR'))}); judge kappa {f2(best.kappa) if best is not None else '—'}",
                              "First half supported; second half supported only for the selected judge, moderately"],
                             ["H2: RAG reduces unsupported and contradicted statements",
                              f"CR down {abs(t10c_.rel_change_mean):.0f}% ({fp(t10c_.p)}, Holm {fp(t10c_.p_holm)}); UFR unchanged",
@@ -213,7 +213,7 @@ def slides(R: Results):
                         ["Dec 4, 2026", "Final ETD upload after revisions; committee approval in the ETD system"]], widths=[2.6, 9.5],
                   note="The defense is planned before the December 4 ETD deadline, as the committee approves the thesis inside the ETD system."))
     S.append(dict(kind="bullets", title="Risks and requests", bullets=[
-        (f"Judge validity: the selected judge agrees with experts moderately (kappa {f2(best.kappa)}); main-study rates are reported with this error profile and bounded by a second judge, and conclusions rest on paired comparisons" if best is not None
+        (f"Judge validity: the selected judge agrees with experts moderately (kappa {f2(best.kappa)}); main-study rates are judge-estimated and reported with this error profile, checked by a second judge and a manual audit, and conclusions rest on paired comparisons" if best is not None
          else "Judge validity: the pilot judge agrees with experts at chance level; the judge selection study addresses this"),
         "Generator difference: the pilot used GPT-4o-mini on public notes and the main study a 7-billion-parameter local model on MIMIC-IV, so the two studies are compared qualitatively",
         "Schedule: advisor approval, the Turnitin check and two weeks of committee review must all precede the November 6 format review",

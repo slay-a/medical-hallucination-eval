@@ -8,8 +8,8 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parent.parent
 RES = ROOT / "results"
 ORDER = ["E0", "E1", "E1b", "E3", "E2", "REF"]
-NAME = {"E0": "E0 zero-context LLM", "E1": "E1 RAG (excerpts only, cited)", "E1b": "E1b RAG (course + excerpts, cited)", "E3": "E3 RAG + CoVe",
-        "E2": "E2 extractive", "REF": "Doctor-written instructions"}
+NAME = {"E0": "E0 full note, no retrieval", "E1": "E1 RAG, excerpts only", "E1b": "E1b RAG, course and excerpts", "E3": "E3 RAG with verification",
+        "E2": "E2 extractive", "REF": "Clinician's instructions"}
 SHORT = {"E0": "E0", "E1": "E1", "E1b": "E1b", "E3": "E3", "E2": "E2", "REF": "clinician"}
 VAR = {"base": "E1 base (5-sentence chunks, top-3, dense, cited)", "chunk3": "3-sentence chunks", "chunk8": "8-sentence chunks", "top2": "top-2 chunks",
        "top5": "top-5 chunks", "bm25": "BM25 retrieval", "nocite": "citations not required"}
@@ -28,7 +28,10 @@ def _join(names):
 
 def _csv(name):
     f = RES / name
-    return pd.read_csv(f) if f.exists() else None
+    try:
+        return pd.read_csv(f) if f.exists() else None
+    except pd.errors.EmptyDataError:
+        return None
 
 
 class Mimic:
