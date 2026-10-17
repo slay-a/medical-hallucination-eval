@@ -1,5 +1,5 @@
 check,value
-tracked files scanned,104
+tracked files scanned,132
 credentialed source shingles,122690
 model-output shingles,348339
 files with a source-text match,6
@@ -8,7 +8,3 @@ distinct shingles shared with the source texts,17
 largest number of source documents containing one of them,7
 files with a model-output match only,5
 distinct shingles shared with the model outputs only,101
-file versions in the history scanned,277
-history versions with a source-text match,11
-of which versions of pilot result files,11
-largest source-document frequency in the history,7
