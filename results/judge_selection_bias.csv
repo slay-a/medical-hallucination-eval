@@ -1,0 +1,29 @@
+analysis,metric,estimate,note,lo,hi
+apparent_selected_judge,kappa,0.3329097885442187,,,
+apparent_selected_judge,auroc,0.7768216204874752,,,
+apparent_selected_judge,precision,0.43820224719101125,,,
+apparent_selected_judge,recall,0.5371900826446281,,,
+apparent_selected_judge,flag_rate,0.24985962942167322,,,
+apparent_best_in_sample,kappa,0.3329097885442187,deberta_large_nli__doc_sup at 0.2,,
+nested_cv_selection_procedure,kappa,0.3012783786175481,,0.26391790131178117,0.3200550922706209
+nested_cv_selection_procedure,auroc,0.7672915173944692,,0.7388336940536376,0.7783474393577688
+nested_cv_selection_procedure,precision,0.394356039347775,,0.3624979874075267,0.4103339760210979
+nested_cv_selection_procedure,recall,0.5877410468319558,,0.5603994490358126,0.6172176308539945
+nested_cv_selection_procedure,flag_rate,0.30415496911847273,,0.28733857383492417,0.33413812464907355
+select_on_doctor_test_on_generated,kappa,0.20595922634605335,bespoke_minicheck_7b__top3 at 0.1,,
+select_on_doctor_test_on_generated,auroc,0.7179764851485149,bespoke_minicheck_7b__top3 at 0.1,,
+select_on_doctor_test_on_generated,precision,0.24782608695652175,bespoke_minicheck_7b__top3 at 0.1,,
+select_on_doctor_test_on_generated,recall,0.5643564356435643,bespoke_minicheck_7b__top3 at 0.1,,
+select_on_doctor_test_on_generated,flag_rate,0.2857142857142857,bespoke_minicheck_7b__top3 at 0.1,,
+select_on_doctor_test_on_generated,training_kappa,0.3598365744727724,bespoke_minicheck_7b__top3 at 0.1,,
+select_on_generated_test_on_doctor,kappa,0.2492808032788706,mednli_deberta_large__doc at 0.65,,
+select_on_generated_test_on_doctor,auroc,0.718623709025595,mednli_deberta_large__doc at 0.65,,
+select_on_generated_test_on_doctor,precision,0.4675324675324675,mednli_deberta_large__doc at 0.65,,
+select_on_generated_test_on_doctor,recall,0.4122137404580153,mednli_deberta_large__doc at 0.65,,
+select_on_generated_test_on_doctor,flag_rate,0.23668032786885246,mednli_deberta_large__doc at 0.65,,
+select_on_generated_test_on_doctor,training_kappa,0.3654404646660213,mednli_deberta_large__doc at 0.65,,
+selected_judge_course_bootstrap,kappa,0.3329097885442187,,0.27666042417639586,0.38831838044945005
+selected_judge_course_bootstrap,auroc,0.7768216204874752,,0.7457332241264434,0.80559130840025
+selected_judge_course_bootstrap,precision,0.43820224719101125,,0.381815137987013,0.4987220248611208
+selected_judge_course_bootstrap,recall,0.5371900826446281,,0.4768018288377348,0.5963289724420989
+selected_judge_course_bootstrap,flag_rate,0.24985962942167322,,0.21651655247887036,0.28499228705857665

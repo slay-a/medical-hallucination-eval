@@ -27,8 +27,13 @@ from preprocessing import is_markdown_header  # noqa: E402
 
 RES = HERE / "results"
 COL = {"E0": "#E07B54", "E1": "#4C8BB5", "E1b": "#8E6BB5", "E2": "#5DBF6E", "E3": "#B5A14C"}
-NAME = {"E0": "E0 Baseline LLM", "E1": "E1 RAG (excerpts only)", "E1b": "E1b RAG (note + excerpts)",
-        "E2": "E2 Extractive", "E3": "E3 RAG + CoVe"}
+NAME = {"E0": "E0 full note, no retrieval", "E1": "E1 RAG, excerpts only", "E1b": "E1b RAG, note and excerpts",
+        "E2": "E2 extractive", "E3": "E3 RAG with verification"}
+
+
+def wrap(name, width=14):
+    import textwrap
+    return "\n".join(textwrap.wrap(name, width, break_long_words=False))
 plt.rcParams.update({"font.family": "serif", "font.serif": ["Times New Roman", "Times", "DejaVu Serif"],
                      "font.size": 11, "axes.titlesize": 12, "axes.labelsize": 11, "legend.fontsize": 9.5,
                      "figure.dpi": 100})
@@ -100,7 +105,7 @@ def fig_boxplots(cmp):
         for i, (d, c) in enumerate(zip(data, conds), start=1):
             bp["boxes"][i - 1].set_facecolor(COL[c]); bp["boxes"][i - 1].set_alpha(0.75)
             ax.scatter(np.full(len(d), i) + rng.uniform(-0.15, 0.15, len(d)), d, s=12, color=COL[c], alpha=0.55, zorder=3, edgecolor="none")
-        ax.set_xticks(range(1, len(conds) + 1)); ax.set_xticklabels([NAME[c] for c in conds], fontsize=9.5)
+        ax.set_xticks(range(1, len(conds) + 1)); ax.set_xticklabels([wrap(NAME[c]) for c in conds], fontsize=9.5)
         ax.set_ylabel(ylabel); ax.set_ylim(-0.03, 1.03); ax.yaxis.grid(True, ls="--", alpha=0.4); ax.set_axisbelow(True)
         ax.set_title(f"{ylabel} per summary (n = {len(cmp)} documents)")
         save(fig, fname)
@@ -349,7 +354,7 @@ def fig_judges(jc):
 
 def fig_mimic(per):
     order = [c for c in ["E0", "E1", "E1b", "E3", "E2", "REF"] if c in set(per.condition)]
-    colm = dict(COL, REF="#999999"); names = dict(NAME, REF="Doctor-written")
+    colm = dict(COL, REF="#999999"); names = dict(NAME, E1b="E1b RAG, course and excerpts", REF="Clinician's instructions")
     base = per[per.variant == "base"]
     fig, axes = plt.subplots(1, 2, figsize=(10, 4.2))
     for ax, metric, lab in zip(axes, ("UFR", "CR"), ("Unsupported Fact Rate", "Contradiction Rate")):
@@ -357,7 +362,7 @@ def fig_mimic(per):
         bp = ax.boxplot(data, patch_artist=True, widths=0.5, medianprops=dict(color="black", lw=2), flierprops=dict(marker="o", markersize=3, alpha=0.5))
         for patch, c in zip(bp["boxes"], order):
             patch.set_facecolor(colm.get(c, "#999999")); patch.set_alpha(0.75)
-        ax.set_xticks(range(1, len(order) + 1)); ax.set_xticklabels([names.get(c, c).replace(" (", "\n(") for c in order], fontsize=8); ax.set_ylabel(lab)
+        ax.set_xticks(range(1, len(order) + 1)); ax.set_xticklabels([wrap(names.get(c, c), 11) for c in order], fontsize=8); ax.set_ylabel(lab)
         ax.set_ylim(-0.03, 1.03); ax.yaxis.grid(True, ls="--", alpha=0.35); ax.set_axisbelow(True)
     axes[0].set_title("Main study: UFR per document"); axes[1].set_title("Main study: CR per document")
     save(fig, "fig_mimic_box.png")
@@ -368,7 +373,7 @@ def fig_mimic(per):
     for patch, c in zip(bp["boxes"], order2):
         patch.set_facecolor(colm.get(c, "#999999")); patch.set_alpha(0.75)
     ax.set_xticks(range(1, len(order2) + 1)); ax.set_xticklabels(order2); ax.set_ylabel("Share of clinician's sentences supported"); ax.set_ylim(-0.03, 1.03)
-    ax.set_title("Coverage of the doctor-written discharge instructions"); ax.yaxis.grid(True, ls="--", alpha=0.35); ax.set_axisbelow(True)
+    ax.set_title("Coverage of the clinician's discharge instructions"); ax.yaxis.grid(True, ls="--", alpha=0.35); ax.set_axisbelow(True)
     save(fig, "fig_mimic_coverage.png")
 
 

@@ -1,0 +1,14 @@
+check,value
+main-study documents (doctor-written + validation courses),110
+distinct hospital courses behind the 100 LLM-generated summaries,20
+generated-summary courses identical to a main-study course,0
+duplicate texts among the main-study courses,0
+main-study courses matched to exactly one discharge note,110
+main-study courses matched to several notes,0
+main-study courses not matched,0
+generated-summary courses matched to exactly one discharge note,20
+distinct patients among matched main-study courses,110
+distinct admissions among matched main-study courses,110
+main-study patients with more than one course,0
+generated-summary courses whose patient also appears in the main study,0
+generated-summary courses whose admission also appears in the main study,0

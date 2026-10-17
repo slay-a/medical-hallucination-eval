@@ -116,10 +116,13 @@ def blocks(R: Results) -> list:
                     f"versus {pct0(bd.flag_rate)}, where the experts flag {pct0(md.expert_rate)}), "
                     f"{'keeps the same precision' if abs(md.precision - bd.precision) < 0.005 else ('gains' if md.precision > bd.precision else 'loses') + f' {abs(md.precision - bd.precision):.2f} in precision'} "
                     f"and {'loses' if md.recall < bd.recall else 'gains'} {abs(md.recall - bd.recall):.2f} in "
-                    f"recall, so that its kappa is {'lower' if md.kappa < bd.kappa else 'higher'}. A nine-point gain on MedNLI, whose hypotheses are short "
-                    f"clinical statements paired with a single note sentence, therefore did not transfer to the expert task, whose sentences are "
-                    f"patient-facing paraphrases that draw on several parts of a hospital course. This points to the granularity of the comparison, "
-                    f"not clinical vocabulary, as the factor that limits agreement with the experts.")
+                    f"recall, so that its kappa is {'lower' if md.kappa < bd.kappa else 'higher'}. A nine-point gain on MedNLI did not transfer to the "
+                    f"expert task. One explanation consistent with this is a difference in granularity: MedNLI pairs a single note sentence with a "
+                    f"short clinical statement, whereas the expert-set sentences are patient-facing paraphrases that often combine several facts "
+                    f"drawn from different parts of a hospital course, so that better clinical vocabulary does not help the model decide which part "
+                    f"of a multi-fact sentence lacks support. The experiment does not establish this explanation; other differences between the "
+                    f"two tasks, such as the patient-facing register and the length of the evidence, could produce the same result. Section 6.6 "
+                    f"tests one implication of it by scoring atomic facts instead of sentences.")
         b += [P(f"The strongest general model was fine-tuned on MedNLI, 11,232 clinician-written premise and hypothesis pairs from "
                 f"MIMIC-III notes (Section 3.4), for {epochs_txt} with the {opt_txt} optimizer, a learning rate of {lr_txt} and an "
                 f"effective batch size of {ftj['batch']} (Section 4.9), which took {hours:.1f} hours on the laptop's GPU while it was "
@@ -138,5 +141,172 @@ def blocks(R: Results) -> list:
             f"flagged by the experts, and its recall of {f2(best.recall)} means that it misses about {100 - round(100 * best.recall)} of "
             f"every 100 expert-flagged sentences. These figures are carried into Chapter 7: every unsupported fact rate reported "
             f"there is an estimate produced by an instrument with this known error profile, and the comparisons between "
-            f"conditions are again paired comparisons on the same documents under the same instrument.")]
+            f"conditions are again paired comparisons on the same documents under the same instrument. Because the judge was "
+            f"chosen on the sentences on which these figures are measured, they are optimistic; Section 6.5 estimates by how much.")]
+    b += independence_blocks()
+    b += atomic_blocks()
+    return b
+
+
+SOURCE_NAMES = {"doctor_written": "Doctor-written", "llama_70b_original": "Llama-2 70B, original data", "llama_70b_cleaned": "Llama-2 70B, cleaned data",
+                "gpt4_zero_shot": "GPT-4, zero-shot", "gpt4_orig": "GPT-4, original examples", "gpt4_cleaned": "GPT-4, cleaned examples"}
+
+
+def _res(name):
+    f = ROOT / "results" / name
+    return pd.read_csv(f) if f.exists() else None
+
+
+def _cand(note):
+    """'deberta_large_nli__doc at 0.2' -> ('DeBERTa-v3-large NLI', 'whole-course evidence', 0.2)."""
+    c, t = str(note).split(" at ")
+    j, m = c.split("__")
+    return JUDGE_NAMES.get(j, j), MODE_PHRASE.get(m, m), float(t)
+
+
+def independence_blocks():
+    ov, sb, fq, ps = _res("data_overlap.csv"), _res("judge_selection_bias.csv"), _res("judge_selection_frequency.csv"), _res("judge_per_source.csv")
+    if ov is None and sb is None:
+        return []
+    b = [("h2", "6.5 Optimism of the Selection and Independence of the Evaluation")]
+    if ov is not None:
+        O = dict(ov.values.tolist())
+        b += [P(f"The agreement figures of Section 6.2 are measured on sentences that are not independent, and the selected judge was chosen "
+                f"on the same sentences. Three facts about the data, established by matching every hospital course to its MIMIC-IV-Note "
+                f"discharge note (Section 4.9), determine how far they can be trusted. First, each of the {int(O['main-study documents (doctor-written + validation courses)'])} "
+                f"main-study courses matches exactly one discharge note, and the notes belong to {int(O['distinct patients among matched main-study courses'])} "
+                f"different patients and {int(O['distinct admissions among matched main-study courses'])} different admissions, so the paired "
+                f"observations of Chapter 7 are independent at the level of the patient. Second, the 100 LLM-generated summaries of the expert set "
+                f"were written from {int(O['distinct hospital courses behind the 100 LLM-generated summaries'])} further courses, five summaries per "
+                f"course, and {'none of their patients or admissions appears' if int(O['generated-summary courses whose patient also appears in the main study']) == 0 and int(O['generated-summary courses whose admission also appears in the main study']) == 0 else 'some of their patients appear'} "
+                f"in the main study. Third, the doctor-written summaries of the expert set are the clinicians' instructions for the main-study "
+                f"courses themselves. The judge was therefore selected partly on text written for the same courses whose generated summaries it "
+                f"later scores; the generated summaries of the main study were never part of the selection, but their courses were.")]
+    if sb is not None:
+        def g(analysis, metric, col="estimate"):
+            r = sb[(sb.analysis == analysis) & (sb.metric == metric)]
+            return float(r[col].iloc[0]) if len(r) else float("nan")
+        def note(analysis):
+            r = sb[(sb.analysis == analysis) & sb.note.notna()]
+            return r.note.iloc[0] if len(r) else None
+        bs = "selected_judge_course_bootstrap"; cv = "nested_cv_selection_procedure"
+        k_app = g("apparent_selected_judge", "kappa")
+        b += [P(f"Resampling hospital courses instead of sentences, which respects the dependence of sentences written for the same course, "
+                f"the selected judge's kappa of {f2(k_app)} has a 95 percent interval from {f2(g(bs, 'kappa', 'lo'))} to {f2(g(bs, 'kappa', 'hi'))}, "
+                f"its AUROC of {f2(g(bs, 'auroc'))} an interval from {f2(g(bs, 'auroc', 'lo'))} to {f2(g(bs, 'auroc', 'hi'))}, its precision "
+                f"from {f2(g(bs, 'precision', 'lo'))} to {f2(g(bs, 'precision', 'hi'))} and its recall from {f2(g(bs, 'recall', 'lo'))} to "
+                f"{f2(g(bs, 'recall', 'hi'))}.")]
+        k_cv, opt = g(cv, "kappa"), k_app - g(cv, "kappa")
+        sel_share = None
+        if fq is not None and len(fq):
+            sel = fq[fq.candidate == "deberta_large_nli__doc"]
+            sel_share = float(sel.share.iloc[0]) if len(sel) else 0.0
+            others = []
+            for c, sh in zip(fq.candidate, fq.share):
+                if c != "deberta_large_nli__doc":
+                    j, m = c.split("__")
+                    others.append(f"{JUDGE_NAMES.get(j, j)} with {MODE_PHRASE.get(m, m)} ({pct0(sh)})")
+            other_txt = f", and otherwise {_join_names(others)}" if others else ""
+        b += [P(f"Choosing the best of {int(len(JUDGE_NAMES))} candidates in two evidence modes and over a grid of thresholds on the same "
+                f"sentences inflates the agreement of the winner. Nested cross-validation estimates the agreement that the selection "
+                f"procedure itself achieves on courses it has not seen: the courses are split into five folds, the whole procedure "
+                f"(candidate, evidence mode and threshold chosen by maximum kappa) is run on four folds and its choice is applied to the "
+                f"fifth, and the split is repeated twenty times. The procedure reaches a kappa of {f2(k_cv)} (from {f2(g(cv, 'kappa', 'lo'))} to "
+                f"{f2(g(cv, 'kappa', 'hi'))} over the repetitions), an AUROC of {f2(g(cv, 'auroc'))}, precision {f2(g(cv, 'precision'))} and recall "
+                f"{f2(g(cv, 'recall'))}, against the apparent kappa of {f2(k_app)} of the judge it selects on all sentences, so the optimism "
+                f"of the apparent figure is about {f2(opt)} in kappa."
+                + (f" The procedure chose the selected configuration, {JUDGE_NAMES['deberta_large_nli']} with whole-course evidence, in "
+                   f"{pct0(sel_share)} of the 100 folds{other_txt}." if sel_share is not None else ""))]
+        t1, t2 = "select_on_doctor_test_on_generated", "select_on_generated_test_on_doctor"
+        n1, n2 = note(t1), note(t2)
+        if n1 and n2:
+            j1, m1, tau1 = _cand(n1); j2, m2, tau2 = _cand(n2)
+            b += [P(f"The patient-disjoint transfer test asks the same question across patients. Selected on the doctor-written sentences "
+                    f"alone, which belong to the main-study courses, the procedure chooses {j1} with {m1} at a threshold of {tau1:.2f} (kappa "
+                    f"{f2(g(t1, 'training_kappa'))} on those sentences) and reaches a kappa of {f2(g(t1, 'kappa'))} and an AUROC of "
+                    f"{f2(g(t1, 'auroc'))} on the LLM-generated summaries of the {int(O['distinct hospital courses behind the 100 LLM-generated summaries']) if ov is not None else 20} "
+                    f"other courses. Selected on the generated summaries, it chooses {j2} with {m2} at {tau2:.2f} (training kappa "
+                    f"{f2(g(t2, 'training_kappa'))}) and reaches {f2(g(t2, 'kappa'))} and {f2(g(t2, 'auroc'))} on the doctor-written "
+                    f"sentences. In both directions the agreement on unseen patients and on a different kind of summary is "
+                    f"{'lower than' if max(g(t1, 'kappa'), g(t2, 'kappa')) < k_app - 0.02 else 'close to'} the apparent agreement, and "
+                    f"the AUROC, which does not depend on the threshold, "
+                    f"{'changes little' if abs(g(t1, 'auroc') - g(bs, 'auroc')) < 0.05 and abs(g(t2, 'auroc') - g(bs, 'auroc')) < 0.05 else 'also changes'}: "
+                    f"{'the ranking ability of the judge transfers, while its threshold and the expected flag rate depend on the kind of summary' if abs(g(t1, 'auroc') - g(bs, 'auroc')) < 0.05 and abs(g(t2, 'auroc') - g(bs, 'auroc')) < 0.05 else 'both its ranking ability and its threshold depend on the kind of summary'}.")]
+    if ps is not None and len(ps):
+        order = [k for k in SOURCE_NAMES if k in set(ps.group)]
+        P_ = ps.set_index("group")
+        lo, hi = P_.kappa.idxmin(), P_.kappa.idxmax()
+        b += [P(f"[[tab:persource]] reports the selected judge's agreement separately for each source of summaries. Agreement is not "
+                f"uniform: kappa ranges from {f2(P_.loc[lo, 'kappa'])} on {SOURCE_NAMES.get(lo, lo).lower().replace('gpt', 'GPT').replace('llama', 'Llama')} "
+                f"to {f2(P_.loc[hi, 'kappa'])} on {SOURCE_NAMES.get(hi, hi).lower().replace('gpt', 'GPT').replace('llama', 'Llama')}, and precision is lowest where the experts "
+                f"found the least unsupported content, as expected when a judge with a fixed error rate is applied to texts with fewer real "
+                f"errors. Each LLM source has only 20 courses, so these per-source figures are imprecise. The main study's generator, "
+                f"Qwen2.5-7B-Instruct, is not among the sources; how the judge behaves on its summaries is measured directly by the "
+                f"manual audit of Section 7.9."),
+              ("table", dict(label="persource", caption="Agreement of the selected judge (DeBERTa-v3-large NLI, whole-course evidence, τ = 0.20) with the experts, by source of the summaries.",
+                             columns=["Source", "Sentences", "Expert rate", "Flag rate", "Precision", "Recall", "Kappa", "AUROC"],
+                             widths=[1.85, 0.75, 0.7, 0.65, 0.7, 0.6, 0.55, 0.6], font=9, align=["left"] + ["center"] * 7,
+                             rows=[[SOURCE_NAMES.get(k, k), str(int(P_.loc[k, 'n'])), pct0(P_.loc[k, 'expert_rate']), pct0(P_.loc[k, 'flag_rate']),
+                                    f2(P_.loc[k, 'precision']), f2(P_.loc[k, 'recall']), f2(P_.loc[k, 'kappa']), f2(P_.loc[k, 'auroc'])] for k in order]))]
+    b += [P("For the main study these analyses mean two things. The selected judge's agreement figures are an optimistic estimate "
+            "of its accuracy, and its error rates on a new generator are not known from the expert set alone. The comparisons of "
+            "Chapter 7 do not require the judge to be accurate in absolute terms, but they do require its errors to be similar "
+            "across the conditions being compared, which is the assumption the manual audit tests.")]
+    return b
+
+
+def _join_names(names):
+    names = list(names)
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+
+
+def atomic_blocks():
+    at = _res("atomic_results.csv")
+    ex = _res("atomic_example.csv")
+    a = sn = None; fx = None
+    if at is not None and len(at):
+        def row(analysis, group="all"):
+            r = at[(at.analysis == analysis) & (at.group == group)] if "group" in at else at[at.analysis == analysis]
+            return r.iloc[0] if len(r) else None
+        a, sn = row("expert_agreement_atomic_min"), row("expert_agreement_sentence")
+        fxr = at[at.analysis == "expert_facts_per_sentence"]
+        fx = fxr.iloc[0] if len(fxr) else None
+    if a is None and (ex is None or not len(ex)):
+        return []
+    b = [("h2", "6.6 Sentence-Level Versus Atomic-Fact Scoring")]
+    b += [P("Patient-facing sentences often combine several facts, and the judge assigns one label to the whole sentence. To test "
+            "whether finer units agree better with the experts, the local model split each expert-set sentence into atomic facts, "
+            "each carrying a single piece of information (prompt in Appendix A), and every fact was scored by the selected judge "
+            "against the whole hospital course. A sentence counts as flagged when its weakest fact falls below a threshold chosen, "
+            "as before, on the other subset of summaries."
+            + (f" Sentences contain {fx['mean']:.1f} facts on average and {pct0(fx.share_multi)} of them contain more than one; "
+               f"{pct(fx.share_fallback)} could not be decomposed and were kept whole." if fx is not None else ""))]
+    if a is not None and sn is not None:
+        better = a.kappa > sn.kappa + 0.02; worse = a.kappa < sn.kappa - 0.02
+        b += [P(f"Scored by their weakest atomic fact, the sentences agree with the experts at a kappa of {f2(a.kappa)} and an AUROC of "
+            f"{f2(a.auroc)} (precision {f2(a.precision)}, recall {f2(a.recall)}, flag rate {pct0(a.flag_rate)}), against {f2(sn.kappa)} "
+            f"and {f2(sn.auroc)} for the same judge scoring whole sentences. "
+            + ("Atomic decomposition therefore improves agreement, which supports the granularity explanation of Section 6.3 without "
+               "proving it, and Chapter 7 reports the main-study rates at the level of facts as well as sentences." if better else
+               ("Atomic decomposition therefore lowers agreement: requiring every fact to be supported multiplies the chances of a "
+                "false flag, because each fact, read alone, loses the context that its sentence supplied." if worse else
+                "Atomic decomposition therefore leaves agreement essentially unchanged.")
+               + " The granularity explanation of Section 6.3 is not supported in this form: if agreement is limited by granularity, "
+               "splitting sentences into facts with the same judge does not remove the limitation. Chapter 7 reports the main-study "
+               "rates at the level of facts as a robustness check."))]
+    if ex is not None and len(ex):
+        rows = []
+        for i, (sent, g) in enumerate(ex.groupby("sentence", sort=False)):
+            for j, r in enumerate(g.itertuples()):
+                rows.append([f"{sent} ({r.sentence_support:.2f})" if j == 0 else "", r.fact, f"{r.fact_support:.2f}"])
+        mixed = sum(1 for _, g in ex.groupby("sentence", sort=False) if (g.fact_support >= g.tau).any() and (g.fact_support < g.tau).any())
+        b += [P(f"[[tab:atomicex]] illustrates the decomposition on public text: the longest full-note summary sentence of each of the "
+                f"first {ex.sentence.nunique()} pilot documents, written by GPT-4o-mini from an MTSamples note, split by the local model and "
+                f"scored by the selected judge against the whole note. "
+                + (f"In {mixed} of the {ex.sentence.nunique()} sentences some facts are supported and others are not, which a single "
+                   f"sentence-level score cannot express." if mixed else
+                   "In these examples the facts of each sentence agree in support, so the sentence-level score loses nothing."))]
+        b += [("table", dict(label="atomicex", caption=f"Atomic decomposition of three pilot summary sentences (public MTSamples data). The number after each sentence and each fact is the selected judge's support probability against the whole note; values below {ex.tau.iloc[0]:.2f} are flagged.",
+                             columns=["Sentence (support)", "Atomic fact", "Support"], widths=[2.9, 2.9, 0.7], font=8.5,
+                             align=["left", "left", "center"], rows=rows))]
     return b

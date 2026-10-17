@@ -15,6 +15,7 @@ sys.path.insert(0, str(HERE))
 from render_docx import build           # noqa: E402
 from references import resolve_citations  # noqa: E402
 from results_loader import Results      # noqa: E402
+ROOT_ = Path(__file__).resolve().parent.parent
 
 META = dict(
     title="Evaluating and Reducing Hallucinations in LLM-Based Medical Report Summarization",
@@ -71,6 +72,12 @@ def main():
     words = sum(len(b[1].split()) for b in blocks if b[0] in ("p", "pni")) + sum(len(x.split()) for b in blocks if b[0] in ("bullets", "numbers") for x in b[1])
     print(f"body words (paragraphs and lists): {words:,}; references: {len(refs)}; missing TOC entries: {missing}")
     print(f"wrote {out_docx.name} and {out_pdf.name}")
+    aud = ROOT_ / "results" / "audit_summary.csv"
+    import pandas as _pd
+    _has_audit = aud.exists() and "manual_unsupported" in _pd.read_csv(aud).columns if aud.exists() else False
+    if not _has_audit:
+        print("NOTE: the manual audit is not summarized yet (results/audit_summary.csv), so Section 7.9 is absent and")
+        print("      sections 7.10-7.12 leave a numbering gap. Finish labeling, run audit_summary.py, and rebuild before submitting.")
 
 
 if __name__ == "__main__":

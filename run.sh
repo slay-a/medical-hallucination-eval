@@ -16,15 +16,31 @@ if [ "$MODE" = "--main-study" ]; then
   # Requires: ann-pt-summ and MedNLI under ~/Desktop/Thesis (PhysioNet credentialed; never copied elsewhere) and a
   # separate Python 3.13 environment .venv-llm with mlx-lm, serving Qwen2.5-7B-Instruct-4bit:
   #   .venv-llm/bin/python -m mlx_lm.server --model mlx-community/Qwen2.5-7B-Instruct-4bit --host 127.0.0.1 --port 8080
-  python judge_candidates.py                       # five candidate judges vs. expert labels -> results/judge_candidates.csv
+  python judge_candidates.py                       # candidate judges vs. expert labels -> results/judge_candidates.csv
   python finetune_mednli.py                        # MedNLI fine-tuning of the best general model (GPU; run alone)
   python judge_candidates.py --only mednli_deberta_large
+  python judge_selection_bias.py                   # nested cross-validation, patient-disjoint transfer, per-source agreement
+  python data_overlap.py                           # patient and admission overlap (needs MIMIC-IV-Note discharge.csv.gz)
   curl -sf http://127.0.0.1:8080/v1/models >/dev/null || { echo "ERROR: start the mlx-lm server first (see comment above)"; exit 1; }
   python mimic_generate.py --ablations             # 110 courses x (E0, E1 + 6 variants, E1b, E2, E3); resumable
+  python mimic_extra.py --length-matched --nocite-e1b
+  python mimic_extra.py --replicates 2 --rep-docs 40
   python mimic_qa.py generate                      # 3 questions x 2 conditions x 110 courses; resumable
-  python mimic_evaluate.py                         # best judge by kappa; UFR, CR, coverage, citation accuracy, tests
+  python atomic_claims.py decompose --set expert
+  python atomic_claims.py decompose --set main
+  python mimic_evaluate.py --tau 0.5               # threshold-0.5 run, archived under results/mimic_tau05/
+  mkdir -p results/mimic_tau05 && cp results/mimic_summary.csv results/mimic_pairwise_tests.csv results/mimic_ablations.csv results/mimic_reference.csv results/mimic_tau05/
+  python mimic_evaluate.py --reuse-forward --reuse-reverse   # selected judge and threshold; UFR, CR, coverage, citations, tests
   python mimic_qa.py evaluate
+  # second judge: serve Bespoke-MiniCheck-7B first (README), on port 8081
+  curl -sf http://127.0.0.1:8081/health >/dev/null && python mimic_second_judge.py || echo "skip: MiniCheck server not running"
+  python atomic_claims.py score
+  python atomic_claims.py analyze
+  python mimic_revision_analysis.py --windows
+  [ -f results_private/audit_items.json ] || python audit_sample.py   # then label with audit_tool.py (Appendix F of the thesis)
+  [ -f results_private/audit_labels.json ] && python audit_sample.py --refresh-judge && python audit_summary.py
   python analyze.py
+  python check_no_protected_text.py
   echo "Done. Aggregates in results/mimic_*.csv; protected per-claim outputs in results_private/ (git-ignored)"
   exit 0
 fi

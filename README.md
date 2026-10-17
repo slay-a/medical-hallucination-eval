@@ -1,7 +1,7 @@
 # Hallucination Evaluation in LLM-Based Medical Summarization
 
 Claim-level evaluation of hallucinations in patient-facing summaries generated from clinical notes, and a
-controlled comparison of five summarization conditions: zero-context LLM summarization (E0), retrieval-augmented
+controlled comparison of five summarization conditions: full-note LLM summarization without retrieval (E0), retrieval-augmented
 generation with excerpts only (E1) or with the full note (E1b), RAG with Chain-of-Verification (E3), and a
 centroid-based extractive baseline (E2). Every generated claim is checked against the source note with
 sentence-embedding retrieval and a natural-language-inference (NLI) judge, yielding two metrics per summary:
@@ -47,9 +47,16 @@ source note ─┬─ E0  LLM, full note ─────────────
 | `finetune_mednli.py` | MedNLI fine-tuning of the best general NLI model (saved outside the repository) | MedNLI (credentialed), GPU |
 | `mimic_generate.py` | Main study generation with the local model server; `--ablations` adds the six E1 variants; resumable | mlx-lm server, ann-pt-summ |
 | `mimic_qa.py generate` / `evaluate` | Question-answering pilot with abstention (QA-E0, QA-E1) | mlx-lm server, ann-pt-summ |
-| `mimic_evaluate.py` | Main study evaluation with the best judge: UFR, CR, coverage vs. clinician's instructions, citation accuracy, tests, ablations | ann-pt-summ |
+| `mimic_extra.py` | Main study variants: length-matched E0 (`--length-matched`), E1b without citations (`--nocite-e1b`), two repeated generations of E0, E1, E1b and E3 on 40 courses (`--replicates 2 --rep-docs 40`, seeds 1000r + k) | mlx-lm server, ann-pt-summ |
+| `citations.py` | Shared claim splitter: removes citation markers before sentence segmentation, assigns each marker by position, strips merged section headers | – |
+| `mimic_evaluate.py` | Main study evaluation with the selected judge: UFR, CR, supported and unsupported counts, coverage vs. clinician's instructions, citation coverage, accuracy and reliability, paired tests with Holm adjustment, ablations | ann-pt-summ |
 | `mimic_second_judge.py` | Scores every base-condition claim with a second judge (Bespoke-MiniCheck-7B) and reports agreement with the selected judge → `results/mimic_judge_agreement.csv` | MiniCheck server |
-| `audit_sample.py`, `audit_summary.py` | Manual precision audit: draws a stratified sample of claims for hand labeling (`results_private/audit_sample.csv`), then computes precision, kappa and a corrected unsupported rate → `results/audit_summary.csv` | – |
+| `atomic_claims.py decompose` / `score` / `analyze` | Splits expert-set sentences and main-study claims into atomic facts with the local model, scores every fact, compares agreement with the experts → `results/atomic_results.csv` | mlx-lm server, ann-pt-summ |
+| `judge_selection_bias.py` | Nested cross-validation of the judge selection, patient-disjoint transfer, course-clustered intervals, per-source agreement | ann-pt-summ |
+| `data_overlap.py` | Matches every course to its MIMIC-IV-Note discharge note; patient and admission overlap → `results/data_overlap.csv` (counts only) | MIMIC-IV-Note |
+| `mimic_revision_analysis.py` | Variant tests, run-to-run variation, abstention, coverage equivalence check, question-answering utility, per-condition intervals, splitter comparison, overlapping-window check (`--windows`) | ann-pt-summ |
+| `audit_sample.py`, `audit_tool.py`, `audit_summary.py` | Blind manual audit: course-clustered stratified sample (60 courses, seed 7), local labeling page on 127.0.0.1:8765, weighted estimates of the judge's precision, false omission rate and the manually confirmed unsupported share → `results/audit_*.csv` | ann-pt-summ |
+| `check_no_protected_text.py` | Scans every tracked file for eight-word sequences of the credentialed texts and of the private outputs → `results/protected_text_scan*.csv` (counts only) | ann-pt-summ, MedNLI |
 | `analyze.py` | Figures (`results/fig_*.png`) and example tables | – |
 | `preprocessing.py` | Shared header filter, abstention filter, MTSamples line-break repair | – |
 | `thesis/build_thesis.py` | Builds the thesis (.docx and .pdf, CSUN format) from the results | LibreOffice |
@@ -58,7 +65,8 @@ source note ─┬─ E0  LLM, full note ─────────────
 ## Reproduce
 
 ```bash
-bash setup.sh                          # venv + dependencies + spaCy model
+bash setup.sh                          # venv + pinned dependencies (requirements.txt) + spaCy model 3.7.1
+bash setup.sh --llm                    # also the model-server environment .venv-llm (requirements-llm.txt; Apple silicon)
 # place mtsamples.csv one directory above this repository
 export OPENAI_API_KEY='sk-...'
 bash run.sh                            # pilot: generation + evaluation + analysis
@@ -77,10 +85,23 @@ The Bespoke-MiniCheck-7B judge candidate is converted once with `mlx_lm.convert 
 copy `tokenizer.json`, `tokenizer.model` and `tokenizer_config.json` from the Hugging Face snapshot into the converted directory afterwards
 (the converter re-saves a broken tokenizer under transformers 5), then serve it with `.venv-llm/bin/python minicheck_server.py --model <dir> --port 8081`.
 
-Random seed 42 is fixed for document sampling; the LLMs are called with temperature 0.3, so regenerated summaries
-differ slightly from the stored ones, but the stored `results/summaries.csv` reproduces every pilot number exactly
-through `recompute_metrics.py`. Main-study generations contain MIMIC-derived text and are stored only in the
-git-ignored `results_private/`; the aggregate tables in `results/mimic_*.csv` are committed.
+`requirements-lock.txt` and `requirements-llm-lock.txt` list both environments exactly as used. Seeds: 42 for the MTSamples
+sample, the MedNLI fine-tuning, the repeated-generation subset and the selection-bias analyses; 1000r + k for course k of
+repeated generation r; 7 for the audit sample; 0 for the pilot bootstrap. The LLMs are called with temperature 0.3, so
+regenerated summaries differ slightly from the stored ones, but the stored `results/summaries.csv` reproduces every pilot
+number exactly through `recompute_metrics.py`.
+
+| Result | Data needed | In this repository |
+|---|---|---|
+| Pilot study | MTSamples (public) | everything; `bash run.sh --offline` |
+| Judge validation and selection | ann-pt-summ (PhysioNet, credentialed) | aggregate statistics only |
+| MedNLI adaptation | MedNLI (PhysioNet, credentialed) | script and summary statistics |
+| Main study and robustness checks | ann-pt-summ courses (from MIMIC-IV-Note) | aggregates in `results/mimic_*.csv` |
+| Data overlap check | MIMIC-IV-Note (credentialed) | counts only |
+| Manual audit | as the main study | aggregates only |
+
+Main-study generations, claims, labels and audit items contain MIMIC-derived text and are stored only in the
+git-ignored `results_private/`.
 
 ## Data
 
@@ -97,11 +118,13 @@ No credentialed text is committed, uploaded to shared storage, or sent to any ex
 
 ## Manual audit of the judge
 
-`python audit_sample.py` writes `results_private/audit_sample.csv` (320 claims: 40 flagged and 40 accepted by the judge from each of
-E0, E1, E1b and E3, in random order, with the hospital course next to each claim). Sort by `order`, read the course, and fill
-`human_label` with `S` (the claim is supported by the course), `U` (not stated or contradicted) or `?` (unsure); do not look at the
-`judge_label` and `p_support` columns while labeling. `python audit_summary.py` then writes `results/audit_summary.csv`, and the thesis
-picks it up as Section 7.8 on the next build.
+`python audit_sample.py` draws 60 courses (seed 7) and, within them, up to 30 claims flagged and 30 accepted by the judge for each
+of E0, E1, E1b and E3, plus 30 cited claims of E1 and of E1b → `results_private/audit_items.json`. `python audit_tool.py` serves a
+local labeling page at http://127.0.0.1:8765 that shows one course at a time and hides the condition and the judge's label; labels
+(supported, partly supported, not supported, unsure, with an error type) are saved to `results_private/audit_labels.json`. The
+protocol is Appendix F of the thesis. After the main-study evaluation, `python audit_sample.py --refresh-judge` stores the judge's
+current label of every audited claim, and `python audit_summary.py` writes `results/audit_summary.csv`, `audit_types.csv` and
+`audit_citations.csv` (Section 7.9).
 
 ## Results files
 
@@ -110,4 +133,9 @@ is_header, is_abstention), `results/summaries.csv`, `results/comparison_per_samp
 `results/aggregate_statistics.csv`, `results/pairwise_tests.csv`, ablation and calibration CSVs.
 Judge study: `results/judge_candidates.csv`. Main study: `results/mimic_summary.csv`,
 `results/mimic_pairwise_tests.csv`, `results/mimic_ablations.csv`, `results/mimic_reference.csv`,
-`results/mimic_qa_summary.csv`, `results/mimic_judge_agreement.csv`, `results/mimic_second_judge_tests.csv`, `results/audit_summary.csv` (when labeled). Figures: `results/fig_*.png`.
+`results/mimic_qa_summary.csv`, `results/mimic_qa_utility.csv`, `results/mimic_condition_ci.csv`, `results/mimic_variant_tests.csv`,
+`results/mimic_replicates.csv`, `results/mimic_abstention.csv`, `results/mimic_equivalence.csv`, `results/mimic_window_check.csv`,
+`results/mimic_splitting_check.csv`, `results/mimic_judge_agreement.csv`, `results/mimic_second_judge_tests.csv`,
+`results/mimic_tau05/` (threshold 0.5), `results/atomic_results.csv`, `results/judge_selection_bias.csv`,
+`results/judge_selection_frequency.csv`, `results/judge_per_source.csv`, `results/data_overlap.csv`, `results/audit_*.csv`,
+`results/protected_text_scan*.csv`. Figures: `results/fig_*.png`.

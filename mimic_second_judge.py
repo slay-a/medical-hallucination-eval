@@ -61,8 +61,16 @@ def main():
         docs[f"val_{i}"] = r["text"]
     cl = pd.read_csv(PRIVATE / "mimic_claims.csv"); cl = cl[cl.variant == "base"].reset_index(drop=True)
     print(f"{len(cl)} base claims across {cl.condition.nunique()} conditions", flush=True)
-    p2 = np.zeros(len(cl))
-    for sid, g in cl.groupby("sid", sort=False):
+    p2 = np.full(len(cl), np.nan)
+    cache = {}
+    if (PRIVATE / "mimic_claims_second.csv").exists():
+        prev = pd.read_csv(PRIVATE / "mimic_claims_second.csv")
+        cache = {(r.sid, str(r.claim)): float(r.p_support_second) for r in prev.itertuples()}
+    for i, r in enumerate(cl.itertuples()):
+        if (r.sid, str(r.claim)) in cache:
+            p2[i] = cache[(r.sid, str(r.claim))]
+    print(f"second-judge cache: {int(np.isfinite(p2).sum())} of {len(cl)} claims already scored", flush=True)
+    for sid, g in cl[np.isnan(p2)].groupby("sid", sort=False):
         ctx = he.sentencize(docs[sid]); S = enc.encode(ctx, convert_to_numpy=True, normalize_embeddings=True, show_progress_bar=False)
         claims = g.claim.astype(str).tolist()
         if mode == "top3":
