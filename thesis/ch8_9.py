@@ -125,11 +125,16 @@ def blocks(R: Results) -> list:
            "corpus's line-break artifact.")
     if main:
         ty = _csv("audit_types.csv")
-        if ty is not None and len(ty):
-            tt = ty.groupby("type", dropna=False).n.sum().sort_values(ascending=False)
+        typed = ty[ty.type.notna() & ~ty.type.astype(str).str.strip().isin(["", "nan"])] if ty is not None and len(ty) else None
+        if typed is not None and len(typed) and typed.n.sum() >= 0.6 * ty.n.sum():
+            tt = typed.groupby("type").n.sum().sort_values(ascending=False)
             from ch_mimic import AUDIT_TYPE
             rq2 += (f" In the main study the manual audit found the same pattern on the local model's summaries: the most frequent "
                     f"problems among unsupported claims were {_join([f'{AUDIT_TYPE.get(k, str(k))} ({pct0(v / tt.sum())})' for k, v in tt.head(2).items()])}.")
+        elif A is not None and "pooled" in A.index and not _nan(A.loc["pooled", "partly_share_of_unsupported"]):
+            rq2 += (f" In the main study's manual audit, most of the claims labeled unsupported, "
+                    f"{pct0(A.loc['pooled', 'partly_share_of_unsupported'])}, were partly supported sentences in which one fact fails "
+                    f"rather than whole fabrications (Section 7.9).")
         rq2 += (" Questions about warning signs, which a hospital course rarely states, drew the most abstentions and the highest "
                 "judge-estimated rates in the question-answering pilot (Section 7.11)"
                 + (f", and the second judge confirmed {'none' if G.loc['E2', 'first_flags_confirmed'] == 0 else pct0(G.loc['E2', 'first_flags_confirmed'])} "
@@ -255,14 +260,19 @@ def blocks(R: Results) -> list:
                        f"shares into true rates; only an audit of the main study's own outputs can." if neg else
                        ". The estimates assume that the expert-set error rates hold for this generator, which the audit tests."))]
         if A is not None and AD is not None and len(AD):
-            conf = [k.split(" minus ")[0] for k in ("E1 minus E0", "E1b minus E0", "E3 minus E0") if k in AD.index and AD.loc[k, "diff_hi"] < 0]
+            keys = [k for k in ("E1 minus E0", "E1b minus E0", "E3 minus E0") if k in AD.index]
+            conf = [k.split(" minus ")[0] for k in keys if AD.loc[k, "diff_hi"] < 0]
+            allneg = bool(keys) and all(AD.loc[k, "diff"] < 0 for k in keys)
+            jconf = [k.split(" minus ")[0] for k in keys if AD.loc[k, "judge_diff_hi"] < 0]
             pq = "; ".join(f"{c} p = {f2(A.loc[c, 'precision'])}, q = {f2(A.loc[c, 'false_omission'])}" for c in ("E0", "E1", "E1b", "E3") if c in A.index)
             b += [P(f"The audit gives these quantities per condition ({pq}; Section 7.9). "
-                    + (f"For {_join(conf)} the manually confirmed reduction relative to E0 has an interval below zero, so the direction "
-                       f"of the judge's comparison is confirmed by manual reading; " if conf else
-                       "No manually confirmed reduction relative to E0 has an interval below zero, so the audit, at its sample size, "
-                       "does not confirm the direction of the judge's comparisons; ")
-                    + "the size of the confirmed differences, rather than the judge's, is the better estimate of the true effect.")]
+                    + ((f"For {_join(conf)} the manually confirmed reduction relative to E0 has an interval below zero, so the direction "
+                        f"of the judge's comparison is confirmed by manual reading, and the size of the confirmed differences, rather "
+                        f"than the judge's, is the better estimate of the true effect.") if conf else
+                       ("None of the manual intervals excludes zero at the audit's sample size"
+                        + (", although every manual point estimate lies on the same side as the judge's difference" if allneg else "")
+                        + (f", and the judge's own paired differences on the audited courses do exclude zero for {_join(jconf)}" if jconf else "")
+                        + "; the manual intervals bound the plausible size of the true effects rather than establish them.")))]
         among = [D.T("UFR", "E1b vs E1"), D.T("UFR", "E3 vs E1")]
         among = [t for t in among if t is not None]
         if among:

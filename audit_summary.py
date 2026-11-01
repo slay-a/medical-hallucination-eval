@@ -119,7 +119,11 @@ def main():
         cit["cited_key"] = cit.cited.apply(lambda x: ",".join(map(str, x)))
         jf = PRIVATE / "mimic_citation_claims.csv"
         if jf.exists():
-            j = pd.read_csv(jf); j["cited_key"] = j.cited_key.astype(str)
+            j = pd.read_csv(jf)
+            if "variant" in j:
+                j = j[j.variant == "base"]
+            j["cited_key"] = j.cited_key.astype(str)
+            j = j.drop_duplicates(subset=["sid", "condition", "claim", "cited_key"])
             cit = cit.merge(j[["sid", "condition", "claim", "cited_key", "judge_supported"]], on=["sid", "condition", "claim", "cited_key"], how="left")
         crow = []
         for c in ("E1", "E1b"):

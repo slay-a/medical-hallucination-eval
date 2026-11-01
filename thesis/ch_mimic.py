@@ -606,7 +606,8 @@ def blocks(R: Results) -> list:
         if over:
             txt += f"The judge's share lies above the manual interval for {_join(over)}, so its flags overstate the unsupported content there. "
         if under:
-            txt += f"It lies below the manual interval for {_join(under)}, so it misses unsupported content there. "
+            subj = "It" if over else "The judge's share"
+            txt += f"{subj} lies below the manual interval for {_join(under)}, so the judge misses unsupported content there. "
         if not over and not under:
             txt += "For every condition the judge's share lies within the interval of the manually confirmed share. "
         p2 = ""
@@ -617,23 +618,27 @@ def blocks(R: Results) -> list:
                     r = Dd.loc[key]
                     parts.append(f"{key.replace(' minus ', ' versus ')}: {pts(r['diff'])} manually (95 percent interval {ci_pts(r.diff_lo, r.diff_hi)}) "
                                  f"against {pts(r.judge_diff)} by the judge")
-            confirmed = [k for k in ("E1 minus E0", "E1b minus E0", "E3 minus E0") if k in Dd.index and Dd.loc[k, "diff_hi"] < 0]
+            keys_d = [k for k in ("E1 minus E0", "E1b minus E0", "E3 minus E0") if k in Dd.index]
+            confirmed = [k for k in keys_d if Dd.loc[k, "diff_hi"] < 0]
+            allneg = bool(keys_d) and all(Dd.loc[k, "diff"] < 0 for k in keys_d)
             p2 = ("The comparisons that matter for the conclusions are differences between conditions. In percentage points of "
                   "unsupported claims they are " + "; ".join(parts) + ". "
                   + (f"The manual reading confirms the direction of the judge's difference for {_join([k.split(' minus ')[0] for k in confirmed])}, "
                      f"whose intervals lie below zero" if confirmed else
-                     "None of the manual intervals excludes zero, so the audit, with its sample size, cannot confirm the judge's differences")
+                     "None of the manual intervals excludes zero, so the audit, with its sample size, cannot confirm the judge's differences"
+                     + (", although every manual point estimate lies in the direction the judge reports" if allneg else ""))
                   + ".")
         ty = _csv("audit_types.csv")
         p3 = ""
         if ty is not None and len(ty):
-            tt = ty.groupby("type", dropna=False).n.sum().sort_values(ascending=False)
-            tot = tt.sum()
-            p3 = ("Among the claims labeled partly or not supported, the most frequent problems were "
-                  + _join([f"{AUDIT_TYPE.get(k, str(k))} ({pct0(v / tot)})" for k, v in tt.head(3).items()])
-                  + (f", and {pct0(A.loc['pooled', 'partly_share_of_unsupported'])} of them were partly supported, that is, sentences in which "
-                     f"some facts are supported and others are not" if "pooled" in A.index and not _nan(A.loc["pooled", "partly_share_of_unsupported"]) else "")
-                  + ".")
+            typed = ty[ty.type.notna() & ~ty.type.astype(str).str.strip().isin(["", "nan"])]
+            tt = typed.groupby("type").n.sum().sort_values(ascending=False)
+            if len(tt) and tt.sum() >= 0.6 * ty.n.sum():
+                p3 = ("Among the claims labeled partly or not supported, the most frequent problems were "
+                      + _join([f"{AUDIT_TYPE.get(k, str(k))} ({pct0(v / tt.sum())})" for k, v in tt.head(3).items()]) + ". ")
+        if "pooled" in A.index and not _nan(A.loc["pooled", "partly_share_of_unsupported"]):
+            p3 += (f"Of the manually unsupported claims, {pct0(A.loc['pooled', 'partly_share_of_unsupported'])} were partly supported, "
+                   f"that is, sentences in which some facts are supported and others are not, rather than wholly unsupported statements.")
         b += [P(txt)] + ([P(p2)] if p2 else []) + ([P(p3)] if p3 else []) + [
               ("table", dict(label="maudit", caption="Manual audit of the selected judge on the main-study claims: number of claims labeled, manually confirmed share of unsupported claims weighted to the condition's claims (95 percent course-bootstrap interval), share of the condition's claims the judge flags, and the judge's precision, false omission rate, sensitivity, specificity and kappa against the manual labels.",
                              columns=["Condition", "Labeled", "Manual unsupported (95% CI)", "Judge flags", "Precision", "False omission", "Sensitivity", "Specificity", "Kappa"],
