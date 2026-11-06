@@ -18,6 +18,7 @@ from results_private/mimic_citation_claims.csv when that file exists.
 Writes only aggregates: results/audit_summary.csv, results/audit_types.csv, results/audit_citations.csv.
 """
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -26,6 +27,7 @@ import pandas as pd
 
 HERE = Path(__file__).resolve().parent
 PRIVATE, RESULTS = HERE / "results_private", HERE / "results"
+LABELS = Path(os.environ.get("AUDIT_LABELS", PRIVATE / "audit_labels.json"))
 CONDS = ["E0", "E1", "E1b", "E3"]
 
 
@@ -52,7 +54,8 @@ def estimates(d, W):
 
 def main():
     items = json.load(open(PRIVATE / "audit_items.json"))
-    labels = json.load(open(PRIVATE / "audit_labels.json")) if (PRIVATE / "audit_labels.json").exists() else {}
+    labels = json.load(open(LABELS)) if LABELS.exists() else {}
+    print(f"labels: {LABELS}", flush=True)
     rows = [dict(it, label=(labels.get(it["item_id"]) or {}).get("label"), type=(labels.get(it["item_id"]) or {}).get("type"))
             for c in items["courses"] for it in c["items"]]
     df = pd.DataFrame(rows)

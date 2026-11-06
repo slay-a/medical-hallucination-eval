@@ -202,7 +202,9 @@ def slides(R: Results):
         "Statistics corrected: the retrieval-ablation effects on faithfulness are now reported with Holm-adjusted p-values and do not survive the correction (coverage effects do); the pilot's Holm family is described correctly as all twenty pairwise tests",
         "Hypotheses H1 to H3 answered across both studies in Chapter 8; paired tests added under the second judge (verification best under that judge, p < 0.001)",
         "Literature review extended with grounding-specific checkers (MiniCheck), evidence on unreliable factuality metrics (Godbole and Jia 2025; FaithBench 2025) and clinical fact verification at scale (VeriFact 2026)",
-        "Consistency pass: Chapters 1 to 4 brought in line with the main study (scope, data sources, methodology overview, section numbering), the comparison of approaches in Section 8.4 rewritten for both studies, spelling and figure captions corrected"]))
+        "Consistency pass: Chapters 1 to 4 brought in line with the main study (scope, data sources, methodology overview, section numbering), the comparison of approaches in Section 8.4 rewritten for both studies, spelling and figure captions corrected",
+        "Manual audit completed in two blind passes on an extended sample (400 items; the rubric was clarified after the first pass and the agreement between the passes is reported): it confirms E1b's reduction against E0 directly and shows the judge understates absolute unsupported shares",
+        "Generator robustness: E0, E1, E1b and E3 re-generated on all 110 courses with Llama-3.1-8B and Mistral-7B and scored by the same judge; the grounding reductions replicate under Llama but not under Mistral, so the thesis states them per generator"]))
     S.append(dict(kind="table", title="Plan to the defense (aligned with CSUN ETD deadlines)", columns=["By", "Milestone"],
                   rows=[["Oct 9, 2026", "ETD Planning Form submitted; committee confirmed (done)"],
                         ["Mid-October", "Second draft and progress report submitted; advisor review of the second draft"],
@@ -215,7 +217,7 @@ def slides(R: Results):
     S.append(dict(kind="bullets", title="Risks and requests", bullets=[
         (f"Judge validity: the selected judge agrees with experts moderately (kappa {f2(best.kappa)}); main-study rates are judge-estimated and reported with this error profile, checked by a second judge and a manual audit, and conclusions rest on paired comparisons" if best is not None
          else "Judge validity: the pilot judge agrees with experts at chance level; the judge selection study addresses this"),
-        "Generator difference: the pilot used GPT-4o-mini on public notes and the main study a 7-billion-parameter local model on MIMIC-IV, so the two studies are compared qualitatively",
+        "Generator difference: the pilot used GPT-4o-mini on public notes and the main study a 7-billion-parameter local model on MIMIC-IV, so the two studies are compared qualitatively; within the main study the grounding effect replicated under Llama-3.1-8B but not under Mistral-7B, so it is stated per generator",
         "Schedule: advisor approval, the Turnitin check and two weeks of committee review must all precede the November 6 format review",
         "Requests to the advisor: review the second draft and approve it for distribution to the committee; advise on the defense window"]))
     return S

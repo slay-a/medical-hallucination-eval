@@ -29,9 +29,9 @@ def backup_labels(min_age_s=600):
         if not LABELS.exists():
             return
         BACKUPS.mkdir(exist_ok=True)
-        newest = max((f.stat().st_mtime for f in BACKUPS.glob("audit_labels-*.json")), default=0)
+        newest = max((f.stat().st_mtime for f in BACKUPS.glob(f"{LABELS.stem}-*.json")), default=0)
         if time.time() - newest >= min_age_s:
-            shutil.copy2(LABELS, BACKUPS / time.strftime("audit_labels-%Y%m%d-%H%M%S.json"))
+            shutil.copy2(LABELS, BACKUPS / time.strftime(f"{LABELS.stem}-%Y%m%d-%H%M%S.json"))
     except Exception:  # noqa: BLE001  (a failed backup must never block a save)
         pass
 SHOWN = {"item_id", "kind", "claim", "cited", "excerpts"}   # everything else (condition, judge scores, strata) stays hidden
@@ -58,9 +58,10 @@ select,input[type=text]{font:inherit;padding:5px 8px;border:1px solid var(--line
 .tag{font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}.saved{color:var(--mute);font-size:13px}
 details{margin-bottom:12px}summary{cursor:pointer;color:var(--acc)}.guide li{margin:4px 0}kbd{border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;font-size:12px}
 #find{width:220px}
+#left{font-weight:800;font-size:20px;color:#b3261e;margin-left:8px;white-space:nowrap}
 </style></head><body>
 <header><b>Manual audit</b><span id="pos"></span><div class="bar"><i id="prog"></i></div><span id="cnt"></span>
-<button onclick="go(-1)">&larr; Previous course</button><button onclick="go(1)">Next course &rarr;</button><button onclick="nextUnlabeled()">Next unlabeled</button>
+<button onclick="go(-1)">&larr; Previous course</button><button onclick="go(1)">Next course &rarr;</button><button onclick="nextUnlabeled()">Next unlabeled</button><button onclick="nextUntyped()">Next P/U without a type</button><button onclick="nextPU()">Next P/U (review)</button><span id="left"></span>
 <input id="find" type="text" placeholder="Highlight a word in the course" oninput="hl()"><span class="saved" id="saved"></span></header>
 <main><section class="panel"><div class="tag">Hospital course</div><div id="course"></div></section>
 <section class="panel"><details open><summary>How to label (click to hide)</summary><ul class="guide">
@@ -74,31 +75,34 @@ details{margin-bottom:12px}summary{cursor:pointer;color:var(--acc)}.guide li{mar
 <div id="items"></div></section></main>
 <script>
 let D=null,L={},ci=0,focusId=null;
+const NS='__STEM__';   // the labels file this server saves to; keeps each pass's browser mirror separate
 const TYPES=[["",""],["not_stated","not stated in the course"],["generic","generic advice / follow-up not in the course"],["contradicts","contradicts the course"],["med_number","wrong medication, dose or number"],["other","other"]];
 async function load(){D=await (await fetch('data')).json();L=await (await fetch('labels')).json();
- try{const m=JSON.parse(localStorage.getItem('labels_mirror')||'{}');let rec=0;
+ try{const m=JSON.parse(localStorage.getItem('labels_mirror:'+NS)||'{}');let rec=0;
   for(const k in m){if(m[k]&&m[k].label&&!(L[k]&&L[k].label)){L[k]=m[k];pend.add(k);rec++}}
   if(rec){flush();document.getElementById('saved').textContent='recovered '+rec+' unsaved answer'+(rec>1?'s':'')+' kept by this browser'}}catch(e){}
- const s=localStorage.getItem('ci');ci=s?Math.min(+s,D.courses.length-1):0;render()}
+ const s=localStorage.getItem('ci:'+NS);ci=s?Math.min(+s,D.courses.length-1):0;render()}
 function esc(t){return t.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
 function hl(){const q=document.getElementById('find').value.trim();const t=esc(D.courses[ci].text);if(!q){document.getElementById('course').innerHTML=t;return}
  const re=new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi');document.getElementById('course').innerHTML=t.replace(re,m=>'<mark>'+m+'</mark>')}
 function total(){let n=0,d=0;for(const c of D.courses)for(const it of c.items){n++;if(L[it.item_id]&&L[it.item_id].label)d++}return[n,d]}
-function render(){const c=D.courses[ci];localStorage.setItem('ci',ci);document.getElementById('pos').textContent=`Course ${ci+1} of ${D.courses.length}`;
- hl();document.getElementById('course').scrollTop=0;const [n,d]=total();document.getElementById('cnt').textContent=`${d} of ${n} labeled`;document.getElementById('prog').style.width=(100*d/n)+'%';
+function render(){const c=D.courses[ci];localStorage.setItem('ci:'+NS,ci);document.getElementById('pos').textContent=`Course ${ci+1} of ${D.courses.length}`;
+ hl();document.getElementById('course').scrollTop=0;const [n,d]=total();const u=D.courses.flatMap(c=>c.items).filter(needsType).length;
+ document.getElementById('cnt').textContent=`${d} of ${n} labeled`+(u?` · ${u} P/U without a type`:'');document.getElementById('prog').style.width=(100*d/n)+'%';
+ const le=document.getElementById('left');le.textContent=u?`${u} left`:'0 left ✓';le.style.color=u?'#b3261e':'#1b7f3b';
  const box=document.getElementById('items');box.innerHTML='';
  c.items.forEach((it,k)=>{const lab=L[it.item_id]||{};const div=document.createElement('div');div.className='item';div.tabIndex=0;div.dataset.id=it.item_id;
   div.onclick=()=>{focusId=it.item_id;document.querySelectorAll('.item').forEach(e=>e.classList.toggle('focus',e.dataset.id===focusId))};
   if(it.kind==='claim'){div.innerHTML=`<div class="tag">Statement ${k+1}</div><p class="claim">${esc(it.claim)}</p>`+
    `<div class="btns">${[['S','S - Supported'],['P','P - Partly'],['U','U - Not supported'],['Q','? - Unsure']].map(([v,t])=>`<button class="b-${v} ${lab.label===v?'on':''}" onclick="setL('${it.item_id}','${v}')">${t}</button>`).join('')}</div>`+
-   `<select onchange="setT('${it.item_id}',this.value)" ${lab.label==='P'||lab.label==='U'?'':'style="display:none"'}>${TYPES.map(([v,t])=>`<option value="${v}" ${lab.type===v?'selected':''}>${t||'What is wrong?'}</option>`).join('')}</select>`+
+   `<select onchange="setT('${it.item_id}',this.value)" ${lab.label==='P'||lab.label==='U'?(lab.type?'':'style="border:2px solid #b3261e"'):'style="display:none"'}>${TYPES.map(([v,t])=>`<option value="${v}" ${lab.type===v?'selected':''}>${t||'What is wrong?'}</option>`).join('')}</select>`+
    `<input type="text" placeholder="Optional note" value="${esc(lab.note||'')}" onchange="setN('${it.item_id}',this.value)">`}
   else{div.innerHTML=`<div class="tag">Citation check ${k+1}</div><p class="claim">${esc(it.claim)}</p>`+it.excerpts.map((e,j)=>`<div class="ex"><b>Cited excerpt ${it.cited[j]}</b>\n${esc(e)}</div>`).join('')+
    `<div class="btns">${[['Yes','Yes - supports'],['Partly','Partly'],['No','No'],['Q','? - Unsure']].map(([v,t])=>`<button class="b-${v} ${lab.label===v?'on':''}" onclick="setL('${it.item_id}','${v}')">${t}</button>`).join('')}</div>`+
    `<input type="text" placeholder="Optional note" value="${esc(lab.note||'')}" onchange="setN('${it.item_id}',this.value)">`}
   box.appendChild(div)})}
 const pend=new Set();
-function mirror(){try{localStorage.setItem('labels_mirror',JSON.stringify(L))}catch(e){}}
+function mirror(){try{localStorage.setItem('labels_mirror:'+NS,JSON.stringify(L))}catch(e){}}
 async function flush(){if(!pend.size)return;const body={};for(const k of pend)body[k]=L[k];let ok=false;
  try{ok=(await fetch('save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})).ok}catch(e){ok=false}
  const el=document.getElementById('saved');
@@ -108,7 +112,20 @@ function save(id){mirror();pend.add(id);document.getElementById('saved').textCon
 setInterval(flush,5000);
 function setL(id,v){L[id]=Object.assign(L[id]||{},{label:v});if(v!=='P'&&v!=='U')delete L[id].type;save(id);const y=window.scrollY;render();window.scrollTo(0,y);focusId=id;
  document.querySelectorAll('.item').forEach(e=>e.classList.toggle('focus',e.dataset.id===focusId))}
-function setT(id,v){L[id]=Object.assign(L[id]||{},{type:v});save(id)}
+function setT(id,v){L[id]=Object.assign(L[id]||{},{type:v});save(id);const y=window.scrollY;render();window.scrollTo(0,y);
+ document.querySelectorAll('.item').forEach(e=>e.classList.toggle('focus',e.dataset.id===focusId))}
+function needsType(it){const l=L[it.item_id]||{};return it.kind==='claim'&&(l.label==='P'||l.label==='U')&&!l.type}
+function nextUntyped(){for(let k=0;k<D.courses.length;k++){const j=(ci+k)%D.courses.length;if(D.courses[j].items.some(needsType)){ci=j;render();
+ const f=D.courses[j].items.find(needsType);focusId=f.item_id;document.querySelectorAll('.item').forEach(e=>e.classList.toggle('focus',e.dataset.id===focusId));
+ const el=document.querySelector(`.item[data-id="${focusId}"]`);if(el)el.scrollIntoView({block:'center'});return}}
+ alert('Every P and U statement has its "what is wrong" set. Thank you!')}
+function isPU(it){const l=L[it.item_id]||{};return it.kind==='claim'&&(l.label==='P'||l.label==='U')}
+let puIdx=-1;
+function nextPU(){const l=D.courses.flatMap((c,i)=>c.items.filter(isPU).map(it=>({ci:i,id:it.item_id})));if(!l.length)return;
+ puIdx=(puIdx+1)%l.length;ci=l[puIdx].ci;render();focusId=l[puIdx].id;
+ document.querySelectorAll('.item').forEach(e=>e.classList.toggle('focus',e.dataset.id===focusId));
+ const el=document.querySelector(`.item[data-id="${focusId}"]`);if(el)el.scrollIntoView({block:'center'});
+ const le=document.getElementById('left');le.textContent=`review ${puIdx+1} of ${l.length}`;le.style.color='#1b7f3b'}
 function setN(id,v){L[id]=Object.assign(L[id]||{},{note:v});save(id)}
 function go(d){ci=Math.max(0,Math.min(D.courses.length-1,ci+d));render();window.scrollTo(0,0)}
 function nextUnlabeled(){for(let k=0;k<D.courses.length;k++){const j=(ci+1+k)%D.courses.length;if(D.courses[j].items.some(it=>!(L[it.item_id]&&L[it.item_id].label))){ci=j;render();window.scrollTo(0,0);return}}alert('Everything is labeled. Thank you!')}
@@ -134,7 +151,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path in ("/", "/index.html"):
-            self._send(200, PAGE.encode(), "text/html; charset=utf-8")
+            self._send(200, PAGE.replace("__STEM__", LABELS.stem).encode(), "text/html; charset=utf-8")
         elif self.path == "/data":
             self._send(200, json.dumps(_strip(json.load(open(ITEMS)))).encode(), "application/json")
         elif self.path == "/labels":
@@ -166,7 +183,7 @@ def main():
     try:
         srv.serve_forever()
     except KeyboardInterrupt:
-        print("\nstopped; labels are saved in results_private/audit_labels.json")
+        print(f"\nstopped; labels are saved in {LABELS}")
 
 
 if __name__ == "__main__":

@@ -479,11 +479,31 @@ def abstract(R: Results) -> list:
                 f"without changing CR. RAG with the whole document achieved coverage similar to the full-note baseline, with no "
                 f"significant difference detected, while excerpt-only RAG and verification omitted more of the clinicians' content. The "
                 f"reductions held under a second judge, but whether verification adds to retrieval depended on the judge. ")
+        repl_g, norepl_g = [], []
+        for tag, nm in (("llama31", "Llama-3.1-8B"), ("mistral7b", "Mistral-7B")):
+            gp = _csv(f"mimic_pairwise_tests_{tag}.csv")
+            if gp is None or not len(gp):
+                continue
+            g = gp[(gp.metric == "UFR") & gp.comparison.isin([f"{c} vs E0" for c in ("E1", "E1b", "E3")])]
+            ok = bool(len(g)) and bool(((g.p_holm_primary.fillna(g.p) < 0.05) & (g.delta_mean < 0)).any())
+            (repl_g if ok else norepl_g).append(nm)
+        if repl_g and norepl_g:
+            txt += f"They replicated under {' and '.join(repl_g)} but not under {' and '.join(norepl_g)}. "
+        elif repl_g:
+            txt += f"They replicated under {' and '.join(repl_g)}. "
+        elif norepl_g:
+            txt += f"They did not replicate under {' and '.join(norepl_g)}. "
         aud = _csv("audit_summary.csv")
-        if aud is not None and "diff" in aud.columns and "E1 minus E0" in set(aud.condition):
-            r = aud.set_index("condition").loc["E1 minus E0"]
-            txt += (f"A blind manual audit estimated the difference between excerpt-only RAG and the baseline at {100 * r['diff']:+.1f} "
-                    f"percentage points of unsupported claims, against {100 * r.judge_diff:+.1f} by the judge. ")
+        if aud is not None and "diff" in aud.columns:
+            ad = aud[aud["diff"].notna()].set_index("condition")
+            names_a = {"E1 minus E0": "excerpt-only RAG", "E1b minus E0": "whole-document RAG", "E3 minus E0": "verification"}
+            conf = [k for k in names_a if k in ad.index and ad.loc[k, "diff_hi"] < 0]
+            if conf:
+                txt += (f"A two-pass blind manual audit confirmed the reduction for {' and '.join(names_a[k] for k in conf)} "
+                        f"(interval below zero) and showed that the judge understates absolute unsupported shares. ")
+            elif len(ad):
+                txt += ("A two-pass blind manual audit could not confirm the condition differences at its sample size and showed "
+                        "that the judge understates absolute unsupported shares. ")
         txt += (f"The clinicians' own instructions scored {f3(M.mean('REF', 'UFR'))} under the same judge because they state what the "
                 f"course does not, so the metric measures faithfulness to the source, not summary quality. ")
     txt += ("The thesis concludes that hallucination judges must be validated against expert labels and checked on the outputs they "

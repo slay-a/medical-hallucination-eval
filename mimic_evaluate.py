@@ -21,6 +21,7 @@ Usage: python mimic_evaluate.py [--judge NAME] [--mode top3|doc] [--tau 0.5]
 """
 import argparse
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -37,7 +38,10 @@ from judge_candidates import CANDIDATES, Judge  # noqa: E402
 from recompute_metrics import paired_stats  # noqa: E402
 
 RESULTS, PRIVATE = HERE / "results", HERE / "results_private"
-GEN = PRIVATE / "mimic_generations.jsonl"
+# MIMIC_TAG=<name> evaluates a second generator's outputs (mimic_generations_<name>.jsonl) into files suffixed _<name>,
+# leaving every untagged file of the main run untouched; unset, the paths are the main run's.
+TAG = ("_" + os.environ["MIMIC_TAG"]) if os.environ.get("MIMIC_TAG") else ""
+GEN = PRIVATE / f"mimic_generations{TAG}.jsonl"
 CITE_RE = re.compile(r"\[(\d+)\]")
 
 
@@ -94,19 +98,22 @@ def main():
     ctx_cache = {}
     # claim-level cache: the support of a claim depends only on the claim text and its hospital course
     fwd = {}
-    if args.reuse_forward and (PRIVATE / "mimic_claims.csv").exists():
-        prev = pd.read_csv(PRIVATE / "mimic_claims.csv")
-        fwd = {(r.sid, str(r.claim)): (float(r.p_support), float(r.p_contra)) for r in prev.itertuples()}
+    if args.reuse_forward:
+        for f in {PRIVATE / "mimic_claims.csv", PRIVATE / f"mimic_claims{TAG}.csv"}:
+            if f.exists():
+                prev = pd.read_csv(f)
+                fwd.update({(r.sid, str(r.claim)): (float(r.p_support), float(r.p_contra)) for r in prev.itertuples()})
         print(f"forward cache: {len(fwd)} scored claims", flush=True)
     rev = {}
-    if args.reuse_reverse and (PRIVATE / "mimic_raw_scores.jsonl").exists():
-        for l in open(PRIVATE / "mimic_raw_scores.jsonl"):
+    if args.reuse_reverse and (PRIVATE / f"mimic_raw_scores{TAG}.jsonl").exists():
+        for l in open(PRIVATE / f"mimic_raw_scores{TAG}.jsonl"):
             r = json.loads(l); rev[(r["sid"], r["condition"], r["variant"])] = np.array(r["reverse_support"], float)
         print(f"reverse cache: {len(rev)} summaries", flush=True)
     cite_cache = {}
-    if (PRIVATE / "mimic_citation_claims.csv").exists():
-        pc_prev = pd.read_csv(PRIVATE / "mimic_citation_claims.csv")
-        cite_cache = {(r.sid, str(r.claim), str(r.cited_key)): float(r.p_cite) for r in pc_prev.itertuples()}
+    for f in {PRIVATE / "mimic_citation_claims.csv", PRIVATE / f"mimic_citation_claims{TAG}.csv"}:
+        if f.exists():
+            pc_prev = pd.read_csv(f)
+            cite_cache.update({(r.sid, str(r.claim), str(r.cited_key)): float(r.p_cite) for r in pc_prev.itertuples()})
     n_fwd_new = n_rev_new = n_cite_new = 0
     contra = {}
     if args.contra_from and Path(args.contra_from).exists():
@@ -190,10 +197,10 @@ def main():
                               citation_accuracy=cite_ok / cite_tot if cite_tot else np.nan,
                               citation_coverage=(cite_tot / n if n else np.nan) if ex else np.nan,
                               citation_reliability=(cite_ok / n if n else np.nan) if ex else np.nan))
-    df = pd.DataFrame(summ_rows); pd.DataFrame(claim_rows).to_csv(PRIVATE / "mimic_claims.csv", index=False)
-    PRIVATE.mkdir(exist_ok=True); df.to_csv(PRIVATE / "mimic_per_summary.csv", index=False)
-    pd.DataFrame(cite_rows).to_csv(PRIVATE / "mimic_citation_claims.csv", index=False)
-    with open(PRIVATE / "mimic_raw_scores.jsonl", "w") as fh:   # raw reverse scores, so that thresholds can be changed offline
+    df = pd.DataFrame(summ_rows); pd.DataFrame(claim_rows).to_csv(PRIVATE / f"mimic_claims{TAG}.csv", index=False)
+    PRIVATE.mkdir(exist_ok=True); df.to_csv(PRIVATE / f"mimic_per_summary{TAG}.csv", index=False)
+    pd.DataFrame(cite_rows).to_csv(PRIVATE / f"mimic_citation_claims{TAG}.csv", index=False)
+    with open(PRIVATE / f"mimic_raw_scores{TAG}.jsonl", "w") as fh:   # raw reverse scores, so that thresholds can be changed offline
         for r in raw_rows:
             fh.write(json.dumps(r) + "\n")
     print(f"newly scored: {n_fwd_new} claims, {n_rev_new} summaries for coverage, {n_cite_new} citations", flush=True)
@@ -209,13 +216,13 @@ def main():
                                                    citation_reliability_mean=("citation_reliability", "mean"),
                                                    cited_claims=("cited_claims", "sum"), cite_correct=("cite_correct", "sum"), claims_total=("n_claims", "sum")).reset_index()
     agg["judge"], agg["mode"], agg["tau"] = jname, jmode, tau
-    agg.to_csv(RESULTS / "mimic_summary.csv", index=False)
+    agg.to_csv(RESULTS / f"mimic_summary{TAG}.csv", index=False)
     # expert-flag rate on the doctor-written references (for the same documents)
     exp = []
     for sid, d in docs.items():
         sents = [s for s in he.sentencize(d["reference"]) if not is_markdown_header(s)]
         exp.append(dict(sid=sid, n_ref_sents=len(sents), expert_spans=len(d["labels"])))
-    pd.DataFrame(exp).merge(df[df.condition == "REF"][["sid", "UFR", "CR"]], on="sid").to_csv(RESULTS / "mimic_reference.csv", index=False)
+    pd.DataFrame(exp).merge(df[df.condition == "REF"][["sid", "UFR", "CR"]], on="sid").to_csv(RESULTS / f"mimic_reference{TAG}.csv", index=False)
     # paired tests (base variants) vs E0, vs E1 and vs the clinician's instructions; Holm adjustment over the primary family
     # (each of E1, E1b, E2, E3 against E0 on UFR, CR and coverage: twelve tests)
     def holm(pvals):
@@ -236,10 +243,11 @@ def main():
                 if w[["REF", b]].notna().all(axis=1).sum() >= 5:
                     st = paired_stats(w["REF"], w[b]); rows.append(dict(metric=m, comparison=f"{b} vs REF", **st))
     tests = pd.DataFrame(rows)
-    fam = tests.metric.isin(["UFR", "CR", "coverage_ref"]) & tests.comparison.isin([f"{c} vs E0" for c in ("E1", "E1b", "E2", "E3")])
-    tests["p_holm_primary"] = np.nan
-    tests.loc[fam, "p_holm_primary"] = holm(tests.loc[fam, "p"].fillna(1.0).values)
-    tests.to_csv(RESULTS / "mimic_pairwise_tests.csv", index=False)
+    if len(tests):
+        fam = tests.metric.isin(["UFR", "CR", "coverage_ref"]) & tests.comparison.isin([f"{c} vs E0" for c in ("E1", "E1b", "E2", "E3")])
+        tests["p_holm_primary"] = np.nan
+        tests.loc[fam, "p_holm_primary"] = holm(tests.loc[fam, "p"].fillna(1.0).values)
+    tests.to_csv(RESULTS / f"mimic_pairwise_tests{TAG}.csv", index=False)
     # retrieval ablations: E1 variants vs E1 base (only the six pre-specified variants)
     from mimic_generate import VARIANTS
     ab = df[(df.condition == "E1") & df.variant.isin(list(VARIANTS))]; rows = []
@@ -248,7 +256,7 @@ def main():
         for v in [c for c in w.columns if c != "base"]:
             if w[["base", v]].notna().all(axis=1).sum() >= 5:
                 st = paired_stats(w["base"], w[v]); rows.append(dict(metric=m, variant=v, **st))
-    pd.DataFrame(rows).to_csv(RESULTS / "mimic_ablations.csv", index=False)
+    pd.DataFrame(rows).to_csv(RESULTS / f"mimic_ablations{TAG}.csv", index=False)
     pd.set_option("display.width", 250)
     print(agg[["condition", "variant", "n_docs", "UFR_mean", "CR_mean", "claims_mean", "supported_mean", "unsupported_mean", "words_mean",
                "coverage_ref_mean", "citation_coverage_mean", "citation_accuracy_mean", "citation_reliability_mean"]].round(3).to_string(index=False))

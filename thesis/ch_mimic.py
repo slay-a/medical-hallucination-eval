@@ -634,18 +634,46 @@ def blocks(R: Results) -> list:
             typed = ty[ty.type.notna() & ~ty.type.astype(str).str.strip().isin(["", "nan"])]
             tt = typed.groupby("type").n.sum().sort_values(ascending=False)
             if len(tt) and tt.sum() >= 0.6 * ty.n.sum():
-                p3 = ("Among the claims labeled partly or not supported, the most frequent problems were "
-                      + _join([f"{AUDIT_TYPE.get(k, str(k))} ({pct0(v / tt.sum())})" for k, v in tt.head(3).items()]) + ". ")
+                named = tt[[k for k in tt.index if k != "other"]]
+                oth = float(tt.get("other", 0)) / tt.sum()
+                p3 = ("Among the claims labeled partly or not supported, "
+                      + _join([f"{AUDIT_TYPE.get(k, str(k))} ({pct0(v / tt.sum())})" for k, v in named.items()])
+                      + (f" account for {pct0(named.sum() / tt.sum())}; the remaining {pct0(oth)} were recorded as other, each with "
+                         f"a written reason, so the four named types cover {'under' if oth > 0.5 else 'about'} half of the problems "
+                         f"the annotator found. " if oth >= 0.3 else
+                         (f"; {pct0(oth)} fell outside these four types. " if oth > 0 else ". ")))
         if "pooled" in A.index and not _nan(A.loc["pooled", "partly_share_of_unsupported"]):
             p3 += (f"Of the manually unsupported claims, {pct0(A.loc['pooled', 'partly_share_of_unsupported'])} were partly supported, "
                    f"that is, sentences in which some facts are supported and others are not, rather than wholly unsupported statements.")
-        b += [P(txt)] + ([P(p2)] if p2 else []) + ([P(p3)] if p3 else []) + [
+        p4 = ""
+        ag = _csv("audit_agreement.csv")
+        if ag is not None and len(ag) and "claim" in set(ag.kind):
+            ac = ag[ag.kind == "claim"].iloc[0]
+            a1 = _csv("audit_summary_v1.csv")
+            v1e0 = (f" (for example {pct(a1.set_index('condition').loc['E0', 'manual_unsupported'])} against "
+                    f"{pct(A.loc['E0', 'manual_unsupported'])} for E0)"
+                    if a1 is not None and "condition" in a1.columns and "E0" in set(a1.condition)
+                    and "E0" in A.index else "")
+            cg = ag[ag.kind == "citation"]
+            cit_ag = (f"; on the {int(cg.iloc[0].n)} citation checks, {pct0(cg.iloc[0].agreement)} (kappa {f2(cg.iloc[0].kappa)})"
+                      if len(cg) else "")
+            p4 = (f"The audit was performed in two blind passes (Section 4.10.5): after the first pass the written rubric was "
+                  f"clarified, because paraphrased claims had been labeled partly supported although the protocol counts paraphrase "
+                  f"as supported, and the author relabeled the extended sample without the first pass's answers visible. The tables "
+                  f"report the second pass; under the first pass's stricter reading the manual unsupported shares were higher{v1e0}. "
+                  f"On the {int(ac.n)} claims labeled in both passes, three-way agreement was {pct0(ac.agreement)} "
+                  f"(kappa {f2(ac.kappa)}; collapsed to supported against not supported, {pct0(ac.agreement_binary)}, "
+                  f"kappa {f2(ac.kappa_binary)}){cit_ag}. The most common change between the passes was from partly supported to "
+                  f"supported, in the direction of the clarified paraphrase rule, so the two passes differ mainly in the rubric, "
+                  f"not in random relabeling; the disagreement rate itself bounds the reliability of one annotator's labels, and "
+                  f"the manual intervals above should be read together with it.")
+        b += [P(txt)] + ([P(p2)] if p2 else []) + ([P(p3)] if p3 else []) + ([P(p4)] if p4 else []) + [
               ("table", dict(label="maudit", caption="Manual audit of the selected judge on the main-study claims: number of claims labeled, manually confirmed share of unsupported claims weighted to the condition's claims (95 percent course-bootstrap interval), share of the condition's claims the judge flags, and the judge's precision, false omission rate, sensitivity, specificity and kappa against the manual labels.",
                              columns=["Condition", "Labeled", "Manual unsupported (95% CI)", "Judge flags", "Precision", "False omission", "Sensitivity", "Specificity", "Kappa"],
                              widths=[1.45, 0.55, 1.25, 0.55, 0.6, 0.6, 0.65, 0.65, 0.5], font=8, rows=rows))]
 
-    # ── 7.10 Robustness to the judge
-    b += [("h2", "7.10 Robustness to the Judge")]
+    # ── 7.10 Robustness to the judge and the generator
+    b += [("h2", "7.10 Robustness to the Judge and the Generator")]
     alt_s, alt_t = _csv("mimic_tau05/mimic_summary.csv"), _csv("mimic_tau05/mimic_pairwise_tests.csv")
     if alt_s is not None and alt_t is not None and abs(D.tau - 0.5) > 1e-6:
         alt = alt_s[alt_s.variant == "base"].set_index("condition")
@@ -770,6 +798,57 @@ def blocks(R: Results) -> list:
                                     pct0(r.first_flags_confirmed), f3(r.UFR_first), f3(r.UFR_second), f3(r.UFR_both), f3(r.UFR_either)]
                                    for c, r in G.iterrows() if c in list(ORDER) + ["all"]]))]
 
+    gens = []
+    for tag, gname in (("llama31", "Llama-3.1-8B-Instruct"), ("mistral7b", "Mistral-7B-Instruct-v0.3")):
+        gs, gpt = _csv(f"mimic_summary_{tag}.csv"), _csv(f"mimic_pairwise_tests_{tag}.csv")
+        if gs is not None and gpt is not None and len(gs):
+            gens.append((gname, gs[gs.variant == "base"].set_index("condition"), gpt))
+    if gens:
+        def g_ufr_t(gpt, comp):
+            r = gpt[(gpt.metric == "UFR") & (gpt.comparison == comp)]
+            return r.iloc[0] if len(r) else None
+        gconds = [c for c in ("E0", "E1", "E1b", "E3", "REF") if all(c in gb.index for _, gb, _ in gens)]
+        grows = [[NAME.get(c, c), f3(D.m(c, "UFR_mean"))] + [f3(gb.loc[c, "UFR_mean"]) for _, gb, _ in gens] for c in gconds]
+        sents, repl_names, norepl_names = [], [], []
+        for gname, gb, gpt in gens:
+            res = []
+            for c in GROUNDED:
+                t = g_ufr_t(gpt, f"{c} vs E0")
+                if t is None:
+                    continue
+                ph = float(t.p_holm_primary) if "p_holm_primary" in t.index and not _nan(t.p_holm_primary) else float(t.p)
+                res.append((c, float(t.delta_mean), ph))
+            sig = [r for r in res if r[2] < 0.05 and r[1] < 0]
+            (repl_names if sig else norepl_names).append(gname)
+            if res and len(sig) == len(res):
+                sents.append(f"Under {gname} every grounded condition has a lower UFR than E0, significant after the Holm adjustment ("
+                             + "; ".join(f"{c} {pts(d)}, {padj(ph)}" for c, d, ph in sig) + ")")
+            elif sig:
+                sents.append(f"Under {gname} only {_join([c for c, _, _ in sig])} ha{'ve' if len(sig) > 1 else 's'} a significantly "
+                             f"lower UFR than E0 (" + "; ".join(f"{c} {pts(d)}, {padj(ph)}" for c, d, ph in sig) + ")")
+            else:
+                worse = [c for c, d, _ in res if d > 0]
+                sents.append(f"Under {gname} no grounded condition differs significantly from E0 after the adjustment ("
+                             + "; ".join(f"{c} {pts(d)}, {padj(ph)}" for c, d, ph in res) + ")"
+                             + (f"; {_join(worse)}'s point estimate is higher than E0's" if worse else ""))
+        if not norepl_names:
+            concl = f"The reductions under grounding therefore replicate on {_join(repl_names)}."
+        elif repl_names:
+            concl = (f"The effect of grounding is therefore generator-dependent: it replicates under {_join(repl_names)} but not "
+                     f"under {_join(norepl_names)}, and the reductions of Section 7.3 are statements about the generator tested, "
+                     f"not about grounding in general.")
+        else:
+            concl = f"The reductions of Section 7.3 did not replicate under {_join(norepl_names)}."
+        b += [P(f"*Other generators.* The rates above are judge-estimated on the output of one generator. To test whether the "
+                f"condition effects depend on it, the four text conditions were regenerated for all {D.n} courses with two further "
+                f"open-weight models of the same size class, {_join([g for g, _, _ in gens])}, under the same prompts, decoding "
+                f"settings and retrieval, and scored by the same judge at the same threshold ([[tab:mgen]]). The clinician-written "
+                f"reference scores identically in every run, as it must, because REF does not depend on the generator. "
+                + ". ".join(sents) + ". " + concl),
+              ("table", dict(label="mgen", caption="Judge-estimated UFR under three generators: per-document means on the same 110 courses, scored by the selected judge at the selected threshold. The reference row is identical by construction.",
+                             columns=["Condition", "Qwen2.5-7B (main)"] + [g for g, _, _ in gens],
+                             widths=[1.9] + [1.35] * (1 + len(gens)), font=9, rows=grows))]
+
     # ── 7.11 Question answering
     qa, qu = _csv("mimic_qa_summary.csv"), _csv("mimic_qa_utility.csv")
     if qa is not None and len(qa):
@@ -842,6 +921,22 @@ def blocks(R: Results) -> list:
     if agr is not None and len(agr):
         lines.append("**Second judge:** the reductions relative to E0 hold under a second judge and under both combined flagging "
                      "rules; whether verification adds to retrieval depends on the judge.")
+    if gens:
+        if not norepl_names:
+            lines.append(f"**Other generators:** the reductions relative to E0 replicate under {_join(repl_names)} (Section 7.10).")
+        elif repl_names:
+            lines.append(f"**Other generators:** the reductions relative to E0 replicate under {_join(repl_names)} but not under "
+                         f"{_join(norepl_names)}; the effect is generator-dependent (Section 7.10).")
+        else:
+            lines.append(f"**Other generators:** the reductions relative to E0 did not replicate under {_join(norepl_names)} (Section 7.10).")
+    if aud is not None and len(aud) and "manual_unsupported" in aud.columns:
+        audD = aud[aud["diff"].notna()].set_index("condition") if "diff" in aud.columns else None
+        conf_s = ([k.split(" minus ")[0] for k in ("E1 minus E0", "E1b minus E0", "E3 minus E0")
+                   if audD is not None and k in audD.index and audD.loc[k, "diff_hi"] < 0] if audD is not None else [])
+        lines.append("**Manual audit:** the judge understates the absolute share of unsupported claims; "
+                     + (f"manual reading confirms the reduction relative to E0 for {_join(conf_s)}, and the audit's sample "
+                        f"size leaves the other condition differences unresolved (Section 7.9)." if conf_s else
+                        "the audit's sample size leaves the condition differences unresolved (Section 7.9)."))
     if qa is not None and len(qa):
         lines.append("**Question answering (exploratory):** retrieval raised abstention and lowered the UFR of the answers given; "
                      "warning-sign questions are rarely answerable from the course.")

@@ -24,6 +24,7 @@ Usage: python mimic_generate.py [--conditions E0,E1,E1b,E2,E3] [--ablations] [--
 """
 import argparse
 import json
+import os
 import re
 import sys
 import time
@@ -43,7 +44,9 @@ from e3_cove_eval import VERIFY_SYSTEM, VERIFY_USER, REVISE_SYSTEM, format_block
 from ablations import extractive_topk  # noqa: E402
 
 PRIVATE = HERE / "results_private"
-OUT = PRIVATE / "mimic_generations.jsonl"
+# MIMIC_TAG=<name> writes to mimic_generations_<name>.jsonl (a second generator's run); unset, the main run's file.
+TAG = ("_" + os.environ["MIMIC_TAG"]) if os.environ.get("MIMIC_TAG") else ""
+OUT = PRIVATE / f"mimic_generations{TAG}.jsonl"
 SECTION_QUERY = "reason for hospital stay, diagnosis, key findings, treatments and procedures, medications, follow-up instructions"
 
 SYSTEM_FULL = ("You are a medical scribe assistant. Produce patient-facing discharge summaries that are accurate and grounded "
@@ -154,13 +157,16 @@ class LocalLLM:
         # (e.g. after a Metal out-of-memory error) must surface as an exception, not as an empty summary
         self.client = OpenAI(base_url=base_url, api_key="local", timeout=300.0, max_retries=0); self.model = model
         self.temperature, self.max_tokens = temperature, max_tokens
+        self.merge_system = False  # set when the model's chat template rejects a system role (e.g. Mistral)
 
     def chat(self, system, user, temperature=None, seed=None, max_tokens=None):
         last = None
         for attempt in range(3):
             try:
                 kw = dict(seed=seed) if seed is not None else {}
-                r = self.client.chat.completions.create(model=self.model, messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
+                msgs = ([{"role": "user", "content": system + "\n\n" + user}] if self.merge_system
+                        else [{"role": "system", "content": system}, {"role": "user", "content": user}])
+                r = self.client.chat.completions.create(model=self.model, messages=msgs,
                                                         temperature=self.temperature if temperature is None else temperature,
                                                         max_tokens=max_tokens or self.max_tokens, **kw)
                 text = (r.choices[0].message.content or "").strip()
@@ -169,6 +175,8 @@ class LocalLLM:
                 last = RuntimeError("empty completion")
             except Exception as exc:  # noqa: BLE001
                 last = exc
+                if not self.merge_system and "must alternate" in str(exc):
+                    self.merge_system = True  # Mistral-style template: fold the system prompt into the user turn
             print(f"  local LLM call failed ({attempt+1}/3): {last}", flush=True); time.sleep(2 ** attempt)
         raise RuntimeError(f"local LLM unavailable after 3 attempts: {last}")
 

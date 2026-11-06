@@ -145,6 +145,7 @@ def blocks(R: Results) -> list:
             f"chosen on the sentences on which these figures are measured, they are optimistic; Section 6.5 estimates by how much.")]
     b += independence_blocks()
     b += atomic_blocks()
+    b += verifact_blocks()
     return b
 
 
@@ -309,4 +310,49 @@ def atomic_blocks():
         b += [("table", dict(label="atomicex", caption=f"Atomic decomposition of three pilot summary sentences (public MTSamples data). The number after each sentence and each fact is the selected judge's support probability against the whole note; values below {ex.tau.iloc[0]:.2f} are flagged.",
                              columns=["Sentence (support)", "Atomic fact", "Support"], widths=[2.9, 2.9, 0.7], font=8.5,
                              align=["left", "left", "center"], rows=rows))]
+    return b
+
+
+def verifact_blocks():
+    """6.7 External check on clinician-labeled propositions — rendered only when results/verifact_judge_eval.csv exists."""
+    ev = _res("verifact_judge_eval.csv")
+    if ev is None or not len(ev) or "subset" not in ev.columns or "all" not in set(ev.subset):
+        return []
+    E = ev.set_index("subset")
+    al = E.loc["all"]
+    b = [("h2", "6.7 External Check on Clinician-Labeled Propositions (VeriFact-BHC)")]
+    b += [P(f"The selection above used expert annotations connected to the main-study courses, and the audit of Section 7.9 "
+            f"measures the judge on this thesis's own outputs. As an external check, the selected judge was run, unchanged, on "
+            f"MIMIC-III-Ext-VeriFact-BHC [[cite:chung2026verifact]]: {int(al.n):,} valid propositions decomposed from "
+            f"human-written and LLM-written brief hospital course summaries of 100 MIMIC-III patients, each adjudicated by "
+            f"clinicians as supported, not supported or not addressed against the patient's complete EHR notes. The judge read "
+            f"each patient's notes in chart-time order with the main study's windowing, a proposition counts as flagged when its "
+            f"best window's support falls below the main study's threshold ({al.tau:.2f}), and clinician labels other than "
+            f"supported count as unsupported, as in the dataset's own analysis. The setting is deliberately harder than the main "
+            f"study's: the reference is a patient's whole record rather than a single course, and the propositions come from "
+            f"another institution's patients, another decade's notes and other models' summaries.")]
+    perf = (f"On all propositions the judge reaches an AUROC of {f2(al.auroc)} and, at the main study's threshold, sensitivity "
+            f"{f2(al.sensitivity)}, specificity {f2(al.specificity)} and kappa {f2(al.kappa)} against the adjudicated clinician "
+            f"labels. ")
+    auth = {i.split("=", 1)[1]: E.loc[i] for i in E.index if i.startswith("author=")}
+    typ = {i.split("=", 1)[1]: E.loc[i] for i in E.index if i.startswith("type=")}
+    labs = {i.split("=", 1)[1]: E.loc[i] for i in E.index if i.startswith("label=")}
+    if auth:
+        perf += "By the summary's author the kappa is " + "; ".join(f"{k} {f2(r.kappa)} (AUROC {f2(r.auroc)})" for k, r in auth.items()) + ". "
+    if typ:
+        perf += "By proposition type it is " + "; ".join(f"{k} {f2(r.kappa)}" for k, r in typ.items()) + ". "
+    if labs:
+        perf += ("The judge flags " + "; ".join(f"{pct0(r.flag_rate)} of the propositions the clinicians adjudicated {k.lower()}"
+                                                for k, r in labs.items()) + ". ")
+    ai = _res("verifact_ai_raters.csv")
+    if ai is not None and len(ai):
+        bt = ai.iloc[0]
+        perf += (f"For context, the dataset ships the verdicts of {len(ai)} configurations of its own retrieval-plus-LLM rater; "
+                 f"the best reaches kappa {f2(bt.kappa)} (sensitivity {f2(bt.sensitivity)}, specificity {f2(bt.specificity)}) on "
+                 f"the same propositions. The comparison is indicative rather than exact, because those raters judge each "
+                 f"proposition against retrieved parts of the record while the judge here reads the whole record in windows.")
+    b += [P(perf)]
+    b += [P("The check asks whether the judge, chosen on one corpus, still separates supported from unsupported statements on "
+            "another; it does not re-validate the threshold, which was chosen for the main study's courses, and a kappa on "
+            "whole-record evidence is not comparable in size to the course-level agreement of Section 6.2.")]
     return b

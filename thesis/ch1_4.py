@@ -192,7 +192,9 @@ def blocks(R: Results) -> list:
             "numerically. The proposal's question-answering task is implemented as a pilot with three fixed questions per "
             "hospital course rather than as a full benchmark. Each condition was generated once per document; for a random "
             "subset of 40 main-study courses, two further generations of the four LLM conditions measure run-to-run "
-            "variation."),
+            "variation, and the four conditions were regenerated on all 110 courses with two further open-weight "
+            "generators, Llama-3.1-8B-Instruct and Mistral-7B-Instruct-v0.3, as a generator-robustness check "
+            "(Section 7.10)."),
           P("Within this scope the thesis makes no claim about the clinical acceptability, safety or usefulness of any "
             "summary. The metrics measure whether statements are supported by the note as judged by an automatic model; a lower "
             "judge-estimated unsupported fact rate does not by itself make a summary better or more useful, because a summary "
@@ -936,7 +938,11 @@ def blocks(R: Results) -> list:
             "(vi) *Retrieval failures of the verifier:* every E1 draft claim that the E3 verifier judged is also scored by the "
             "selected judge against the whole course and against the verifier's own three retrieved sentences; a claim that the "
             "verifier rejected and that the judge supports from the whole course but not from those sentences is counted as a "
-            "candidate retrieval failure.")]
+            "candidate retrieval failure. (vii) *Other generators:* the four text conditions are regenerated on all 110 courses "
+            "with Llama-3.1-8B-Instruct and Mistral-7B-Instruct-v0.3, both four-bit and served by the same local server under "
+            "the same prompts, decoding settings and retrieval (Mistral's chat template takes no separate system role, so the "
+            "system prompt is folded into the user message), and every summary is evaluated by the same judge at the same "
+            "threshold, with the same tests and Holm adjustment.")]
     b += [H3("4.10.5 Manual Audit")]
     b += [P("To check whether the selected judge remains reliable on the summaries this generator actually wrote, a blind manual "
             "audit was designed. Sixty of the 110 courses were drawn at random (seed 7); within them, for each of E0, E1, E1b "
@@ -957,7 +963,15 @@ def blocks(R: Results) -> list:
             "their headers removed as the corrected pipeline does. Intervals come from 2,000 bootstrap resamples of courses, and "
             "for each pair of conditions the difference in the manually confirmed share is compared with the difference in the "
             "judge's share. The audit checks textual support by the course, not clinical correctness, and it was performed by "
-            "one annotator, the author, who is not a clinician.")]
+            "one annotator, the author, who is not a clinician."),
+          P("The audit was performed in two blind passes. A review of the first pass found that paraphrased claims had been "
+            "labeled partly supported, although the protocol counts paraphrase as supported. The written rubric was clarified "
+            "(Appendix F); the sample was extended by up to 15 further flagged and 15 further accepted claims per condition "
+            "from the same 60 courses under the same stratified design, drawn against the corrected pipeline's judge labels "
+            "(seed 8; 105 claims, bringing the sample to 340 claims and 60 citation checks); and the author relabeled the full "
+            "sample blind, with the first pass's answers hidden and the items in the same randomized presentation. Chapter 7 "
+            "reports the second pass, the agreement between the passes, and, under the first pass's stricter reading, how the "
+            "estimates change; both label files are preserved, and the error types were recorded in the second pass.")]
     b += [H2("4.11 Question-Answering Pilot")]
     b += [P("The proposal's second task is piloted with three fixed questions per hospital course, about medications after "
             "discharge, follow-up appointments or tests, and warning signs that should prompt care. The local model answers each "

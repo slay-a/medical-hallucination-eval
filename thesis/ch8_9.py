@@ -354,6 +354,35 @@ def blocks(R: Results) -> list:
                     f"retrieval, is the appropriate response to such questions, but the pilot has no gold answers and does not show "
                     f"whether the answers given were correct.")]
 
+    # generator-robustness outcome, used by 8.5-8.7 and 9.2 (files written by the Section 7.10 reruns)
+    repl_g, norepl_g = [], []
+    for tag, gname in (("llama31", "Llama-3.1-8B"), ("mistral7b", "Mistral-7B")):
+        gpt = _csv(f"mimic_pairwise_tests_{tag}.csv")
+        if gpt is None or not len(gpt):
+            continue
+        sig = False
+        for c in ("E1", "E1b", "E3"):
+            r = gpt[(gpt.metric == "UFR") & (gpt.comparison == f"{c} vs E0")]
+            if len(r):
+                ph = r.p_holm_primary.iloc[0] if "p_holm_primary" in r.columns and not _nan(r.p_holm_primary.iloc[0]) else r.p.iloc[0]
+                if float(ph) < 0.05 and float(r.delta_mean.iloc[0]) < 0:
+                    sig = True
+        (repl_g if sig else norepl_g).append(gname)
+    if repl_g and norepl_g:
+        gen_note = (f" Re-running the conditions with two further generators reproduced the reductions under {_join(repl_g)} but "
+                    f"not under {_join(norepl_g)} (Section 7.10), so the recommendation is also generator-dependent.")
+        gen_lim = (f" The main-study conditions were regenerated with two further generators; the grounding reductions replicated "
+                   f"under {_join(repl_g)} but not under {_join(norepl_g)}, so the condition effects are statements about the "
+                   f"generators tested (Section 7.10).")
+    elif repl_g:
+        gen_note = f" Re-running the conditions with {_join(repl_g)} reproduced the reductions (Section 7.10)."
+        gen_lim = f" The main-study conditions were regenerated with {_join(repl_g)}, where the grounding reductions replicated (Section 7.10)."
+    elif norepl_g:
+        gen_note = f" Re-running the conditions with {_join(norepl_g)} did not reproduce the reductions (Section 7.10)."
+        gen_lim = f" The main-study conditions were regenerated with {_join(norepl_g)}, where the grounding reductions did not replicate (Section 7.10)."
+    else:
+        gen_note = gen_lim = ""
+
     # ── 8.5 comparison of the approaches
     b += [H2("8.5 Comparison of the Approaches")]
     if main and tu:
@@ -366,8 +395,9 @@ def blocks(R: Results) -> list:
                     f"percent under the judge. Excerpt-only RAG and verification paid for the reduction with coverage. RAG with the whole "
                     f"course in view reduced the judge-estimated rate as much as the other grounded conditions while achieving coverage "
                     f"similar to E0, so it is the design these results favor. The recommendation is conditional: it rests on judge-estimated "
-                    f"rates for one generator, one corpus and one retrieval design, on a coverage measure scored by the same judge, and on "
-                    f"citations that cover only {pct0(cc['E1b'][1] / cc['E1b'][0]) if not _nan(cc['E1b'][0]) else '—'} of E1b's claims. "
+                    f"rates for one corpus and one retrieval design, on a coverage measure scored by the same judge, and on "
+                    f"citations that cover only {pct0(cc['E1b'][1] / cc['E1b'][0]) if not _nan(cc['E1b'][0]) else '—'} of E1b's claims."
+                    f"{gen_note} "
                     f"The extractive summarizer cannot fabricate but produces text that no patient should be handed unedited. That the "
                     f"ordering of E0 and the grounded conditions is the same under both judges, at both thresholds and in repeated "
                     f"generations is some assurance that the judges respond to real differences when those differences are large; it does "
@@ -421,8 +451,10 @@ def blocks(R: Results) -> list:
             ["Clinical adaptation", "MedNLI accuracy up nine points; agreement not improved",
              "Granularity rather than vocabulary limits agreement (plausible" + (f"; atomic scoring kappa {f2(ka)} against {f2(ks)}" if not _nan(ka) else "") + ")",
              "What would improve agreement on patient-facing paraphrase"],
-            ["Grounding", f"Judge-estimated UFR lower by {lo_u:.3f} to {hi_u:.3f} for E1, E1b and E3 (Holm-adjusted); robust to threshold, second judge" + (" and repeated generation" if rep is not None and len(rep) and "kind" in rep.columns else ""),
-             "Focus on retrieved passages; fewer claims; citation instruction (separated in part by Section 7.5)", "True size of the reduction (Section 8.3)"],
+            ["Grounding", f"Judge-estimated UFR lower by {lo_u:.3f} to {hi_u:.3f} for E1, E1b and E3 (Holm-adjusted); robust to threshold, second judge" + (" and repeated generation" if rep is not None and len(rep) and "kind" in rep.columns else "")
+             + (f"; replicates under {_join(repl_g)}" + (f" but not {_join(norepl_g)}" if norepl_g else "") if repl_g else (f"; does not replicate under {_join(norepl_g)}" if norepl_g else "")),
+             "Focus on retrieved passages; fewer claims; citation instruction (separated in part by Section 7.5)",
+             "True size of the reduction (Section 8.3)" + (f"; why the effect is absent for {_join(norepl_g)}" if norepl_g else "")],
             ["Omission", f"E1 and E3 lose coverage; E1b similar to E0 ({pts(t_b.delta_mean) if t_b is not None else '—'})",
              "Withholding the course causes the loss (associated, via E1b against E1)", "Clinical importance of the omitted sentences"],
             ["Verification", "No difference from E1 under the selected judge; lower UFR under the second judge",
@@ -461,9 +493,10 @@ def blocks(R: Results) -> list:
         "notes, with corrupted line breaks, and the corpus is public and may be in the generator's training data. The main-study courses "
         "come from one institution and one section of the discharge summary, and the clinician's instructions used as the coverage "
         "reference contain content that the course does not, so complete coverage of them is neither attainable nor desirable.",
-        "**Two generators of different capability.** The pilot used GPT-4o-mini through an API and the main study a four-bit, "
+        "**Generators.** The pilot used GPT-4o-mini through an API and the main study a four-bit, "
         "seven-billion-parameter open-weight model, the largest that the data use agreement and the hardware allowed. Results are "
-        "compared across the studies qualitatively, and each study used one prompt per condition, one retriever and one verifier.",
+        "compared across the studies qualitatively, and each study used one prompt per condition, one retriever and one verifier."
+        + gen_lim,
         "**Heuristic components.** The header filter, the abstention rule and the citation parser are rule-based. An earlier version of "
         "the main-study parser mishandled citation markers and merged headers (Section 3.5); the corrected parser is used throughout, "
         "but rule-based components remain a source of error.",
@@ -540,11 +573,24 @@ def blocks(R: Results) -> list:
                 f"E1's citations were supported by the cited excerpts." if not _nan(D.m('E1', 'claims_total')) else ""),
                "**Robustness.** The reductions relative to E0 hold at a second threshold and under a second judge"
                + (" and in repeated generations" if rep is not None and len(rep) and "kind" in rep.columns else "")
-               + "; verification is better than retrieval alone only under the second judge."]
-        if A is not None and AD is not None and "E1 minus E0" in AD.index:
-            r = AD.loc["E1 minus E0"]
-            kf.append(f"**Manual audit.** The manually confirmed difference between E1 and E0 was {pts(r['diff'])} (95 percent interval "
-                      f"{ci_pts(r.diff_lo, r.diff_hi)}), against {pts(r.judge_diff)} by the judge.")
+               + "; verification is better than retrieval alone only under the second judge."
+               + (f" Under other generators the reductions replicate for {_join(repl_g)}" + (f" but not for {_join(norepl_g)}" if norepl_g else "") + " (Section 7.10)."
+                  if repl_g else (f" Under {_join(norepl_g)} the reductions do not replicate (Section 7.10)." if norepl_g else ""))]
+        if A is not None and AD is not None and len(AD):
+            keys = [k for k in ("E1 minus E0", "E1b minus E0", "E3 minus E0") if k in AD.index]
+            conf = [k for k in keys if AD.loc[k, "diff_hi"] < 0]
+            ag_ = _csv("audit_agreement.csv")
+            agk = (f" after two blind passes that agree with kappa {f2(ag_[ag_.kind == 'claim'].iloc[0].kappa)} on claims"
+                   if ag_ is not None and len(ag_) and "claim" in set(ag_.kind) else "")
+            if conf:
+                parts = "; ".join(f"{k.split(' minus ')[0]} {pts(AD.loc[k, 'diff'])} (95 percent interval "
+                                  f"{ci_pts(AD.loc[k, 'diff_lo'], AD.loc[k, 'diff_hi'])})" for k in conf)
+                kf.append(f"**Manual audit.** The manually confirmed reduction relative to E0 excludes zero for {parts}{agk}; "
+                          f"the remaining condition differences are unresolved at the audit's sample size, and the judge "
+                          f"understates the absolute unsupported shares.")
+            else:
+                kf.append(f"**Manual audit.** None of the manually confirmed condition differences excludes zero at the audit's "
+                          f"sample size{agk}; the judge understates the absolute unsupported shares.")
         if M.qa_tot is not None and {"QA-E0", "QA-E1"} <= set(M.qa_tot.index):
             kf.append(f"**Question answering (exploratory).** Retrieval raised abstention from {pct0(M.qa_tot.loc['QA-E0','abstention_rate'])} to "
                       f"{pct0(M.qa_tot.loc['QA-E1','abstention_rate'])} and lowered the judge-estimated UFR of the answers given; warning-sign "
@@ -554,9 +600,10 @@ def blocks(R: Results) -> list:
     b += [("numbers", [
         "**Clinician annotation of the generator's own output.** The audit of this thesis was performed by one non-clinician annotator; "
         "two clinicians labeling the same sample would give agreement between annotators and clinically validated error rates for the "
-        "selected judge on these outputs.",
+        "selected judge on these outputs."] + ([
         "**External validation of the judge.** Clinician-labeled statements about other patients, such as the VeriFact-BHC annotations "
-        "of MIMIC-III hospital courses [[cite:chung2026verifact]], would test the selected judge outside the courses it was chosen on.",
+        "of MIMIC-III hospital courses [[cite:chung2026verifact]], would test the selected judge outside the courses it was chosen on."]
+        if _csv("verifact_judge_eval.csv") is None else []) + [
         "**Better judges for patient-facing paraphrase.** LLM-based judges calibrated against expert labels, alignment models trained "
         "on clinical consistency data, and decomposition designs that keep the context of each fact are natural candidates for the same "
         "selection protocol.",

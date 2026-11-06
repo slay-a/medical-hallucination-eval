@@ -23,7 +23,9 @@ def blocks(R: Results) -> list:
     b += [("h1", "Appendix A: Prompts"),
           ("pni", "The prompts below are reproduced verbatim from the source code. Placeholders in braces are filled at run time. "
                   "Pilot-study calls (A.1 to A.4) use GPT-4o-mini with a maximum of 450 output tokens; temperature is 0.3 for generation and 0 for the E3 verifier. "
-                  "Main-study calls (A.5 and A.6) use Qwen2.5-7B-Instruct served locally with the same limits; the E3 verifier prompts of A.4 are reused unchanged."),
+                  "Main-study calls (A.5 and A.6) use Qwen2.5-7B-Instruct served locally with the same limits; the E3 verifier prompts of A.4 are reused unchanged. "
+                  "The generator-robustness runs of Section 7.10 reuse the A.5 prompts verbatim with Llama-3.1-8B-Instruct and Mistral-7B-Instruct-v0.3; "
+                  "Mistral's chat template accepts no separate system role, so for it the system prompt is prepended to the user message."),
           ("h2", "A.1 E0: Full-Note Summarization Without Retrieval"), ("pni", "System prompt:"), ("code", he.BASELINE_SYSTEM), ("pni", "User prompt:"), ("code", he.BASELINE_USER),
           ("h2", "A.2 E1: Retrieval-Augmented Generation (Excerpts Only)"), ("pni", "System prompt:"), ("code", he.RAG_SYSTEM), ("pni", "User prompt:"), ("code", he.RAG_USER),
           ("h2", "A.3 E1b: Retrieval-Augmented Generation with the Full Note"), ("pni", "System prompt:"), ("code", e1b.E1B_SYSTEM), ("pni", "User prompt:"), ("code", e1b.E1B_USER),
@@ -102,7 +104,8 @@ def blocks(R: Results) -> list:
                                ["data_overlap.py", "Maps every ann-pt-summ hospital course to its MIMIC-IV-Note discharge note and reports document, admission and patient overlap"],
                                ["judge_selection_bias.py", "Nested cross-validation of the judge selection by course, patient-disjoint transfer, course-clustered intervals"],
                                ["mimic_revision_analysis.py", "Length-matched and citation-free comparisons, run-to-run variation, abstention, coverage equivalence, question-answering utility, overlapping-window check"],
-                               ["audit_sample.py, audit_tool.py, audit_summary.py", "Manual audit: course-clustered stratified sample, local blind labeling tool, re-weighted agreement statistics"],
+                               ["audit_sample.py, audit_tool.py, audit_summary.py, audit_agreement.py", "Manual audit: course-clustered stratified sample and its extension, local blind labeling tool, re-weighted agreement statistics, agreement between the two labeling passes"],
+                               ["verifact_eval.py", "External check of the selected judge on the clinician-adjudicated VeriFact-BHC propositions (PhysioNet, credentialed): scoring, metrics and the published raters' baseline"],
                                ["check_no_protected_text.py", "Scans every tracked repository file for word sequences from the credentialed documents and generations"],
                                ["analyze.py", "All figures and the qualitative example tables"],
                                ["thesis/build_thesis.py", "Generates this document from the result files (content modules ch1_4, ch5_pilot, ch_judge, ch_mimic, ch8_9, appendices)"],
@@ -126,7 +129,9 @@ def blocks(R: Results) -> list:
                   "bespokelabs/Bespoke-MiniCheck-7B (1ed7786, converted to 8-bit MLX), mlx-community/Qwen2.5-7B-Instruct-4bit "
                   "(c26a38f), and the OpenAI model gpt-4o-mini through the API. Seeds: 42 for the MTSamples sample, the MedNLI "
                   "fine-tuning, the repeated-generation subset and the selection-bias analyses; 1000r + k for the k-th course of "
-                  "repeated generation r; 7 for the manual-audit sample; 0 for the pilot bootstrap. requirements.txt and "
+                  "repeated generation r; 7 for the manual-audit sample and 8 for its wave-2 extension; 0 for the pilot bootstrap. "
+                  "The generator-robustness runs use mlx-community/Meta-Llama-3.1-8B-Instruct-4bit and "
+                  "mlx-community/Mistral-7B-Instruct-v0.3-4bit under the same decoding settings. requirements.txt and "
                   "requirements-llm.txt pin the versions of Table 4.3, and the lock files list both environments completely."),
           ("pni", "Reproduction from a clean machine:"),
           ("code", "git clone https://github.com/slay-a/medical-hallucination-eval.git\ncd medical-hallucination-eval\nbash setup.sh\n# place mtsamples.csv one directory above the repository\nexport OPENAI_API_KEY='sk-...'   # only for generation\nbash run.sh            # full chain\nbash run.sh --offline  # recompute every pilot result from the stored results\nbash run.sh --main-study  # judge study, MedNLI fine-tuning, MIMIC-IV main study, QA pilot (credentialed data, local models)\npython thesis/build_thesis.py")]
@@ -158,5 +163,17 @@ def blocks(R: Results) -> list:
                   "ceftriaxone and azithromycin, switched to oral amoxicillin, discharged home on day four. \"You were treated for a lung "
                   "infection with antibiotics\" is S. \"You got antibiotics through a vein, and you will take amoxicillin for five more "
                   "days\" is P, not stated. \"You will take 500 mg of amoxicillin twice a day\" is U, invented dose. \"Please see your "
-                  "primary care doctor in one week\" is U, generic advice or follow-up.")]
+                  "primary care doctor in one week\" is U, generic advice or follow-up."),
+          ("pni", "The audit was performed in two blind passes. A review of the first pass found paraphrased statements labeled partly "
+                  "supported, against the paraphrase rule above, so the rubric was reissued with one clarification and three named "
+                  "mistakes to avoid. The clarification: the question answered for every statement is whether a clinician who has just "
+                  "read the course would agree that the statement is true of this patient — meaning, not wording. The mistakes: "
+                  "rewording alone is not partly supported; a conclusion the course clearly commits to is supported, while one it never "
+                  "commits to is not; an invented specific, such as a dose, number, date, duration or side, makes that assertion "
+                  "unsupported however plausible it is. The sample was then extended by 105 claims from the same courses under the same "
+                  "stratified design (seed 8), and all 400 items were relabeled blind, with the first pass's answers hidden. For every partly "
+                  "or not supported statement the annotator wrote the reason as free text; the reasons were sorted into the five "
+                  "types above by fixed keyword rules (audit_map_types.py), and the annotator then reviewed every assignment in the "
+                  "tool, with the written reason shown beside it, and corrected it where needed. Chapter 7 reports the second pass and "
+                  "the agreement between the passes; both label files are preserved privately, outside the repository.")]
     return b

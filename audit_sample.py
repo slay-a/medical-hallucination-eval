@@ -15,6 +15,11 @@ Usage:  python audit_sample.py [--courses 60] [--per-cell 30] [--cite-per-cond 3
                                                  audited claim (judge_flagged_v2), taken from results_private/mimic_claims.csv
                                                  when the claim text matches and otherwise scored directly with the selected
                                                  judge against the whole course.  The sampling stratum is kept.
+        python audit_sample.py --extend 15 --seed 8   second sampling wave: adds up to 15 flagged and 15 accepted claims per
+                                                 condition, drawn from the current pipeline's claims (results_private/
+                                                 mimic_claims.csv) within the SAME 60 courses, skipping claims already
+                                                 sampled; refreshes design.strata_population to the current pipeline.
+                                                 Existing items and their ids are untouched.
 """
 import argparse
 import ast
@@ -71,14 +76,59 @@ def refresh_judge():
           f"{changed} changed label since sampling")
 
 
+def extend(n_per_stratum, seed):
+    """Second sampling wave into the existing audit_items.json (see module docstring)."""
+    import os
+    f = PRIVATE / "audit_items.json"; payload = json.load(open(f))
+    rng = random.Random(seed)
+    norm = lambda x: " ".join(str(x).split())
+    have = {(it["sid"], it["condition"], norm(it["claim"])) for c in payload["courses"] for it in c["items"] if it["kind"] == "claim"}
+    next_id = 1 + max(int(it["item_id"][1:]) for c in payload["courses"] for it in c["items"])
+    courses = {c["sid"] for c in payload["courses"]}
+    by_sid = {c["sid"]: c for c in payload["courses"]}
+    cl = pd.read_csv(PRIVATE / "mimic_claims.csv"); cl = cl[cl.variant == "base"]
+    pop = {cond: dict(flagged=int((d.label != "Supported").sum()), accepted=int((d.label == "Supported").sum()))
+           for cond, d in cl.groupby("condition") if cond in ("E0", "E1", "E1b", "E3")}
+    sub = cl[cl.sid.isin(courses)]
+    counts = {}
+    for cond in ("E0", "E1", "E1b", "E3"):
+        d = sub[sub.condition == cond]
+        for flagged, pool in ((True, d[d.label != "Supported"]), (False, d[d.label == "Supported"])):
+            pool = pool[~pool.apply(lambda r: (r.sid, cond, norm(strip_headers(str(r.claim)))) in have, axis=1)]
+            take = pool.sample(n=min(n_per_stratum, len(pool)), random_state=rng.randrange(10 ** 9))
+            counts[(cond, "flagged" if flagged else "accepted")] = len(take)
+            for _, r in take.iterrows():
+                claim = strip_headers(str(r.claim))
+                it = dict(kind="claim", sid=r.sid, condition=cond, claim=claim, judge_label=r.label,
+                          p_support=float(r.p_support), judge_flagged=bool(flagged), stratum="flagged" if flagged else "accepted",
+                          wave=2, p_support_v2=float(r.p_support), judge_match="pipeline",
+                          judge_flagged_v2=bool(r.label != "Supported"), item_id=f"i{next_id:04d}")
+                next_id += 1; have.add((r.sid, cond, norm(claim)))
+                by_sid[r.sid]["items"].append(it)
+    for c in payload["courses"]:
+        c["items"].sort(key=lambda x: x["kind"] == "citation")
+    payload["design"]["strata_population_v1"] = payload["design"].get("strata_population")
+    payload["design"]["strata_population"] = pop
+    payload["design"]["wave2"] = dict(per_stratum=n_per_stratum, seed=seed)
+    tmp = f.with_suffix(".json.tmp"); json.dump(payload, open(tmp, "w")); os.replace(tmp, f)
+    total = sum(1 for c in payload["courses"] for it in c["items"])
+    print(f"wave 2: added {sum(counts.values())} claims (requested {n_per_stratum} per condition and stratum); file now holds {total} items")
+    for k, v in sorted(counts.items()):
+        print(f"  {k[0]:4s} {k[1]:9s} +{v}")
+    print("strata_population refreshed from the current pipeline; previous kept as strata_population_v1")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--courses", type=int, default=60); ap.add_argument("--per-cell", type=int, default=30)
     ap.add_argument("--cite-per-cond", type=int, default=30); ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--refresh-judge", action="store_true")
+    ap.add_argument("--extend", type=int, default=None, help="add up to this many flagged and accepted claims per condition (second wave)")
     args = ap.parse_args()
     if args.refresh_judge:
         return refresh_judge()
+    if args.extend:
+        return extend(args.extend, args.seed)
     out_f = PRIVATE / "audit_items.json"
     if out_f.exists() and (PRIVATE / "audit_labels.json").exists():
         sys.exit("labels already exist for the current sample; delete results_private/audit_labels.json first if you really want a new sample")
