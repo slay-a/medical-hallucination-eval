@@ -1,0 +1,10 @@
+subset,judge,premise,topk,retriever,tau,auroc,n,prevalence,sensitivity,specificity,ppv,npv,accuracy,kappa,judge_calls,min_windows,median_windows,max_windows,share_capped,share_best_at_last_rank,flag_rate,median_p,n_reference_texts,flag_agreement,n_flag_changed,n_newly_flagged,n_unflagged,median_abs_dp,kappa_all_windows,sensitivity_all_windows,specificity_all_windows,auroc_all_windows
+all,deberta_large_nli,admission,5,hybrid,0.2,0.8164,12614,0.2487,0.293,0.9156,0.5346,0.7964,0.7607,0.2457,63070.0,17.0,51.0,676.0,1.0,0.1536,,,,,,,,,,,,
+author=human,deberta_large_nli,admission,5,hybrid,0.2,0.7933,8175,0.3565,0.3037,0.8926,0.6103,0.6983,0.6827,0.2211,,,,,,,,,,,,,,,,,,
+author=llm,deberta_large_nli,admission,5,hybrid,0.2,0.7384,4439,0.0502,0.1525,0.9443,0.1264,0.9547,0.9045,0.0881,,,,,,,,,,,,,,,,,,
+type=claim,deberta_large_nli,admission,5,hybrid,0.2,0.8321,9065,0.2239,0.3064,0.923,0.5344,0.8218,0.7849,0.2704,,,,,,,,,,,,,,,,,,
+type=sentence,deberta_large_nli,admission,5,hybrid,0.2,0.7685,3549,0.3119,0.2683,0.8943,0.5351,0.7295,0.6991,0.1883,,,,,,,,,,,,,,,,,,
+label=Not Addressed,deberta_large_nli,admission,5,hybrid,0.2,,2018,,,,,,,,,,,,,,0.3092,0.3441,,,,,,,,,,
+label=Not Supported,deberta_large_nli,admission,5,hybrid,0.2,,1119,,,,,,,,,,,,,,0.2636,0.3791,,,,,,,,,,
+label=Supported,deberta_large_nli,admission,5,hybrid,0.2,,9477,,,,,,,,,,,,,,0.0844,0.9503,,,,,,,,,,
+cap_check_vs_all_windows,deberta_large_nli,admission,5,hybrid,0.2,0.8661,940,,0.4144,0.9136,,,,0.3669,,,,29.0,,,,,13.0,0.8383,152.0,152.0,0.0,0.0,0.0047,0.0045,0.9986,0.8649

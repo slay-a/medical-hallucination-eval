@@ -313,6 +313,30 @@ def atomic_blocks():
     return b
 
 
+def _and_join(parts):
+    parts = list(parts)
+    return parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + " and " + parts[-1]
+
+
+def _retriever_choice_sentence(k, n_cap_texts=None):
+    """How the window ranking was chosen, from results/verifact_retriever_check.csv (every setting on the propositions all
+    of them scored); empty when the file is absent or only one ranking was tried.  n_cap_texts is the number of admissions
+    in the cap check, so the sentence can say whether the ranking was chosen on all of them or on the shortest."""
+    rc = _res("verifact_retriever_check.csv")
+    if not k or rc is None or not len(rc) or "setting" not in rc.columns:
+        return ""
+    names = {f"top{k}_dense": "the bi-encoder alone", f"top{k}_bm25": "BM25 alone", f"top{k}_hybrid": "the interleaved ranking"}
+    rk = rc[rc.setting.isin(names)].set_index("setting")
+    if len(rk) < 2:
+        return ""
+    best = rk.kappa.idxmax()
+    nt = int(rk.n_reference_texts.iloc[0]) if "n_reference_texts" in rk.columns and pd.notna(rk.n_reference_texts.iloc[0]) else None
+    where = "on these same admissions" if nt is None or nt == n_cap_texts else f"on the {nt} shortest of these admissions"
+    return (f"The ranking was chosen {where} before the full run: on the {int(rk.n.iloc[0]):,} propositions "
+            f"scored every way, " + "; ".join(f"{names[s]} gave kappa {f2(r.kappa)} (AUROC {f2(r.auroc)})" for s, r in rk.iterrows())
+            + f", so {names[best]} was used throughout. ")
+
+
 def verifact_blocks():
     """6.7 External check on clinician-labeled propositions — rendered only when results/verifact_judge_eval.csv exists."""
     ev = _res("verifact_judge_eval.csv")
@@ -320,39 +344,96 @@ def verifact_blocks():
         return []
     E = ev.set_index("subset")
     al = E.loc["all"]
+    adm = str(al.get("premise", "patient")) == "admission"
+    k = int(al.get("topk", 0) or 0)
+    retr = {"dense": "the bi-encoder of the judge selection's top-3 evidence mode (all-MiniLM-L6-v2; a window ranks by its "
+                     "sentence most similar to the proposition)",
+            "bm25": "BM25 over whole windows",
+            "hybrid": "the bi-encoder of the judge selection's top-3 evidence mode (all-MiniLM-L6-v2; a window ranks by its "
+                      "sentence most similar to the proposition) and BM25, interleaved"}.get(str(al.get("retriever", "")), "")
     b = [("h2", "6.7 External Check on Clinician-Labeled Propositions (VeriFact-BHC)")]
     b += [P(f"The selection above used expert annotations connected to the main-study courses, and the audit of Section 7.9 "
             f"measures the judge on this thesis's own outputs. As an external check, the selected judge was run, unchanged, on "
             f"MIMIC-III-Ext-VeriFact-BHC [[cite:chung2026verifact]]: {int(al.n):,} valid propositions decomposed from "
             f"human-written and LLM-written brief hospital course summaries of 100 MIMIC-III patients, each adjudicated by "
             f"clinicians as supported, not supported or not addressed against the patient's complete EHR notes. The judge read "
-            f"each patient's notes in chart-time order with the main study's windowing, a proposition counts as flagged when its "
-            f"best window's support falls below the main study's threshold ({al.tau:.2f}), and clinician labels other than "
-            f"supported count as unsupported, as in the dataset's own analysis. The setting is deliberately harder than the main "
-            f"study's: the reference is a patient's whole record rather than a single course, and the propositions come from "
-            f"another institution's patients, another decade's notes and other models' summaries.")]
+            + ("the notes of the summarized admission" if adm else "each patient's notes")
+            + f" in chart-time order with the main study's windowing"
+            + (f". Those notes are far longer than a hospital course: an admission spans {int(al.min_windows)} to "
+               f"{int(al.max_windows):,} windows of 400 tokens (median {int(al.median_windows)}) against one to three for a "
+               f"main-study course, and scoring every proposition against every window would have taken more than a million "
+               f"judge calls, weeks on the laptop used for this thesis. Each proposition was therefore scored against the "
+               f"{k} windows ranked highest by {retr}, with the maximum over those windows taken as in the main study "
+               f"({int(al.judge_calls):,} judge calls) — the retrieve-then-judge design of the dataset's own raters, which "
+               f"read 5 to 50 retrieved sentences or facts. A"
+               if k else ", a")
+            + f" proposition counts as flagged when its best window's support falls below the main study's threshold "
+            f"({al.tau:.2f}), and clinician labels other than supported count as unsupported, as in the dataset's own analysis. "
+            + ("The clinicians judged against the whole record, so a proposition that restates history from an earlier "
+               "admission can be unsupported by the admission's own notes; the dataset's authors evaluate this reference "
+               "setting as well, and the comparison below uses their raters with the same restriction. "
+               if adm else
+               "The setting is deliberately harder than the main study's: the reference is a patient's whole record rather "
+               "than a single course. ")
+            + "The propositions come from another institution's patients, another decade's notes and other models' summaries.")]
+    if k and "cap_check_vs_all_windows" in E.index:
+        cc = E.loc["cap_check_vs_all_windows"]
+        b += [P(f"The cap was checked on the {int(cc.n_reference_texts)} shortest admissions ({int(cc.n):,} propositions, at most "
+                f"{int(cc.max_windows)} windows), where every window had also been scored: scoring only the retrieved windows "
+                f"changed the judge's flag for {int(cc.n_flag_changed)} propositions ({pct0(1 - cc.flag_agreement)}"
+                + ((", all" if int(cc.n_newly_flagged) == int(cc.n_flag_changed) else f", {int(cc.n_newly_flagged)} of them")
+                   + " from supported to flagged" if pd.notna(cc.get("n_newly_flagged", None)) else "")
+                + f"), and agreement with the clinicians was kappa {f2(cc.kappa)} with the cap against "
+                f"{f2(cc.kappa_all_windows)} without it (AUROC {f2(cc.auroc)} against {f2(cc.auroc_all_windows)}; sensitivity "
+                f"{f2(cc.sensitivity)} against {f2(cc.sensitivity_all_windows)}, specificity {f2(cc.specificity)} against "
+                f"{f2(cc.specificity_all_windows)}). "
+                + (f"The maximum over every window of a long record finds support for almost everything (sensitivity "
+                   f"{f2(cc.sensitivity_all_windows)} without the cap), so the cap also keeps the judge close to the main "
+                   f"study's regime of one to three windows per course. "
+                   if cc.kappa_all_windows < cc.kappa else "")
+                + _retriever_choice_sentence(k, int(cc.n_reference_texts))
+                + (f"Across all propositions whose admission exceeds {k} windows ({pct0(al.share_capped)} of them), the window "
+                   f"with the highest support was the last of the {k} retrieved for {pct0(al.share_best_at_last_rank)}, so "
+                   f"evidence beyond the retrieved windows is likely for a minority of propositions and the figures below "
+                   f"measure the judge together with this retrieval step, not the judge alone."
+                   if pd.notna(al.get("share_best_at_last_rank", None)) else ""))]
     perf = (f"On all propositions the judge reaches an AUROC of {f2(al.auroc)} and, at the main study's threshold, sensitivity "
             f"{f2(al.sensitivity)}, specificity {f2(al.specificity)} and kappa {f2(al.kappa)} against the adjudicated clinician "
             f"labels. ")
     auth = {i.split("=", 1)[1]: E.loc[i] for i in E.index if i.startswith("author=")}
     typ = {i.split("=", 1)[1]: E.loc[i] for i in E.index if i.startswith("type=")}
     labs = {i.split("=", 1)[1]: E.loc[i] for i in E.index if i.startswith("label=")}
+    anames = {"human": "human-written summaries", "llm": "LLM-written summaries"}
+    tnames = {"claim": "claims", "sentence": "sentences"}
     if auth:
-        perf += "By the summary's author the kappa is " + "; ".join(f"{k} {f2(r.kappa)} (AUROC {f2(r.auroc)})" for k, r in auth.items()) + ". "
+        perf += ("By the summary's author the kappa is "
+                 + _and_join(f"{f2(r.kappa)} for {anames.get(k, k)} (AUROC {f2(r.auroc)})" for k, r in auth.items()) + ". ")
     if typ:
-        perf += "By proposition type it is " + "; ".join(f"{k} {f2(r.kappa)}" for k, r in typ.items()) + ". "
+        perf += "By proposition type it is " + _and_join(f"{f2(r.kappa)} for {tnames.get(k, k)}" for k, r in typ.items()) + ". "
     if labs:
-        perf += ("The judge flags " + "; ".join(f"{pct0(r.flag_rate)} of the propositions the clinicians adjudicated {k.lower()}"
-                                                for k, r in labs.items()) + ". ")
+        perf += ("The judge flags "
+                 + _and_join(f"{pct0(r.flag_rate)} of the propositions the clinicians adjudicated {k.lower()}" if j == 0
+                             else f"{pct0(r.flag_rate)} of those adjudicated {k.lower()}" for j, (k, r) in enumerate(labs.items()))
+                 + ". ")
     ai = _res("verifact_ai_raters.csv")
     if ai is not None and len(ai):
-        bt = ai.iloc[0]
-        perf += (f"For context, the dataset ships the verdicts of {len(ai)} configurations of its own retrieval-plus-LLM rater; "
-                 f"the best reaches kappa {f2(bt.kappa)} (sensitivity {f2(bt.sensitivity)}, specificity {f2(bt.specificity)}) on "
-                 f"the same propositions. The comparison is indicative rather than exact, because those raters judge each "
-                 f"proposition against retrieved parts of the record while the judge here reads the whole record in windows.")
+        n_all = len(ai)
+        if "reference_only_admission" in ai.columns:
+            ai = ai[ai.reference_only_admission.astype(str).str.lower() == str(adm).lower()]
+        if len(ai):
+            bt = ai.iloc[0]
+            perf += (f"For context, the dataset ships the verdicts of {n_all} configurations of its own retrieval-plus-LLM rater; "
+                     f"among the {len(ai)} that use the same reference, the best reaches kappa {f2(bt.kappa)} (sensitivity "
+                     f"{f2(bt.sensitivity)}, specificity {f2(bt.specificity)}) on the same propositions. The comparison is "
+                     + ("indicative rather than exact: both designs retrieve before judging, but those raters are large language "
+                        "models that read the retrieved sentences or facts with their chart times, while the judge here is a "
+                        "sentence-pair entailment model reading retrieved 400-token windows."
+                        if k else
+                        "indicative rather than exact, because those raters judge each proposition against retrieved parts of the "
+                        "reference while the judge here reads all of it in windows."))
     b += [P(perf)]
     b += [P("The check asks whether the judge, chosen on one corpus, still separates supported from unsupported statements on "
             "another; it does not re-validate the threshold, which was chosen for the main study's courses, and a kappa on "
-            "whole-record evidence is not comparable in size to the course-level agreement of Section 6.2.")]
+            + ("retrieved admission-note evidence" if k else "whole-record evidence")
+            + " is not comparable in size to the course-level agreement of Section 6.2.")]
     return b

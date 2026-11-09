@@ -86,13 +86,13 @@ class Judge:
         self.max_len = 512
 
     @torch.no_grad()
-    def probs(self, premises, hypotheses, batch=16):
+    def probs(self, premises, hypotheses, batch=16, pad_to_multiple_of=None):
         out = []
         idx = np.argsort([len(p) + len(h) for p, h in zip(premises, hypotheses)])
         for s in range(0, len(idx), batch):
             b = idx[s:s + batch]
             enc = self.tok([premises[i] for i in b], [hypotheses[i] for i in b], truncation="only_first", max_length=self.max_len,
-                           padding=True, return_tensors="pt").to(DEVICE)
+                           padding=True, pad_to_multiple_of=pad_to_multiple_of, return_tensors="pt").to(DEVICE)
             p = torch.softmax(self.model(**enc).logits.float(), dim=-1).cpu().numpy()
             out.append((b, p))
         res = np.zeros((len(premises), out[0][1].shape[1]))
@@ -100,8 +100,11 @@ class Judge:
             res[b] = p
         return res
 
-    def support_scores(self, premises, hypotheses):
-        """Return (p_support, p_contra) arrays."""
+    def support_scores(self, premises, hypotheses, pad_to_multiple_of=None, batch=16):
+        """Return (p_support, p_contra) arrays.  pad_to_multiple_of (e.g. 64) rounds each batch's padded length up so a long
+        run meets only a few tensor shapes (the Metal graph cache keeps a compiled kernel per shape); padding is masked, so
+        the scores do not depend on it.  batch sets the inference batch size (the Metal working pool scales with it); a
+        pair's scores do not depend on it either."""
         if self.kind == "llm_yesno":
             import urllib.request
             py = np.zeros(len(premises))
@@ -112,23 +115,28 @@ class Judge:
                     out = json.loads(r.read())
                 py[s:s + 512] = out["p_yes"]
             return py, np.zeros(len(premises))          # a binary grounding checker has no contradiction channel
-        p = self.probs(premises, hypotheses)
+        p = self.probs(premises, hypotheses, batch=batch, pad_to_multiple_of=pad_to_multiple_of)
         if self.kind == "nli3":
             return p[:, self.i_ent], p[:, self.i_con]
         return p[:, 1], np.zeros(len(premises))          # MiniCheck: label 1 = supported
 
-    def windows(self, sentences, max_tokens=400):
+    def windows(self, sentences, max_tokens=400, members=False):
+        """Consecutive sentences packed into windows of at most max_tokens; members=True also returns, per window, the
+        indices of the sentences it holds."""
         if self.kind == "llm_yesno":                     # the 32k-context checker reads the whole course at once
-            return [" ".join(sentences)]
-        wins, cur, cur_len = [], [], 0
-        for s in sentences:
+            wins, mem = [" ".join(sentences)], [list(range(len(sentences)))]
+            return (wins, mem) if members else wins
+        wins, mem, cur, cur_len = [], [], [], 0
+        for i, s in enumerate(sentences):
             n = len(self.tok.tokenize(s))
             if cur and cur_len + n > max_tokens:
-                wins.append(" ".join(cur)); cur, cur_len = [], 0
-            cur.append(s); cur_len += n
+                wins.append(" ".join(sentences[j] for j in cur)); mem.append(cur); cur, cur_len = [], 0
+            cur.append(i); cur_len += n
         if cur:
-            wins.append(" ".join(cur))
-        return wins or [" ".join(sentences)]
+            wins.append(" ".join(sentences[j] for j in cur)); mem.append(cur)
+        if not wins:
+            wins, mem = [" ".join(sentences)], [list(range(len(sentences)))]
+        return (wins, mem) if members else wins
 
 
 def save_sentence_scores(df):

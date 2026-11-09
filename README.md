@@ -56,6 +56,7 @@ source note ─┬─ E0  LLM, full note ─────────────
 | `data_overlap.py` | Matches every course to its MIMIC-IV-Note discharge note; patient and admission overlap → `results/data_overlap.csv` (counts only) | MIMIC-IV-Note |
 | `mimic_revision_analysis.py` | Variant tests, run-to-run variation, abstention, coverage equivalence check, question-answering utility, per-condition intervals, splitter comparison, overlapping-window check (`--windows`) | ann-pt-summ |
 | `audit_sample.py`, `audit_tool.py`, `audit_summary.py` | Blind manual audit: course-clustered stratified sample (60 courses, seed 7), local labeling page on 127.0.0.1:8765, weighted estimates of the judge's precision, false omission rate and the manually confirmed unsupported share → `results/audit_*.csv` | ann-pt-summ |
+| `verifact_eval.py` | External check of the selected judge on MIMIC-III-Ext-VeriFact-BHC: 12,614 clinician-adjudicated propositions, each scored against the five best-matching 400-token windows of the admission's notes with the main study's windowing and threshold (`--score --premise admission`), metrics against the clinician labels and the cap check against all-window scoring (`--summarize`), retriever comparison (`--compare-retrievers`), the published AI raters' baseline (`--baseline`) → `results/verifact_judge_eval.csv`, `results/verifact_retriever_check.csv`, `results/verifact_ai_raters.csv` (metrics only) | VeriFact-BHC |
 | `check_no_protected_text.py` | Scans every tracked file for eight-word sequences of the credentialed texts and of the private outputs → `results/protected_text_scan*.csv` (counts only) | ann-pt-summ, MedNLI |
 | `analyze.py` | Figures (`results/fig_*.png`) and example tables | – |
 | `preprocessing.py` | Shared header filter, abstention filter, MTSamples line-break repair | – |
@@ -99,9 +100,15 @@ number exactly through `recompute_metrics.py`.
 | Main study and robustness checks | ann-pt-summ courses (from MIMIC-IV-Note) | aggregates in `results/mimic_*.csv` |
 | Data overlap check | MIMIC-IV-Note (credentialed) | counts only |
 | Manual audit | as the main study | aggregates only |
+| External check of the judge | MIMIC-III-Ext-VeriFact-BHC (PhysioNet, credentialed) | aggregates in `results/verifact_*.csv` |
 
-Main-study generations, claims, labels and audit items contain MIMIC-derived text and are stored only in the
-git-ignored `results_private/`.
+Main-study generations, claims, labels, audit items and the per-proposition VeriFact scores contain MIMIC-derived text
+and are stored only in the git-ignored `results_private/`.
+
+The external check runs separately from `run.sh`: `python verifact_eval.py --baseline`, then
+`python verifact_eval.py --score --premise admission --batch 8 --chunk 256` (resumable; about a day on the laptop) and
+`python verifact_eval.py --summarize --premise admission`; `--compare-retrievers --premise admission` reproduces the
+choice of the window ranking.
 
 ## Data
 
@@ -113,6 +120,9 @@ git-ignored `results_private/`.
 * **MedNLI v1.0.0** (PhysioNet, credentialed): 14,049 clinician-written premise and hypothesis pairs used to
   fine-tune the judge.
 * **MIMIC-IV-Note v2.2** (PhysioNet, credentialed): the source of the hospital courses; staged locally, never committed.
+* **MIMIC-III-Ext-VeriFact-BHC v1.0.0** (PhysioNet, credentialed): 12,614 valid propositions from Brief Hospital Course
+  summaries of 100 MIMIC-III patients with adjudicated clinician labels, plus the patients' notes; used only for the
+  external check of the judge (thesis Section 6.7). Staged locally, never committed.
 
 No credentialed text is committed, uploaded to shared storage, or sent to any external API.
 
@@ -138,4 +148,5 @@ Judge study: `results/judge_candidates.csv`. Main study: `results/mimic_summary.
 `results/mimic_splitting_check.csv`, `results/mimic_judge_agreement.csv`, `results/mimic_second_judge_tests.csv`,
 `results/mimic_tau05/` (threshold 0.5), `results/atomic_results.csv`, `results/judge_selection_bias.csv`,
 `results/judge_selection_frequency.csv`, `results/judge_per_source.csv`, `results/data_overlap.csv`, `results/audit_*.csv`,
-`results/protected_text_scan*.csv`. Figures: `results/fig_*.png`.
+`results/protected_text_scan*.csv`. External check of the judge: `results/verifact_judge_eval.csv`,
+`results/verifact_retriever_check.csv`, `results/verifact_ai_raters.csv`. Figures: `results/fig_*.png`.

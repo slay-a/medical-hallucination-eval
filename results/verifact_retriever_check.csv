@@ -1,0 +1,4 @@
+setting,judge,premise,tau,n_reference_texts,auroc,n,prevalence,sensitivity,specificity,ppv,npv,accuracy,kappa
+all_windows,deberta_large_nli,admission,0.2,11,0.8859,780,0.2346,0.0,1.0,,0.7654,0.7654,0.0
+top5_dense,deberta_large_nli,admission,0.2,11,0.8633,780,0.2346,0.3661,0.9112,0.5583,0.8242,0.7833,0.3149
+top5_hybrid,deberta_large_nli,admission,0.2,11,0.8835,780,0.2346,0.4317,0.9146,0.6077,0.84,0.8013,0.3849

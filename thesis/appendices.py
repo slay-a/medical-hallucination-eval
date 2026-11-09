@@ -105,7 +105,7 @@ def blocks(R: Results) -> list:
                                ["judge_selection_bias.py", "Nested cross-validation of the judge selection by course, patient-disjoint transfer, course-clustered intervals"],
                                ["mimic_revision_analysis.py", "Length-matched and citation-free comparisons, run-to-run variation, abstention, coverage equivalence, question-answering utility, overlapping-window check"],
                                ["audit_sample.py, audit_tool.py, audit_summary.py, audit_agreement.py", "Manual audit: course-clustered stratified sample and its extension, local blind labeling tool, re-weighted agreement statistics, agreement between the two labeling passes"],
-                               ["verifact_eval.py", "External check of the selected judge on the clinician-adjudicated VeriFact-BHC propositions (PhysioNet, credentialed): scoring, metrics and the published raters' baseline"],
+                               ["verifact_eval.py", "External check of the selected judge on the clinician-adjudicated VeriFact-BHC propositions (PhysioNet, credentialed): retrieval of the five best-matching windows of the admission's notes, scoring with the main study's windowing and threshold, metrics and the published raters' baseline"],
                                ["check_no_protected_text.py", "Scans every tracked repository file for word sequences from the credentialed documents and generations"],
                                ["analyze.py", "All figures and the qualitative example tables"],
                                ["thesis/build_thesis.py", "Generates this document from the result files (content modules ch1_4, ch5_pilot, ch_judge, ch_mimic, ch8_9, appendices)"],
