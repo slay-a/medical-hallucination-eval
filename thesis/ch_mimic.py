@@ -341,7 +341,7 @@ def blocks(R: Results) -> list:
                          widths=[1.6, 1.15, 0.95, 1.35, 0.55, 0.9], font=8.5, rows=rows)),
           ("figure", dict(label="mcov", path="results/fig_mimic_coverage.png", width=5.6, caption="Judge-estimated coverage of the clinician's discharge instructions per document under each condition."))]
 
-    # ── retrieval-ablation families (Holm within each measure), used in Sections 7.5, 7.7 and 7.12
+    # ── retrieval-ablation families (Holm within each measure), used in Sections 7.5 and 7.7
     abl = _csv("mimic_ablations.csv")
     variants = [v for v in VAR if v != "base"]
     cite_measures = ("citation_coverage", "citation_accuracy")
@@ -892,53 +892,4 @@ def blocks(R: Results) -> list:
                              columns=["Condition", "Question", "Abstained", "Answered, all supported", "Answered, some unsupported", "UFR of answers", "Supported by clinician"],
                              widths=[0.75, 1.15, 0.75, 1.0, 1.05, 0.75, 0.95], font=8.5, rows=rows))]
 
-    # ── 7.12 Summary
-    b += [("h2", "7.12 Summary of the Main Study")]
-    lines = []
-    if len(lower) == len(GROUNDED):
-        lines.append(f"**Judge-estimated faithfulness:** E1, E1b and E3 had a lower UFR than E0 ({f3(D.m('E0', 'UFR_mean'))}; "
-                     + ", ".join(f"{c} {f3(D.m(c, 'UFR_mean'))}" for c in GROUNDED)
-                     + "), significant after the Holm adjustment, with no significant change in CR; the differences among the three are "
-                       "within what the judge's errors could produce.")
-    if t_b is not None:
-        lines.append(f"**Coverage:** E1 and E3 covered fewer of the clinician's sentences than E0; E1b achieved coverage similar to E0, "
-                     f"with no statistically significant difference detected ({pts(t_b.delta_mean)}, 95 percent interval "
-                     f"{ci_pts(t_b.ci95_low, t_b.ci95_high)}).")
-    if vt is not None and len(vt):
-        lines.append("**Length and citations:** a length-matched E0 and E1 without the citation instruction show how much of the "
-                     "reduction is due to brevity and to the instruction (Section 7.5).")
-    if cited and "E1" in cc:
-        lines.append(f"**Citations:** {pct0(cc['E1'][1] / cc['E1'][0])} of E1's claims carry a valid citation and "
-                     f"{pct0(cc['E1'][2] / cc['E1'][1])} of those are supported by the cited excerpts"
-                     + (f"; E1b cites only {pct0(cc['E1b'][1] / cc['E1b'][0])} of its claims" if "E1b" in cc else "") + ".")
-    if abl is not None and len(abl):
-        lines.append("**Retrieval settings:** the amount of the course shown to the model governs coverage; no setting changed "
-                     "faithfulness after correction for multiple comparisons." if not any(F[m][v][2] < 0.05 for m in ("UFR", "CR") for v in F[m]) else
-                     "**Retrieval settings:** see Section 7.7.")
-    if rep is not None and len(rep) and "kind" in rep.columns:
-        lines.append(f"**Repeated generation:** {_join(stable) if stable else 'no comparison'} held in all three generations"
-                     + (f"; {_join(unstable)} did not." if unstable else "."))
-    if agr is not None and len(agr):
-        lines.append("**Second judge:** the reductions relative to E0 hold under a second judge and under both combined flagging "
-                     "rules; whether verification adds to retrieval depends on the judge.")
-    if gens:
-        if not norepl_names:
-            lines.append(f"**Other generators:** the reductions relative to E0 replicate under {_join(repl_names)} (Section 7.10).")
-        elif repl_names:
-            lines.append(f"**Other generators:** the reductions relative to E0 replicate under {_join(repl_names)} but not under "
-                         f"{_join(norepl_names)}; the effect is generator-dependent (Section 7.10).")
-        else:
-            lines.append(f"**Other generators:** the reductions relative to E0 did not replicate under {_join(norepl_names)} (Section 7.10).")
-    if aud is not None and len(aud) and "manual_unsupported" in aud.columns:
-        audD = aud[aud["diff"].notna()].set_index("condition") if "diff" in aud.columns else None
-        conf_s = ([k.split(" minus ")[0] for k in ("E1 minus E0", "E1b minus E0", "E3 minus E0")
-                   if audD is not None and k in audD.index and audD.loc[k, "diff_hi"] < 0] if audD is not None else [])
-        lines.append("**Manual audit:** the judge understates the absolute share of unsupported claims; "
-                     + (f"manual reading confirms the reduction relative to E0 for {_join(conf_s)}, and the audit's sample "
-                        f"size leaves the other condition differences unresolved (Section 7.9)." if conf_s else
-                        "the audit's sample size leaves the condition differences unresolved (Section 7.9)."))
-    if qa is not None and len(qa):
-        lines.append("**Question answering (exploratory):** retrieval raised abstention and lowered the UFR of the answers given; "
-                     "warning-sign questions are rarely answerable from the course.")
-    b += [("bullets", lines)]
     return b

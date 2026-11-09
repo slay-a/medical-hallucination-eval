@@ -77,7 +77,7 @@ def main():
     _has_audit = aud.exists() and "manual_unsupported" in _pd.read_csv(aud).columns if aud.exists() else False
     if not _has_audit:
         print("NOTE: the manual audit is not summarized yet (results/audit_summary.csv), so Section 7.9 is absent and")
-        print("      sections 7.10-7.12 leave a numbering gap. Finish labeling, run audit_summary.py, and rebuild before submitting.")
+        print("      sections 7.10-7.11 leave a numbering gap. Finish labeling, run audit_summary.py, and rebuild before submitting.")
 
 
 if __name__ == "__main__":

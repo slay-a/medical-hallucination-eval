@@ -96,12 +96,10 @@ def blocks(R: Results) -> list:
 
     # ══════════════════════════════════ CHAPTER 8 ══════════════════════════════════
     b += [H1("Chapter 8 Discussion"), H2("8.1 Answers to the Research Questions")]
-    rq1 = (f"**RQ1.** Measured by the claim-level NLI judge of the pilot, {pct0(R.mean('E0','UFR'))} of the sentences in full-note "
-           f"GPT-4o-mini summaries could not be verified against the note and {pct0(R.mean('E0','CR'))} were labeled as contradicting "
-           f"it. The validation study shows that these numbers overstate the problem several-fold: on summaries where medical experts "
-           f"flagged 5 to 9 percent of sentences, the same judge flagged 86 to 87 percent. The pilot therefore answers RQ1 only "
-           f"qualitatively: the summaries contain unsupported statements, in identifiable categories, but that instrument cannot say "
-           f"how many.")
+    rq1 = (f"**RQ1.** The pilot's judge answers RQ1 only qualitatively: it labeled {pct0(R.mean('E0','UFR'))} of the sentences in "
+           f"full-note GPT-4o-mini summaries unsupported, but against the medical experts it overstated the problem several-fold "
+           f"(Section 5.4), so the pilot shows that the summaries contain unsupported statements in identifiable categories and that "
+           f"this instrument cannot say how many.")
     if main:
         rq1 += (f" The main study answers it with the judge selected in Chapter 6. Under that judge, {pct(M.mean('E0','UFR'))} of the claims "
                 f"in full-note summaries written by the local model were not supported by the hospital course and {pct(M.mean('E0','CR'))} "
@@ -140,46 +138,38 @@ def blocks(R: Results) -> list:
                 + (f", and the second judge confirmed {'none' if G.loc['E2', 'first_flags_confirmed'] == 0 else pct0(G.loc['E2', 'first_flags_confirmed'])} "
                    f"of the selected judge's flags on verbatim sentences, which places that error in the judge rather than in the text "
                    f"(Section 7.10)." if G is not None and "E2" in G.index else "."))
-    rq3 = (f"**RQ3.** In the pilot, under a judge later shown to be invalid for this task, excerpt-only RAG reduced contradictions "
-           f"by about a quarter and unsupported facts not at all, while covering {pct(covv('E1'))} instead of {pct(covv('E0'))} of the "
-           f"note's sentences; retrieval with the full note lowered the unsupported fact rate by about {abs(t1b0u.rel_change_mean):.0f} "
-           f"percent and verification by about {abs(t30u.rel_change_mean):.0f} percent relative to E0. These pilot effects describe how "
-           f"that judge reacted and are not interpreted further.")
+    rq3 = ("**RQ3.** The pilot's effects (Section 5.8) describe how a judge later shown to be invalid for this task reacted to the "
+           "conditions, and they are not interpreted further.")
     if main and tu:
         rq3 += (f" In the main study, excerpt-only retrieval, retrieval with the whole course and verification lowered the "
-                f"judge-estimated UFR by between {lo_u:.3f} and {hi_u:.3f} relative to E0 ("
-                + "; ".join(f"{c} {signed(t.delta_mean)}, 95 percent interval {ci3(t.ci95_low, t.ci95_high)}" for c, t in tu.items())
-                + f"; all {padj(max(D.holm_p(t) for t in tu.values()))}), without a significant change in the contradiction rate, and "
-                  f"the three grounded conditions do not differ significantly from one another. The reductions hold at a second "
-                  f"threshold and under a second judge (Section 7.10)")
+                f"judge-estimated UFR by between {lo_u:.3f} and {hi_u:.3f} relative to E0 (all "
+                f"{padj(max(D.holm_p(t) for t in tu.values()))}; intervals in Section 7.3), without a significant change in the "
+                f"contradiction rate, and the three grounded conditions do not differ significantly from one another. The reductions "
+                f"hold at a second threshold and under a second judge (Section 7.10)")
         if rep is not None and len(rep) and "kind" in rep.columns:
             rq3 += " and in each of three generations on 40 courses (Section 7.8)"
         rq3 += (". Part of the reduction comes from saying less: the grounded summaries contain fewer claims, and Section 7.5 "
                 "separates the contributions of length and of the citation instruction. The cost is omission for the conditions that "
                 "withhold the course: E1 and E3 covered fewer of the clinician's sentences than E0")
         if "E1b" in tcov and tcov["E1b"] is not None:
-            rq3 += (f", whereas E1b achieved coverage similar to E0, with no statistically significant difference detected "
-                    f"({pts(tcov['E1b'].delta_mean)}, 95 percent interval {ci_pts(tcov['E1b'].ci95_low, tcov['E1b'].ci95_high)})")
+            rq3 += ", whereas E1b achieved coverage similar to E0, with no statistically significant difference detected (Section 7.4)"
         rq3 += "."
     b += [P(rq1), P(rq2), P(rq3)]
     if main and tu:
         t31m = D.T("UFR", "E3 vs E1"); tcr1 = D.T("CR", "E1 vs E0")
         s31 = ST2.loc["E3 vs E1"] if ST2 is not None and "E3 vs E1" in ST2.index else None
         nocite = vrow("E1/nocite vs E0/base", "UFR")
-        b += [P(f"**Hypotheses.** H1, that full-note summaries contain a measurable share of unsupported statements and that a judge "
-                f"can detect them with agreement substantially better than chance, holds in its first half: the judge-estimated share in "
-                f"the main study is {pct(M.mean('E0','UFR'))} of claims"
-                + (f", and the manual audit confirms unsupported content in E0 summaries" if A is not None and "E0" in A.index else "")
-                + f". Its second half is rejected for the pilot judge (kappa {f2(cal_all.any_kappa)}) and holds only moderately for the "
-                f"selected judge (kappa {f2(jr.kappa)}, an optimistic figure). H2, that retrieval reduces unsupported content, is "
+        b += [P("**Hypotheses.** H1 holds in its first half: full-note summaries contain a measurable share of unsupported statements"
+                + (", confirmed by the manual audit" if A is not None and "E0" in A.index else "")
+                + "; its second half, that a judge detects them with agreement substantially better than chance, is rejected for the "
+                f"pilot judge and holds only moderately for the selected judge. H2, that retrieval reduces unsupported content, is "
                 f"supported for the judge-estimated UFR in the main study ({padj(D.holm_p(tu['E1']))} for E1)"
-                + (f", including when the citation instruction is removed ({signed(nocite.delta_mean)} relative to E0, {fp(nocite.p)})"
-                   if nocite is not None and nocite.p < 0.05 and nocite.delta_mean < 0 else "")
+                + (", including without the citation instruction" if nocite is not None and nocite.p < 0.05 and nocite.delta_mean < 0 else "")
                 + f", but not for contradictions ({padj(D.holm_p(tcr1))}), which were rare under every condition; in the pilot neither "
-                f"rate changed significantly after the adjustment. H3, that verification adds to retrieval, is not supported under the selected judge in the main study "
-                f"(E3 versus E1, {fp(t31m.p)})"
-                + (f"; under the second judge E3 has the lowest UFR of the LLM conditions ({f3(s31.mean_b)} against {f3(s31.mean_a)} for E1, "
-                   f"{fp(s31.p)}), so the evidence on H3 depends on the judge and remains open." if s31 is not None else "."))]
+                f"rate changed significantly after the adjustment. H3, that verification adds to retrieval, is not supported under the "
+                f"selected judge (E3 versus E1, {fp(t31m.p)})"
+                + (f"; under the second judge E3 has the lowest UFR of the LLM conditions ({fp(s31.p)}), so the evidence on H3 depends "
+                   f"on the judge and remains open." if s31 is not None else "."))]
 
     b += [H2("8.2 Why the Judge Disagrees with the Experts")]
     b += [P("Four causes are consistent with the pilot judge's disagreement with the experts; the evidence for each differs. The first "
@@ -389,12 +379,10 @@ def blocks(R: Results) -> list:
         cut = {c: abs(tu[c].rel_change_mean) for c in GROUNDED}
         cc = {c: (D.m(c, "claims_total"), D.m(c, "cited_claims"), D.m(c, "cite_correct")) for c in ("E1", "E1b")}
         cmp_text = (f"[[tab:compare]] summarizes the strengths, weaknesses and appropriate uses of the five conditions in the light of both "
-                    f"studies. No approach dominates on every criterion. The full-note LLM without retrieval is the most fluent and, with "
-                    f"E1b, the most complete, and in both studies it has the highest judge-estimated rate of unsupported claims. On the "
-                    f"hospital courses every form of grounding lowered that rate by {min(cut.values()):.0f} to {max(cut.values()):.0f} "
-                    f"percent under the judge. Excerpt-only RAG and verification paid for the reduction with coverage. RAG with the whole "
-                    f"course in view reduced the judge-estimated rate as much as the other grounded conditions while achieving coverage "
-                    f"similar to E0, so it is the design these results favor. The recommendation is conditional: it rests on judge-estimated "
+                    f"studies. No approach dominates on every criterion. RAG with the whole course in view reduced the judge-estimated "
+                    f"rate of unsupported claims as much as the other grounded conditions ({min(cut.values()):.0f} to "
+                    f"{max(cut.values()):.0f} percent below E0 under the judge) while achieving coverage similar to E0, so it is the "
+                    f"design these results favor. The recommendation is conditional: it rests on judge-estimated "
                     f"rates for one corpus and one retrieval design, on a coverage measure scored by the same judge, and on "
                     f"citations that cover only {pct0(cc['E1b'][1] / cc['E1b'][0]) if not _nan(cc['E1b'][0]) else '—'} of E1b's claims."
                     f"{gen_note} "
@@ -534,28 +522,18 @@ def blocks(R: Results) -> list:
 
     # ══════════════════════════════════ CHAPTER 9 ══════════════════════════════════
     b += [H1("Chapter 9 Conclusion and Future Work"), H2("9.1 Summary")]
-    s1 = (f"This thesis set out to measure and reduce hallucinations in LLM-generated patient-facing summaries of clinical notes. It "
-          f"built a reproducible claim-level evaluation pipeline from open components, compared five summarization conditions on "
-          f"{R.n_docs} public MTSamples notes, validated the pipeline's judge against medical-expert annotations, found it invalid for this "
-          f"task, selected a better judge by the same validation, and repeated the comparison on {M.n_docs if M.ok else 110} MIMIC-IV hospital "
-          f"courses with an open-weight model running on the author's computer, measuring omission against the discharge instructions "
-          f"the clinicians wrote.")
-    s2 = ""
-    if main and tu:
-        s2 = (f"Its first contribution is methodological. A small general-domain NLI judge applied at sentence granularity agreed "
-              f"with the experts at chance level (kappa {f2(cal_all.any_kappa)}); a larger NLI model with whole-course evidence agreed "
-              f"moderately (kappa {f2(jr.kappa)}" + (f", about {f2(k_cv)} after correcting for the selection" if not _nan(k_cv) else "")
-              + "), and its error rates on the expert set did not transfer to the local model's summaries. Its second contribution "
-              f"is empirical and conditional on that judge. Every form of grounding lowered the judge-estimated rate of unsupported "
-              f"claims by {lo_u:.3f} to {hi_u:.3f}, partly by making the summaries shorter; only retrieval with the whole course in view "
-              f"did so with coverage similar to the full-note baseline; whether verification adds to retrieval depends on the judge; "
-              f"and the clinicians' own instructions scored worse than every model under a metric of support by the source, which "
-              f"measures faithfulness to the course rather than the quality of a summary.")
-    b += [P(s1)] + ([P(s2)] if s2 else [])
+    s1 = (f"This thesis asked whether LLM-generated patient-facing summaries of clinical notes contain unsupported statements, "
+          f"whether an automatic judge can measure them, and whether retrieval and verification reduce them. It built a reproducible "
+          f"claim-level evaluation pipeline from open components, found the pilot's judge invalid against medical-expert annotations, "
+          f"selected a better judge by the same validation and audited it on the main study's own outputs, and compared five "
+          f"summarization conditions on {M.n_docs if M.ok else 110} MIMIC-IV hospital courses with an open-weight model running on the "
+          f"author's computer, measuring omission against the discharge instructions the clinicians wrote. The findings below are "
+          f"conditional on the measured validity of that judge; Chapter 8 interprets them.")
+    b += [P(s1)]
     b += [H2("9.2 Key Findings")]
-    kf = [f"**Pilot judge.** Against 1,781 expert-annotated sentences, the pilot judge's precision was {pct0(cal_all.any_precision)}, recall "
-          f"{pct0(cal_all.any_recall)}, kappa {f2(cal_all.any_kappa)} and AUROC {f2(cal_all.auroc_1_minus_p_entail)}; no evidence-aggregation "
-          f"rule raised kappa above {f2(var_all.best_kappa.max()) if var_all is not None else '—'}, so its pilot rates are not hallucination rates.",
+    kf = [f"**Pilot judge.** Against 1,781 expert-annotated sentences the pilot judge agreed with the experts at chance level (kappa "
+          f"{f2(cal_all.any_kappa)}, AUROC {f2(cal_all.auroc_1_minus_p_entail)}), and no evidence-aggregation rule raised kappa above "
+          f"{f2(var_all.best_kappa.max()) if var_all is not None else '—'}, so its pilot rates are not hallucination rates.",
           "**Evaluation artifacts.** Counting markdown header lines as claims and labeling abstentions as contradictions distort "
           "claim-level rates; both, and the misattribution of citation markers in the main study, were corrected."]
     if main and tu:
