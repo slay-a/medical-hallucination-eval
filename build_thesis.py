@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-build_thesis.py — Generate thesis_final.docx from results CSVs + plot PNGs.
+build_thesis.py: Generate thesis_final.docx from results CSVs + plot PNGs.
 """
 
 import os
@@ -33,7 +33,7 @@ def set_cell_bg(cell, hex_color):
     tcPr.append(shd)
 
 def set_cell_border(cell, **kwargs):
-    """kwargs: top, bottom, left, right — each a dict with sz, color, val."""
+    """kwargs: top, bottom, left, right. Each is a dict with sz, color, val."""
     tc   = cell._tc
     tcPr = tc.get_or_add_tcPr()
     tcBorders = OxmlElement("w:tcBorders")
@@ -167,8 +167,8 @@ add_heading(doc, "Abstract", level=1, space_before=0)
 add_body(doc,
     "Large language models (LLMs) have demonstrated remarkable capacity for generating "
     "coherent, patient-facing summaries of clinical documentation. However, their "
-    "propensity to produce unsupported or factually incorrect statements—commonly termed "
-    "hallucinations—poses serious safety risks in high-stakes medical contexts. This "
+    "propensity to produce unsupported or factually incorrect statements, commonly termed "
+    "hallucinations, poses serious safety risks in high-stakes medical contexts. This "
     "thesis presents a systematic empirical evaluation of hallucination rates in "
     "GPT-4o-mini generated medical summaries, comparing a zero-context baseline (E0) "
     "against a Retrieval-Augmented Generation system (E1) across 50 de-identified "
@@ -205,7 +205,7 @@ add_body(doc,
     "preferred by clinicians over manually authored versions on dimensions of fluency "
     "and completeness (Van Veen et al., 2024). Yet alongside these capabilities, a "
     "well-documented failure mode persists: LLMs fabricate factual content with "
-    "confident, fluent prose—a phenomenon known as hallucination (Ji et al., 2023)."
+    "confident, fluent prose, a phenomenon known as hallucination (Ji et al., 2023)."
 )
 add_body(doc,
     "In the medical domain, hallucinations are not merely embarrassing artifacts; they "
@@ -223,8 +223,8 @@ add_body(doc,
     "grounding the model's generation in retrieved passages from the source document, "
     "one can in principle constrain the hypothesis space of possible outputs and reduce "
     "the frequency of factual errors (Lewis et al., 2020). However, empirical "
-    "validation of this hypothesis at the claim level—as opposed to holistic fluency "
-    "ratings—remains sparse in the clinical summarization literature."
+    "validation of this hypothesis at the claim level, as opposed to holistic fluency "
+    "ratings, remains sparse in the clinical summarization literature."
 )
 add_body(doc,
     "This thesis addresses that gap with three primary contributions. First, we "
@@ -234,7 +234,7 @@ add_body(doc,
     "GPT-4o-mini summaries across 50 clinical transcriptions from MTSamples, reporting "
     "both UFR and CR with full per-sample distributions. Third, we provide a "
     "qualitative analysis of claim categories that RAG successfully resolves versus "
-    "those that remain persistently unsupported—informing the design of future "
+    "those that remain persistently unsupported, informing the design of future "
     "clinical NLP systems."
 )
 
@@ -286,7 +286,7 @@ add_body(doc,
     "iterative retrieval (Trivedi et al., 2022), and domain-specific applications in "
     "biomedicine (Zakka et al., 2024). In clinical summarization, Ji et al. (2023) "
     "argued that RAG is particularly well-suited because the entire relevant knowledge "
-    "base—the source clinical note—is available at inference time, removing the need "
+    "base, the source clinical note, is available at inference time, removing the need "
     "for an external corpus. However, empirical evaluation comparing RAG and baseline "
     "summaries at the claim level has not been systematically performed."
 )
@@ -298,8 +298,8 @@ add_body(doc,
     "answers them independently, and uses the answers to revise its output. CoVe "
     "demonstrated meaningful reductions in hallucination on Wikidata entity lookups "
     "and long-form generation tasks. While CoVe addresses hallucination via iterative "
-    "self-checking rather than retrieval, the underlying insight—that claim-level "
-    "verification is more effective than holistic self-revision—motivates the "
+    "self-checking rather than retrieval, the underlying insight, that claim-level "
+    "verification is more effective than holistic self-revision, motivates the "
     "claim-level evaluation framework adopted in this thesis. Combining RAG with "
     "CoVe-style post-hoc verification represents a natural direction for future work."
 )
@@ -315,7 +315,7 @@ add_body(doc,
     "Clinical transcriptions were drawn from MTSamples, a publicly available corpus of "
     "de-identified medical transcriptions spanning 40 specialty categories. We filtered "
     "for two document types most representative of structured clinical communication: "
-    "Consultation – History and Physical notes (40 documents) and Discharge Summaries "
+    "History and Physical consultation notes (40 documents) and Discharge Summaries "
     "(10 documents), yielding a combined pool of 624 eligible documents. Fifty samples "
     "were selected using a fixed random seed (seed = 42) to ensure reproducibility. "
     "Source documents ranged from 117 to 1,809 words in length "
@@ -450,7 +450,7 @@ for r_idx, (row_data, color) in enumerate(zip(data_rows, row_colors)):
 
 # Pct improved row
 pct_row = tbl1.rows[3]
-pct_data = ["% Improved", "—", "—", "—", "—", "—", "—", "42% / 72%"]
+pct_data = ["% Improved", "n/a", "n/a", "n/a", "n/a", "n/a", "n/a", "42% / 72%"]
 for c_idx, val in enumerate(pct_data):
     cell = pct_row.cells[c_idx]
     cell.text = val
@@ -531,8 +531,8 @@ add_body(doc,
     "the diagonal indicate samples where RAG reduced the contradiction rate; 36 of "
     "50 samples (72%) fall in this region. The degree of improvement varies "
     "substantially across samples (Δ CR ranging from −0.257 to +0.362), suggesting "
-    "that document characteristics—such as length, structural complexity, or the "
-    "density of specific numerical claims—moderate the effectiveness of retrieval."
+    "that document characteristics, such as length, structural complexity, or the "
+    "density of specific numerical claims, moderate the effectiveness of retrieval."
 )
 add_figure(doc, "plot_cr_scatter.png",
            "Figure 3. Per-sample scatter of E0 CR vs E1 CR. Points below the dashed diagonal "
@@ -561,8 +561,8 @@ add_heading(doc, "5. Discussion", level=1)
 
 add_heading(doc, "5.1 RAG Reduces Contradictions but Not Unsupported Claims", level=2)
 add_body(doc,
-    "The central empirical finding—that RAG significantly reduces CR (p < 0.001) "
-    "while leaving UFR statistically unchanged (p = 0.581)—reveals a nuanced "
+    "The central empirical finding, that RAG significantly reduces CR (p < 0.001) "
+    "while leaving UFR statistically unchanged (p = 0.581), reveals a nuanced "
     "picture of how retrieval augmentation affects LLM factuality. The CR reduction "
     "is theoretically coherent: when the model is explicitly provided with retrieved "
     "passages stating, for example, a patient's actual medication regimen, the model "
@@ -573,13 +573,13 @@ add_body(doc,
 add_body(doc,
     "The persistence of high UFR in both conditions, however, reveals a more "
     "fundamental limitation. The majority of unsupported claims in both E0 and E1 "
-    "are not contradictions—they are generic statements that no passage in the "
+    "are not contradictions; they are generic statements that no passage in the "
     "source document can verify. Examples from the qualitative analysis include "
     "boilerplate patient-education language ('it is important to take care of your "
     "mental health'), templated follow-up instructions ('reach out to your healthcare "
     "provider if you notice any changes'), and structural placeholders that the model "
     "generates to satisfy the expected summary format. These claims emerge from the "
-    "model's parametric memory—trained distributions over medical language—rather "
+    "model's parametric memory, trained distributions over medical language, rather "
     "than from the source document, and retrieval of additional source passages does "
     "not suppress them because they are not generated in response to source content "
     "in the first place."
@@ -613,13 +613,13 @@ add_body(doc,
     "These findings carry direct implications for the deployment of LLM-based "
     "summarization in clinical settings. First, the significant CR reduction "
     "achieved by RAG suggests that retrieval augmentation should be considered a "
-    "baseline requirement—not an optional enhancement—for any clinical summarization "
+    "baseline requirement, not an optional enhancement, for any clinical summarization "
     "system. The 48 percentage-point reduction in median CR (from 22.3% to 13.4%) "
     "translates to a meaningful decrease in the probability that any given claim "
     "in a patient-facing summary directly conflicts with the source record."
 )
 add_body(doc,
-    "Second, the persistent UFR—averaging 80.7% even with RAG—indicates that the "
+    "Second, the persistent UFR, averaging 80.7% even with RAG, indicates that the "
     "majority of claims in generated summaries cannot be verified against the source "
     "document. This does not necessarily mean all such claims are clinically "
     "erroneous; some may reflect appropriate inferential summarization. However, it "
@@ -634,7 +634,7 @@ add_body(doc,
     "of 50 documents, while sufficient to detect the large CR effect (Cohen's d ≈ 0.59), "
     "may be underpowered for detecting smaller UFR effects. Future work should evaluate "
     "at scale across the full MTSamples corpus and beyond. Second, the NLI classifier "
-    "used for labeling—while state-of-the-art for its size class—is not specifically "
+    "used for labeling, while state-of-the-art for its size class, is not specifically "
     "fine-tuned on clinical text and may systematically misclassify claims involving "
     "medical terminology or abbreviations. Third, the ground truth for claim labeling "
     "is itself model-generated, introducing a circular dependency: claims labeled "
@@ -702,7 +702,7 @@ refs = [
     "Van Veen, D., Van Uden, C., Blankemeier, L., Delbrouck, J. B., Aali, A., Bluethgen, C., ... & Rajpurkar, P. (2024). Adapted large language models can outperform medical experts in clinical text summarization. Nature Medicine, 30(4), 1134–1142.",
     "Williams, A., Nangia, N., & Bowman, S. (2018). A Broad-Coverage Challenge Corpus for Sentence Understanding through Inference. In Proceedings of NAACL 2018 (pp. 1112–1122).",
     "Xie, Q., Mullenbach, J., Shi, X., Xing, E., & Ho, J. C. (2023). Me LLaMA: Foundation Large Language Models for Medical Applications. arXiv:2402.12749.",
-    "Zakka, C., Shad, R., Chaurasia, A., Dalal, A. R., Kim, J. L., Moor, M., ... & Wornow, M. (2024). Almanac—Retrieval-Augmented Language Models for Clinical Medicine. NEJM AI, 1(2), AIoa2300068.",
+    "Zakka, C., Shad, R., Chaurasia, A., Dalal, A. R., Kim, J. L., Moor, M., ... & Wornow, M. (2024). Almanac: Retrieval-Augmented Language Models for Clinical Medicine. NEJM AI, 1(2), AIoa2300068.",
 ]
 
 for ref in refs:

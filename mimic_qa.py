@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-mimic_qa.py — Document-grounded question answering pilot on MIMIC hospital courses (proposal Task B).
+mimic_qa.py: Document-grounded question answering pilot on MIMIC hospital courses (proposal Task B).
 
 Three fixed questions per hospital course (medications, follow-up, warning signs) are answered by the LOCAL model
 under two conditions, with an explicit abstention instruction:

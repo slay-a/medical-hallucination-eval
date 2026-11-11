@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-minicheck_server.py — local scoring server for Bespoke-MiniCheck-7B (Tang, Laban and Durrett, 2024; Bespoke Labs, 2024)
+minicheck_server.py: local scoring server for Bespoke-MiniCheck-7B (Tang, Laban and Durrett, 2024; Bespoke Labs, 2024)
 running on Apple silicon through MLX.  Runs in the Python 3.13 environment (.venv-llm); the evaluation pipeline
 (.venv, Python 3.9) talks to it over localhost, so no text ever leaves the machine.
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-mimic_extra.py — Additional main-study generations requested in the advisor's review (October 2026).
+mimic_extra.py: Additional main-study generations (local model, credentialed data).
 
   --length-matched   E0 variant "short": full-note summarization without retrieval, asked for about 150 words, the length of
                      the E1 summaries, to test whether brevity alone lowers the judge-estimated unsupported fact rate.

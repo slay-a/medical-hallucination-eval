@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-ablations.py — Offline robustness analyses for the claim-level NLI judge.
+ablations.py: Offline robustness analyses for the claim-level NLI judge.
 
 No API calls.  Uses the locally cached models (all-MiniLM-L6-v2 bi-encoder and
 cross-encoder/nli-MiniLM2-L6-H768) and the stored generations in results/.

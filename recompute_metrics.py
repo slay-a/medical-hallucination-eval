@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-recompute_metrics.py — Rebuild every per-sample and aggregate metric from
+recompute_metrics.py: Rebuild every per-sample and aggregate metric from
 results/claims_all.csv with markdown section headers excluded from the claim set.
 
 Runs offline (no API or model calls) and is idempotent.  Run it after any

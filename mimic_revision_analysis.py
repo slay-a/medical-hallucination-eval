@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-mimic_revision_analysis.py — Analyses added in response to the advisor's review (October 2026).  Aggregates only.
+mimic_revision_analysis.py: Follow-up analyses of the main study.  Aggregates only.
 
   * results/mimic_variant_tests.csv   length-matched E0 ("short") against E0 and E1; E1 without citations against E0;
                                       E1b without citations against E1b (paired Wilcoxon tests, bootstrap 95% intervals)

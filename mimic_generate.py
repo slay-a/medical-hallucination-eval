@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-mimic_generate.py — Generate patient-facing summaries from MIMIC-IV hospital courses with a LOCAL language model.
+mimic_generate.py: Generate patient-facing summaries from MIMIC-IV hospital courses with a LOCAL language model.
 
 Documents: the 110 Brief Hospital Course texts of ann-pt-summ (100 + 10 validation), each paired with the
 doctor-written Discharge Instructions (the reference for coverage) and with expert unsupported-fact labels.

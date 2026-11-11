@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-audit_map_types.py — Fill the "what is wrong" type of P/U audit labels from the annotator's own free-text notes.
+audit_map_types.py: Fill the "what is wrong" type of P/U audit labels from the annotator's own free-text notes.
 
 The annotator recorded the reason for every partly or not supported label as free text; this script coarsens
 those reasons into the protocol's five categories with deterministic keyword rules.  The first category in

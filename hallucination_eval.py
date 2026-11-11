@@ -3,12 +3,12 @@
 Hallucination Evaluation in LLM-Based Medical Summarization
 ============================================================
 Compares:
-  E0 — Baseline GPT-4o-mini (no retrieval)
-  E1 — RAG-augmented GPT-4o-mini (top-3 chunks retrieved)
+  E0: Baseline GPT-4o-mini (no retrieval)
+  E1: RAG-augmented GPT-4o-mini (top-3 chunks retrieved)
 
 Metrics per summary:
-  UFR  — Unsupported Fact Rate  = (Not-Supported + Contradicted) / total_claims
-  CR   — Contradiction Rate     = Contradicted / total_claims
+  UFR: Unsupported Fact Rate  = (Not-Supported + Contradicted) / total_claims
+  CR:  Contradiction Rate     = Contradicted / total_claims
 
 Pipeline per sample:
   1. Generate summary (E0 or E1)
@@ -57,7 +57,7 @@ CHUNK_SIZE: int = 5        # sentences per RAG chunk
 TARGET_TYPES = ["Discharge Summary", "Consult - History and Phy."]
 
 # NLI label indices for cross-encoder/nli-MiniLM2-L6-H768
-# Model trained on MNLI → outputs [contradiction, entailment, neutral]
+# Model trained on MNLI, outputs [contradiction, entailment, neutral]
 IDX_CONTRADICTION = 0
 IDX_ENTAILMENT    = 1
 IDX_NEUTRAL       = 2
@@ -196,9 +196,9 @@ def label_claim(claim: str, evidence: List[str]) -> Tuple[str, float, float]:
     contradiction probability across all evidence items.
 
     Returns:
-        label       — 'Supported' | 'Contradicted' | 'Not-Supported'
-        p_entail    — best entailment probability
-        p_contradict — best contradiction probability
+        label:        'Supported' | 'Contradicted' | 'Not-Supported'
+        p_entail:     best entailment probability
+        p_contradict: best contradiction probability
     """
     if not evidence:
         return "Not-Supported", 0.0, 0.0
@@ -303,7 +303,7 @@ def call_gpt(system: str, user: str) -> str:
             return resp.choices[0].message.content.strip()
         except Exception as exc:
             wait = 2 ** attempt
-            log.warning(f"GPT call failed (attempt {attempt+1}/{GPT_RETRIES}): {exc} — retry in {wait}s")
+            log.warning(f"GPT call failed (attempt {attempt+1}/{GPT_RETRIES}): {exc}. Retrying in {wait}s")
             if attempt < GPT_RETRIES - 1:
                 time.sleep(wait)
     log.error("GPT call failed after all retries; returning empty string.")
@@ -321,8 +321,8 @@ def evaluate_summary(
     Split summary into claims, find evidence from source, NLI-label each claim.
 
     Returns:
-        claim_records — list of dicts with claim / evidence / label / scores
-        metrics       — UFR, CR, counts
+        claim_records: list of dicts with claim / evidence / label / scores
+        metrics:       UFR, CR, counts
     """
     source_sents = sentencize(source_text)
     claims       = sentencize(summary)
@@ -411,7 +411,7 @@ def main() -> None:
         description = str(row.get("description", "")).strip()
 
         if not source_text:
-            log.warning(f"Sample {doc_id} has empty transcription — skipping.")
+            log.warning(f"Sample {doc_id} has empty transcription, skipping.")
             continue
 
         log.info(f"[{idx+1}/{len(samples)}] {specialty} | {description[:70]}")
@@ -558,7 +558,7 @@ def _build_stats_table(df: pd.DataFrame) -> pd.DataFrame:
 def _print_results(stats: pd.DataFrame, df: pd.DataFrame, output_dir: Path) -> None:
     sep = "=" * 72
     print(f"\n{sep}")
-    print("  HALLUCINATION EVALUATION  —  E0 (Baseline) vs E1 (RAG)")
+    print("  HALLUCINATION EVALUATION:  E0 (Baseline) vs E1 (RAG)")
     print(sep)
     print(f"  Samples evaluated : {len(df)}")
     print(f"  Output directory  : {output_dir}\n")
@@ -574,10 +574,10 @@ Column glossary
   Pct_Improved = % samples where E1 < E0 for that metric
 
 Output files
-  results/summaries.csv            — per-sample summaries + metrics (E0 & E1)
-  results/claims_all.csv           — per-claim labels for every sample/condition
-  results/comparison_per_sample.csv — side-by-side E0 vs E1 per document
-  results/aggregate_statistics.csv  — this table
+  results/summaries.csv              per-sample summaries + metrics (E0 & E1)
+  results/claims_all.csv             per-claim labels for every sample/condition
+  results/comparison_per_sample.csv  side-by-side E0 vs E1 per document
+  results/aggregate_statistics.csv   this table
 {sep}
 """)
 

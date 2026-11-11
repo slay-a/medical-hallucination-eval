@@ -22,7 +22,7 @@ __pycache__/
 dist/
 build/
 
-# Data — large raw dataset (download separately)
+# Data: large raw dataset (download separately)
 mtsamples.csv
 
 # Thesis draft document
@@ -39,7 +39,7 @@ results/claims_partial.csv
 .env
 *.key
 
-# Credentialed (PhysioNet) derived outputs — never commit
+# Credentialed (PhysioNet) derived outputs: never commit
 results_private/
 data/
 

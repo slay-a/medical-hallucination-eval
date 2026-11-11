@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# setup.sh — Create venv and install all dependencies
+# setup.sh: Create venv and install all dependencies
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV="$SCRIPT_DIR/.venv"
 
 echo "────────────────────────────────────────────────────────────"
-echo " Medical Hallucination Eval — Environment Setup"
+echo " Medical Hallucination Eval: Environment Setup"
 echo "────────────────────────────────────────────────────────────"
 
 # 1. Create virtual environment
@@ -14,7 +14,7 @@ if [ ! -d "$VENV" ]; then
     echo "[1/4] Creating virtual environment at $VENV …"
     python3 -m venv "$VENV"
 else
-    echo "[1/4] Virtual environment already exists — skipping."
+    echo "[1/4] Virtual environment already exists, skipping."
 fi
 
 # 2. Activate

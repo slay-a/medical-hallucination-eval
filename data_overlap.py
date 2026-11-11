@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-data_overlap.py — Independence check between the judge-selection data and the main study.
+data_overlap.py: Independence check between the judge-selection data and the main study.
 
 Maps every ann-pt-summ source document (the 100 doctor-written and 10 validation hospital courses, which are also the 110
 main-study documents, and the 20 hospital courses behind the 100 LLM-generated summaries) to MIMIC-IV-Note discharge notes by

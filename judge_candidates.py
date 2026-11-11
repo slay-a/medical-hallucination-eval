@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-judge_candidates.py — Head-to-head evaluation of candidate claim judges against the ann-pt-summ
+judge_candidates.py: Head-to-head evaluation of candidate claim judges against the ann-pt-summ
 medical-expert annotations.  Local models only; MIMIC-derived text never leaves this machine.
 
 Candidates (all run on the same 1,781 summary sentences):

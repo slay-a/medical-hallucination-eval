@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-audit_sample.py — Draw the manual-audit sample of main-study claims and citations (local, credentialed data).
+audit_sample.py: Draw the manual-audit sample of main-study claims and citations (local, credentialed data).
 
 Design (course-clustered, so that the annotator reads each hospital course once):
   * 60 hospital courses drawn at random (seed 7) from the 110 main-study courses;

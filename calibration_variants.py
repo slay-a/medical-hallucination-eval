@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-calibration_variants.py — Does the way evidence is aggregated change how well the NLI
+calibration_variants.py: Does the way evidence is aggregated change how well the NLI
 judge agrees with medical experts?  Evaluated on the ann-pt-summ expert-annotated set.
 
 Variants (all use the same cross-encoder and the same summary sentences):

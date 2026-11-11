@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-audit_tool.py — Local, blind labeling tool for the manual audit (the data never leave this computer).
+audit_tool.py: Local, blind labeling tool for the manual audit (the data never leave this computer).
 
     .venv/bin/python3 audit_tool.py          then open  http://127.0.0.1:8765  in your own browser
 
@@ -65,10 +65,10 @@ details{margin-bottom:12px}summary{cursor:pointer;color:var(--acc)}.guide li{mar
 <input id="find" type="text" placeholder="Highlight a word in the course" oninput="hl()"><span class="saved" id="saved"></span></header>
 <main><section class="panel"><div class="tag">Hospital course</div><div id="course"></div></section>
 <section class="panel"><details open><summary>How to label (click to hide)</summary><ul class="guide">
-<li><b>S - Supported</b>: every fact in the statement is stated in the hospital course or follows directly from it. Plain-language paraphrase is fine.</li>
-<li><b>P - Partly supported</b>: the statement has several facts; at least one is supported and at least one is not.</li>
-<li><b>U - Not supported</b>: the main content is not in the course, or it contradicts the course.</li>
-<li><b>? - Unsure</b>: you cannot decide from the course.</li>
+<li><b>S (Supported)</b>: every fact in the statement is stated in the hospital course or follows directly from it. Plain-language paraphrase is fine.</li>
+<li><b>P (Partly supported)</b>: the statement has several facts; at least one is supported and at least one is not.</li>
+<li><b>U (Not supported)</b>: the main content is not in the course, or it contradicts the course.</li>
+<li><b>? (Unsure)</b>: you cannot decide from the course.</li>
 <li>For P and U, pick what is wrong. Generic advice or follow-up that the course does not mention counts as not supported; choose "generic advice / follow-up not in the course" for it.</li>
 <li><b>Citation checks</b>: does the quoted excerpt itself support the statement? Judge only the excerpt, not the whole course.</li>
 <li>Keys: click a statement, then <kbd>1</kbd> S, <kbd>2</kbd> P, <kbd>3</kbd> U, <kbd>4</kbd> ?; <kbd>n</kbd> next course, <kbd>b</kbd> previous course. Everything saves automatically.</li></ul></details>
@@ -94,11 +94,11 @@ function render(){const c=D.courses[ci];localStorage.setItem('ci:'+NS,ci);docume
  c.items.forEach((it,k)=>{const lab=L[it.item_id]||{};const div=document.createElement('div');div.className='item';div.tabIndex=0;div.dataset.id=it.item_id;
   div.onclick=()=>{focusId=it.item_id;document.querySelectorAll('.item').forEach(e=>e.classList.toggle('focus',e.dataset.id===focusId))};
   if(it.kind==='claim'){div.innerHTML=`<div class="tag">Statement ${k+1}</div><p class="claim">${esc(it.claim)}</p>`+
-   `<div class="btns">${[['S','S - Supported'],['P','P - Partly'],['U','U - Not supported'],['Q','? - Unsure']].map(([v,t])=>`<button class="b-${v} ${lab.label===v?'on':''}" onclick="setL('${it.item_id}','${v}')">${t}</button>`).join('')}</div>`+
+   `<div class="btns">${[['S','S (Supported)'],['P','P (Partly)'],['U','U (Not supported)'],['Q','? (Unsure)']].map(([v,t])=>`<button class="b-${v} ${lab.label===v?'on':''}" onclick="setL('${it.item_id}','${v}')">${t}</button>`).join('')}</div>`+
    `<select onchange="setT('${it.item_id}',this.value)" ${lab.label==='P'||lab.label==='U'?(lab.type?'':'style="border:2px solid #b3261e"'):'style="display:none"'}>${TYPES.map(([v,t])=>`<option value="${v}" ${lab.type===v?'selected':''}>${t||'What is wrong?'}</option>`).join('')}</select>`+
    `<input type="text" placeholder="Optional note" value="${esc(lab.note||'')}" onchange="setN('${it.item_id}',this.value)">`}
   else{div.innerHTML=`<div class="tag">Citation check ${k+1}</div><p class="claim">${esc(it.claim)}</p>`+it.excerpts.map((e,j)=>`<div class="ex"><b>Cited excerpt ${it.cited[j]}</b>\n${esc(e)}</div>`).join('')+
-   `<div class="btns">${[['Yes','Yes - supports'],['Partly','Partly'],['No','No'],['Q','? - Unsure']].map(([v,t])=>`<button class="b-${v} ${lab.label===v?'on':''}" onclick="setL('${it.item_id}','${v}')">${t}</button>`).join('')}</div>`+
+   `<div class="btns">${[['Yes','Yes (supports)'],['Partly','Partly'],['No','No'],['Q','? (Unsure)']].map(([v,t])=>`<button class="b-${v} ${lab.label===v?'on':''}" onclick="setL('${it.item_id}','${v}')">${t}</button>`).join('')}</div>`+
    `<input type="text" placeholder="Optional note" value="${esc(lab.note||'')}" onchange="setN('${it.item_id}',this.value)">`}
   box.appendChild(div)})}
 const pend=new Set();
@@ -107,7 +107,7 @@ async function flush(){if(!pend.size)return;const body={};for(const k of pend)bo
  try{ok=(await fetch('save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})).ok}catch(e){ok=false}
  const el=document.getElementById('saved');
  if(ok){pend.clear();el.textContent='saved';el.style.cssText=''}
- else{el.textContent='NOT SAVING - the tool is not running. Your clicks are kept in this page; restart the tool in Terminal and they will save by themselves.';el.style.cssText='color:#b3261e;font-weight:700'}}
+ else{el.textContent='NOT SAVING: the tool is not running. Your clicks are kept in this page; restart the tool in Terminal and they will save by themselves.';el.style.cssText='color:#b3261e;font-weight:700'}}
 function save(id){mirror();pend.add(id);document.getElementById('saved').textContent='saving...';flush()}
 setInterval(flush,5000);
 function setL(id,v){L[id]=Object.assign(L[id]||{},{label:v});if(v!=='P'&&v!=='U')delete L[id].type;save(id);const y=window.scrollY;render();window.scrollTo(0,y);focusId=id;

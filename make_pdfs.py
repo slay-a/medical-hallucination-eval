@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-make_pdfs.py — Generate progress_report.pdf and progress_slides.pdf
+make_pdfs.py: Generate progress_report.pdf and progress_slides.pdf
 in results/ using ReportLab.
 
 Run from the project root with the venv active:
@@ -72,7 +72,7 @@ pct_cr  = float(cr_row["Pct_Improved"])
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# FILE 1 — PROGRESS REPORT
+# FILE 1: PROGRESS REPORT
 # ══════════════════════════════════════════════════════════════════════════════
 from reportlab.lib.pagesizes import LETTER
 from reportlab.lib.units import inch
@@ -158,7 +158,7 @@ def build_report():
         rightMargin=1.0 * inch,
         topMargin=1.0 * inch,
         bottomMargin=0.85 * inch,
-        title="Thesis Progress Report — Hallucination Evaluation",
+        title="Thesis Progress Report: Hallucination Evaluation",
         author="Laya",
     )
 
@@ -195,13 +195,13 @@ def build_report():
 
     # ── 2. Work Completed ─────────────────────────────────────────────────────
     story.append(section("2. Work Completed", bullets([
-        "MTSamples data pipeline: loaded, filtered (Discharge Summary + Consult–H&P), "
+        "MTSamples data pipeline: loaded, filtered (Discharge Summary + Consult H&P), "
         "and sampled 50 clinical notes (seed=42) for reproducibility.",
         "E0 Baseline: GPT-4o-mini summaries generated from full clinical note (no retrieval).",
         "E1 RAG: GPT-4o-mini summaries generated from top-3 retrieved sentence chunks "
         "(all-MiniLM-L6-v2 bi-encoder).",
         "E2 Extractive Baseline: centroid-based sentence extraction (top-5 most "
-        "representative sentences by mean cosine similarity) — no LLM call.",
+        "representative sentences by mean cosine similarity), no LLM call.",
         "Claim-level NLI evaluation framework: spaCy sentence segmentation → "
         "bi-encoder evidence retrieval → cross-encoder/nli-MiniLM2-L6-H768 "
         "support classification → UFR / CR aggregation.",
@@ -266,7 +266,7 @@ def build_report():
         Paragraph(
             f"<b>RAG significantly reduces contradictions but not generic unsupported "
             f"facts.</b> The Contradiction Rate fell from {e0_cr:.4f} (E0) to "
-            f"{e1_cr:.4f} (E1) — a {cr_reduction_pct:.0f}% relative reduction "
+            f"{e1_cr:.4f} (E1), a {cr_reduction_pct:.0f}% relative reduction "
             f"(Wilcoxon p&nbsp;=&nbsp;0.0001, highly significant). By contrast, "
             f"the Unsupported Fact Rate showed no significant improvement "
             f"(Δ&nbsp;=&nbsp;{d_ufr:+.4f}, p&nbsp;=&nbsp;0.576), suggesting that "
@@ -275,8 +275,8 @@ def build_report():
             sty_body),
         Spacer(1, 4),
         Paragraph(
-            f"<b>E2 validates pipeline correctness.</b> The extractive baseline — "
-            f"which selects verbatim sentences from the source — achieved "
+            f"<b>E2 validates pipeline correctness.</b> The extractive baseline, "
+            f"which selects verbatim sentences from the source, achieved "
             f"UFR&nbsp;=&nbsp;{e2_ufr:.4f} and CR&nbsp;=&nbsp;{e2_cr:.4f}, "
             f"confirming that near-zero hallucination rates are achievable and that "
             f"the NLI pipeline correctly labels source-faithful content as Supported. "
@@ -300,7 +300,7 @@ def build_report():
     story.append(section("6. Remaining Work", bullets([
         "ann-pt-summ dataset: obtain and benchmark against annotated patient "
         "summary corpus once access is confirmed.",
-        "E3 — Verification stage (Chain-of-Verification / CoVe): implement "
+        "E3 verification stage (Chain-of-Verification / CoVe): implement "
         "post-hoc verification prompting to reduce residual Not-Supported claims.",
         "Error taxonomy: qualitative categorization of hallucination types "
         "(fabricated dosages, incorrect dates, invented diagnoses, etc.).",
@@ -345,7 +345,7 @@ def build_report():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# FILE 2 — SLIDES
+# FILE 2: SLIDES
 # ══════════════════════════════════════════════════════════════════════════════
 from reportlab.pdfgen import canvas as rl_canvas
 from reportlab.lib.pagesizes import landscape, A4
@@ -594,7 +594,7 @@ def build_slides():
          "systematic verification frameworks."),
         ("RAG as a mitigation:",
          "Retrieval-Augmented Generation constrains the model to retrieved source "
-         "passages — but its effect on hallucination rates is poorly quantified in "
+         "passages, but its effect on hallucination rates is poorly quantified in "
          "the medical domain."),
     ]
     for bold, rest in bullets2:
@@ -607,7 +607,7 @@ def build_slides():
     cy = draw_wrapped(c, CONTENT_X + 14, cy,
         "We lack a reproducible, claim-level metric framework that quantifies "
         "how often LLM-generated medical summaries introduce unsupported or "
-        "contradicted facts — and how much RAG helps.",
+        "contradicted facts, and how much RAG helps.",
         font="Helvetica-Oblique", size=10, color=HexColor("#333333"))
 
     c.showPage()
@@ -650,9 +650,9 @@ def build_slides():
 
     c.showPage()
 
-    # ── Slide 4: Methodology — Pipeline ───────────────────────────────────────
+    # ── Slide 4: Methodology, Pipeline ───────────────────────────────────────
     draw_chrome(c, 4, total_slides)
-    header_text(c, "Methodology — Evaluation Pipeline")
+    header_text(c, "Methodology: Evaluation Pipeline")
 
     cy = body_top() - 6
 
@@ -775,11 +775,11 @@ def build_slides():
 
     # Left column
     cy_l = cy
-    cy_l = section_label(c, left_x, cy_l, "Dataset — MTSamples")
+    cy_l = section_label(c, left_x, cy_l, "Dataset: MTSamples")
     cy_l -= 4
     for item in [
         "Public de-identified clinical transcriptions",
-        "Specialties: Discharge Summary + Consult–H&P",
+        "Specialties: Discharge Summary + Consult H&P",
         "50 samples, random seed = 42 (reproducible)",
         "Source docs: median ~300 words each",
     ]:
@@ -801,9 +801,9 @@ def build_slides():
     cy_r = section_label(c, right_x, cy_r, "Experimental Conditions")
     cy_r -= 4
     conds = [
-        ("E0 — Baseline", "GPT-4o-mini given full note, no retrieval"),
-        ("E1 — RAG",      "Top-3 retrieved chunks fed to GPT-4o-mini"),
-        ("E2 — Extractive","Top-5 centroid sentences, no LLM"),
+        ("E0: Baseline", "GPT-4o-mini given full note, no retrieval"),
+        ("E1: RAG",      "Top-3 retrieved chunks fed to GPT-4o-mini"),
+        ("E2: Extractive","Top-5 centroid sentences, no LLM"),
     ]
     for bold, rest in conds:
         cy_r = draw_bullet(c, right_x, cy_r, rest, font_size=9, bold_prefix=bold)
@@ -832,7 +832,7 @@ def build_slides():
 
     # ── Slide 6: 3-Way Results Table ──────────────────────────────────────────
     draw_chrome(c, 6, total_slides)
-    header_text(c, "3-Way Results — E0 vs E1 vs E2")
+    header_text(c, "3-Way Results: E0 vs E1 vs E2")
 
     cy = body_top() - 10
 
@@ -923,7 +923,7 @@ def build_slides():
 
     # ── Slide 7: CR Finding ───────────────────────────────────────────────────
     draw_chrome(c, 7, total_slides)
-    header_text(c, "CR Finding — RAG Significantly Reduces Contradictions")
+    header_text(c, "CR Finding: RAG Significantly Reduces Contradictions")
 
     cy = body_top() - 4
 
@@ -937,7 +937,7 @@ def build_slides():
         c.drawImage(str(PNG_CR), img_x, img_y, width=img_w, height=img_h,
                     preserveAspectRatio=True, mask="auto")
 
-    # Right column — stats + bullets
+    # Right column: stats + bullets
     rx = img_x + img_w + 22
     ry = cy
     c.setFillColor(C_PURPLE)
@@ -995,7 +995,7 @@ def build_slides():
 
     # ── Slide 8: UFR Finding ──────────────────────────────────────────────────
     draw_chrome(c, 8, total_slides)
-    header_text(c, "UFR Finding — E2 Validates Pipeline; RAG Alone Insufficient")
+    header_text(c, "UFR Finding: E2 Validates Pipeline; RAG Alone Insufficient")
 
     cy = body_top() - 4
 
@@ -1042,7 +1042,7 @@ def build_slides():
 
     ry -= 6
     interp2 = (
-        "RAG does not significantly reduce UFR — "
+        "RAG does not significantly reduce UFR: "
         "the model still produces ungrounded claims "
         "even when given retrieved context. "
         "E2's near-zero UFR confirms the NLI "
@@ -1146,7 +1146,7 @@ def build_slides():
         "RAG eliminates contradictions by anchoring the model to retrieved excerpts. "
         "However, claims that reference follow-up instructions, future events, or "
         "context not present in any retrieved chunk remain Not-Supported in both "
-        "conditions — suggesting a retrieval coverage gap rather than a generation "
+        "conditions, suggesting a retrieval coverage gap rather than a generation "
         "defect. E3 (verification prompting) targets these residual failures.",
         size=9, color=C_DGREY)
 
@@ -1168,7 +1168,7 @@ def build_slides():
     for item in [
         "Await PhysioNet credentialing approval and migrate pipeline to MIMIC-III notes.",
         "Obtain ann-pt-summ annotated dataset; compute inter-annotator agreement baseline.",
-        "Run E3 — Chain-of-Verification prompting on E0 outputs; measure ΔCR and ΔUFR.",
+        "Run E3: Chain-of-Verification prompting on E0 outputs; measure ΔCR and ΔUFR.",
         "Begin qualitative error taxonomy: categorize persistent Not-Supported claims by type.",
     ]:
         cy_l2 = draw_bullet(c, left_x2, cy_l2, item, font_size=9)
@@ -1178,10 +1178,10 @@ def build_slides():
     cy_r2 = section_label(c, right_x2, cy_r2, "Thesis Completion (Semester 2)")
     cy_r2 -= 4
     for item in [
-        "Chapter 2 — Literature Review (LLM hallucinations, RAG, NLI evaluation).",
-        "Chapter 3 — Methodology (finalize with MIMIC results if available).",
-        "Chapter 4 — Results (quantitative + qualitative findings for all conditions).",
-        "Chapter 5 — Discussion: limitations, future work, clinical implications.",
+        "Chapter 2: Literature Review (LLM hallucinations, RAG, NLI evaluation).",
+        "Chapter 3: Methodology (finalize with MIMIC results if available).",
+        "Chapter 4: Results (quantitative + qualitative findings for all conditions).",
+        "Chapter 5: Discussion (limitations, future work, clinical implications).",
         "Committee review, defense preparation, and final submission.",
     ]:
         cy_r2 = draw_bullet(c, right_x2, cy_r2, item, font_size=9)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-analyze.py — Figures and example tables for the thesis, built from results/*.csv.
+analyze.py: Figures and example tables for the thesis, built from results/*.csv.
 
 Runs offline.  Every figure is written to results/fig_*.png at 200 dpi.  Figures whose
 inputs are missing (e.g. ablations not yet run) are skipped with a message.

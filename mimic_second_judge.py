@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-mimic_second_judge.py — Score every main-study claim (base variants) with a second, independent judge and measure its
+mimic_second_judge.py: Score every main-study claim (base variants) with a second, independent judge and measure its
 agreement with the selected judge.  Default second judge: Bespoke-MiniCheck-7B through minicheck_server.py, in its
 best evidence mode from the judge selection study (top-3 retrieved sentences), at the threshold that study chose.
 

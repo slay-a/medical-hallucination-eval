@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-preprocessing.py — Shared text-preprocessing utilities for the evaluation pipeline.
+preprocessing.py: Shared text-preprocessing utilities for the evaluation pipeline.
 
 Two data-quality problems in the original pipeline are handled here.
 

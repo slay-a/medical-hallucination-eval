@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-finetune_mednli.py — Adapt an NLI cross-encoder to clinical language with MedNLI (PhysioNet, credentialed).
+finetune_mednli.py: Adapt an NLI cross-encoder to clinical language with MedNLI (PhysioNet, credentialed).
 
 MedNLI (Romanov & Shivade, 2018): 11,232 train / 1,395 dev / 1,422 test premise-hypothesis pairs written by
 clinicians from MIMIC-III notes, labels entailment / contradiction / neutral.  The data stay on this machine.

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-atomic_claims.py — Atomic-fact decomposition of claims, scored by the selected judge (local models only).
+atomic_claims.py: Atomic-fact decomposition of claims, scored by the selected judge (local models only).
 
   decompose --set expert   split each of the 1,781 expert-annotated summary sentences into atomic facts (local Qwen2.5-7B)
   decompose --set main     the same for every base-condition claim of the main study (E0, E1, E1b, E2, E3, REF)

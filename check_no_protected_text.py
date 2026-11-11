@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-check_no_protected_text.py — Verify that no tracked repository file contains text from the credentialed sources.
+check_no_protected_text.py: Verify that no tracked repository file contains text from the credentialed sources.
 
 Builds hashed 8-word shingles from every credentialed text used in this thesis (ann-pt-summ hospital courses and summaries,
 MedNLI sentences) and from every MIMIC-derived output kept in results_private/ (main-study generations, excerpts, answers,

@@ -1,5 +1,5 @@
 """
-citations.py — Attribute citation markers such as [2] or [1][3] to the sentences they belong to.
+citations.py: Attribute citation markers such as [2] or [1][3] to the sentences they belong to.
 
 The generators were told to cite "after each sentence".  Splitting the raw text into sentences directly is unreliable: a
 marker written before the period ("...pneumonia [1].") becomes a separate fragment that the sentence filter discards, and a

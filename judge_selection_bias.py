@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-judge_selection_bias.py — How optimistic is the agreement of the selected judge, and does it hold on independent documents?
+judge_selection_bias.py: How optimistic is the agreement of the selected judge, and does it hold on independent documents?
 
 Uses the per-sentence support scores of every candidate judge and evidence mode (results_private/judge_candidates_sentences.csv)
 and the expert labels of the 1,781 ann-pt-summ sentences.  The unit of independence is the hospital course: each doctor-written

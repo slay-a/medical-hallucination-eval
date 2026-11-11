@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run.sh — Full reproduction chain.
+# run.sh: Full reproduction chain.
 #   bash run.sh               # pilot generation (needs OPENAI_API_KEY) + evaluation + analysis
 #   bash run.sh --offline     # skip generation; recompute metrics, ablations, calibration, plots from stored results
 #   bash run.sh --main-study  # judge selection, MedNLI fine-tuning, MIMIC-IV main study and QA pilot (credentialed
@@ -37,7 +37,7 @@ if [ "$MODE" = "--main-study" ]; then
   python atomic_claims.py score
   python atomic_claims.py analyze
   python mimic_revision_analysis.py --windows
-  [ -f results_private/audit_items.json ] || python audit_sample.py   # then label with audit_tool.py (Appendix F of the thesis)
+  [ -f results_private/audit_items.json ] || python audit_sample.py   # then label with audit_tool.py (Appendix C of the thesis)
   [ -f results_private/audit_labels.json ] && python audit_sample.py --refresh-judge && python audit_summary.py
   python analyze.py
   python check_no_protected_text.py

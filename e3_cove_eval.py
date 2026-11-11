@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-e3_cove_eval.py — E3: retrieval-augmented generation + Chain-of-Verification (CoVe).
+e3_cove_eval.py: E3: retrieval-augmented generation + Chain-of-Verification (CoVe).
 
 Design (factored CoVe, Dhuliawala et al. 2023, adapted to document grounding):
   1. Draft        : the E1 (RAG) summary already stored in results/summaries.csv.

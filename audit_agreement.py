@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-audit_agreement.py — Intra-annotator agreement between the first audit pass (results_private/audit_labels.json)
+audit_agreement.py: Intra-annotator agreement between the first audit pass (results_private/audit_labels.json)
 and the second blind pass under the clarified rubric (results_private/audit_labels_v2.json), on the items labeled
 in both.  Claims use the S/P/U scale (pairs with an unsure label excluded); citation checks use Yes/Partly/No.
 The binary columns collapse the scales to supported vs not (S vs P+U; Yes vs Partly+No).  Writes only aggregates:

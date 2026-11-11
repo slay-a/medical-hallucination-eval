@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-verifact_eval.py — External validation of the selected judge on MIMIC-III-Ext-VeriFact-BHC (PhysioNet, credentialed).
+verifact_eval.py: External validation of the selected judge on MIMIC-III-Ext-VeriFact-BHC (PhysioNet, credentialed).
 
 The dataset contains 13,070 propositions decomposed from human-written and LLM-written Brief Hospital Course
 summaries of 100 MIMIC-III patients, each labeled Supported / Not Supported / Not Addressed against the patient's
@@ -24,8 +24,8 @@ over windows) and threshold tau.  An admission's notes span 15-606 windows again
 --topk K (default 5) scores each proposition only against the K windows ranked highest by --retriever: the
 judge-selection bi-encoder (dense; all-MiniLM-L6-v2, a window ranks by its most similar sentence), BM25 over windows,
 or both lists interleaved (hybrid, the default and the thesis setting: on the 11 shortest admissions it agreed with the
-clinicians better than dense, kappa .38 vs .31) — the retrieve-then-judge design of VeriFact's own raters.  --topk 0
-scores every window; the shortest admissions were scored that way too, and --summarize compares the two on them.
+clinicians better than dense, kappa .38 vs .31).  This is the retrieve-then-judge design of VeriFact's own raters.
+--topk 0 scores every window; the shortest admissions were scored that way too, and --summarize compares the two on them.
 --summarize --tag NAME writes a side file (results/verifact_judge_eval_NAME.csv) instead of the main one.
 Binary task: clinician label Supported vs not (Not Supported and Not Addressed both count as unsupported), matching
 the judge's flag = p_support < tau.  Invalid propositions (imperative/interrogative/incomplete/vague) are excluded,
@@ -61,7 +61,7 @@ def load_propositions(root):
 
 def load_premises(root, mode="patient"):
     """Reference text per key.  'patient': all of the patient's notes, keyed by subject_id.  'admission': the notes of
-    one admission, keyed by hadm_id — the reference that VeriFact's reference_only_admission raters use."""
+    one admission, keyed by hadm_id, the reference that VeriFact's reference_only_admission raters use."""
     ne = pd.read_csv(root / "reference_ehr" / "ehr_noteevents.csv.gz")
     t = pd.to_datetime(ne.CHARTTIME, errors="coerce").fillna(pd.to_datetime(ne.CHARTDATE, errors="coerce"))
     ne = ne.assign(_t=t).sort_values(["SUBJECT_ID", "_t", "ROW_ID"])
@@ -295,7 +295,7 @@ def summarize(args):
 
 def retriever_check(args):
     """Agreement with the clinicians for every scoring setting present in the score file (each ranking, and every window),
-    on the propositions all of them scored — the shortest admissions — written to results/verifact_retriever_check.csv.
+    on the propositions all of them scored (the shortest admissions), written to results/verifact_retriever_check.csv.
     This is how the ranking for the full run was chosen."""
     jname, tau_sel = args.judge or selected_judge()[0], selected_judge()[1]
     tau = args.tau if args.tau is not None else tau_sel

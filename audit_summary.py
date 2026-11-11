@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-audit_summary.py — Compare the selected judge with the manual labels of the audit (results_private/audit_labels.json).
+audit_summary.py: Compare the selected judge with the manual labels of the audit (results_private/audit_labels.json).
 
 Claims: a manual label of P (partly supported) or U (not supported) counts as unsupported, S as supported; "?" is excluded.
 Flagged and accepted claims were sampled in fixed numbers per condition (the sampling strata, stored with each item), so

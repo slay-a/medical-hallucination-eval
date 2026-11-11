@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-calibration_annptsumm.py — Validate the NLI judge against medical-expert annotations.
+calibration_annptsumm.py: Validate the NLI judge against medical-expert annotations.
 
 Data: ann-pt-summ v1.0.1 (Hegselmann et al., 2024; PhysioNet, credentialed access).
   hallucinations_generated_di.jsonl          100 LLM-generated patient summaries

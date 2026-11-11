@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-mimic_evaluate.py — Score the MIMIC generations (results_private/mimic_generations.jsonl) with a chosen judge.
+mimic_evaluate.py: Score the MIMIC generations (results_private/mimic_generations.jsonl) with a chosen judge.
 
 For every (condition, variant) and for the doctor-written reference summaries:
   UFR, CR             claim-level rates from the judge (header lines and abstentions excluded)

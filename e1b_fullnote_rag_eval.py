@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-e1b_fullnote_rag_eval.py — E1b: retrieval-augmented generation with the FULL note
+e1b_fullnote_rag_eval.py: E1b: retrieval-augmented generation with the FULL note
 plus retrieved excerpts (the variant the April draft described, but which was
 never run).  E1 proper shows the model only the excerpts.
 

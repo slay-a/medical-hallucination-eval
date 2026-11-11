@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
 """
-e2_extractive_eval.py — Add E2 (Extractive baseline) to the evaluation pipeline.
+e2_extractive_eval.py: Add E2 (Extractive baseline) to the evaluation pipeline.
 
 E2: centroid-based extractive summarisation using all-MiniLM-L6-v2.
   - Embed every sentence in the source document.
   - Rank each sentence by its mean cosine similarity to every other sentence
-    (centroid / most-representative criterion — no query needed).
+    (centroid / most-representative criterion, no query needed).
   - Take the top-5 sentences (in original order) as the "summary".
   - No LLM call, no generation.
 
 The same NLI pipeline used for E0/E1 is then applied:
-  claim segmentation (spaCy) → evidence retrieval (cos-sim) → NLI label
-  → UFR / CR aggregation.
+  claim segmentation (spaCy), evidence retrieval (cos-sim), NLI label,
+  then UFR / CR aggregation.
 
 Results are written into the existing CSVs:
-  results/summaries.csv           — E2 columns appended
-  results/claims_all.csv          — E2 claim rows appended
-  results/comparison_per_sample.csv — E2 columns added
-  results/aggregate_statistics.csv  — rebuilt with E0/E1/E2
+  results/summaries.csv              E2 columns appended
+  results/claims_all.csv             E2 claim rows appended
+  results/comparison_per_sample.csv  E2 columns added
+  results/aggregate_statistics.csv   rebuilt with E0/E1/E2
 
 Box plots (plot_ufr_boxplot.png, plot_cr_boxplot.png) are regenerated with
 three boxes.
@@ -135,7 +135,7 @@ def extractive_summary(source_text: str, k: int = TOP_K_EXTRACTIVE) -> str:
         return " ".join(sentences)
 
     enc = get_bi_encoder()
-    # normalize_embeddings=True → dot product == cosine similarity
+    # normalize_embeddings=True, so dot product == cosine similarity
     embeddings = enc.encode(
         sentences, convert_to_numpy=True, normalize_embeddings=True
     )
@@ -332,9 +332,9 @@ def regenerate_boxplots(df_cmp: pd.DataFrame) -> None:
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    C_E0 = "#E07B54"    # warm orange  — baseline
-    C_E1 = "#4C8BB5"    # steel blue   — RAG
-    C_E2 = "#5DBF6E"    # leaf green   — extractive
+    C_E0 = "#E07B54"    # warm orange, baseline
+    C_E1 = "#4C8BB5"    # steel blue, RAG
+    C_E2 = "#5DBF6E"    # leaf green, extractive
     GREY = "#888888"
 
     def make_boxplot(col_e0, col_e1, col_e2, ylabel, title, filename):
@@ -383,13 +383,13 @@ def regenerate_boxplots(df_cmp: pd.DataFrame) -> None:
     make_boxplot(
         "E0_UFR", "E1_UFR", "E2_UFR",
         "Unsupported Fact Rate",
-        "UFR Distribution — Baseline vs RAG vs Extractive",
+        "UFR Distribution: Baseline vs RAG vs Extractive",
         "plot_ufr_boxplot.png",
     )
     make_boxplot(
         "E0_CR", "E1_CR", "E2_CR",
         "Contradiction Rate",
-        "CR Distribution — Baseline vs RAG vs Extractive",
+        "CR Distribution: Baseline vs RAG vs Extractive",
         "plot_cr_boxplot.png",
     )
 
@@ -398,7 +398,7 @@ def regenerate_boxplots(df_cmp: pd.DataFrame) -> None:
 def print_3way_table(stats: pd.DataFrame, n_samples: int) -> None:
     sep = "=" * 82
     print(f"\n{sep}")
-    print("  3-WAY COMPARISON — E0 Baseline  ·  E1 RAG  ·  E2 Extractive")
+    print("  3-WAY COMPARISON: E0 Baseline  ·  E1 RAG  ·  E2 Extractive")
     print(sep)
     print(f"  Samples evaluated : {n_samples}\n")
 
@@ -453,7 +453,7 @@ def main() -> None:
         description = str(row.get("description", "")).strip()
 
         if not source_text:
-            log.warning(f"doc_id={doc_id} has empty transcription — skipping.")
+            log.warning(f"doc_id={doc_id} has empty transcription, skipping.")
             continue
 
         # Build extractive summary (no LLM)
