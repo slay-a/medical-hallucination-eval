@@ -272,6 +272,7 @@ class Renderer:
         self.labels, self.headings, self.tables, self.figures = collect_entries(blocks)
         self.pages = page_numbers or {}
         self.doc = Document()
+        set_properties(self.doc, meta.get("title", ""), meta.get("author", ""))
         self._break_next = False
         self._setup_styles()
 
@@ -557,6 +558,15 @@ class Renderer:
 
 
 # ───────────────────────────── PDF conversion & page lookup ─────────────────
+def set_properties(doc, title: str, author: str):
+    """Write the title and the author into the file properties. python-docx and python-pptx leave their template
+    defaults there, and LibreOffice copies them into the PDF."""
+    from datetime import datetime, timezone
+    cp = doc.core_properties
+    cp.title, cp.author, cp.last_modified_by, cp.comments = title, author, author, ""
+    cp.created = cp.modified = datetime.now(timezone.utc)
+
+
 def soffice_convert(docx_path: Path, outdir: Path) -> Path:
     outdir.mkdir(parents=True, exist_ok=True)
     cmd = ["soffice", "--headless", "--norestore", "--convert-to", "pdf", "--outdir", str(outdir), str(docx_path)]

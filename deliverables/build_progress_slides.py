@@ -26,8 +26,12 @@ RES = ROOT / "results"
 sys.path.insert(0, str(ROOT / "thesis"))
 from results_loader import Results, f3, f2, pct, pct0, fp  # noqa: E402
 from mimic_results import Mimic, JUDGE_NAMES, VAR as MVAR, _join  # noqa: E402
+from render_docx import set_properties  # noqa: E402
 
 W, H = 13.333 * 72, 7.5 * 72
+DOC_TITLE = ("Evaluating and Reducing Hallucinations in LLM-Based Medical Report Summarization: "
+             "Second Progress Report, Fall 2026")
+DOC_AUTHOR = "Srilaya Ponangi"
 NAVY, ORANGE, GREY = HexColor("#1F2A44"), HexColor("#E07B54"), HexColor("#666666")
 for name, fn in (("TNR", "Times New Roman.ttf"), ("TNRB", "Times New Roman Bold.ttf")):
     pdfmetrics.registerFont(TTFont(name, f"/System/Library/Fonts/Supplemental/{fn}"))
@@ -383,6 +387,7 @@ def draw_table(c, x, y, columns, rows, widths, font=9.5):
 
 def render_pdf(S, out: Path):
     c = canvas.Canvas(str(out), pagesize=(W, H))
+    c.setTitle(DOC_TITLE); c.setAuthor(DOC_AUTHOR); c.setSubject("COMP 698C"); c.setCreator("build_progress_slides.py")
     n = len(S)
     for i, s in enumerate(S, 1):
         if s["kind"] == "title":
@@ -434,6 +439,7 @@ def render_pdf(S, out: Path):
 
 def render_pptx(S, out: Path):
     prs = Presentation(); prs.slide_width, prs.slide_height = Inches(13.333), Inches(7.5)
+    set_properties(prs, DOC_TITLE, DOC_AUTHOR)
     blank = prs.slide_layouts[6]
     for s in S:
         sl = prs.slides.add_slide(blank)

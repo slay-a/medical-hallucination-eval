@@ -17,7 +17,7 @@ from docx.shared import Inches, Pt, RGBColor
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent
 sys.path.insert(0, str(ROOT / "thesis")); sys.path.insert(0, str(HERE))
-from render_docx import _font, _pf, _shade, _repeat_header, soffice_convert  # noqa: E402
+from render_docx import _font, _pf, _shade, _repeat_header, set_properties, soffice_convert  # noqa: E402
 from build_progress_slides import thesis_stats  # noqa: E402
 
 OUT = HERE / "Source_Code_and_Data_Description_Fall2026"
@@ -126,6 +126,8 @@ def main():
     ]
 
     doc = Document()
+    set_properties(doc, "Source Code and Data Description: Evaluating and Reducing Hallucinations in LLM-Based Medical "
+                        "Report Summarization", "Srilaya Ponangi")
     from render_docx import _set_margins
     _set_margins(doc.sections[0])
     st = doc.styles["Normal"]; st.font.name = "Times New Roman"; st.font.size = Pt(11)
