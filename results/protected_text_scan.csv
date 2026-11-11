@@ -25,11 +25,11 @@ calibration_variants.py,993,0,0,0
 check_no_protected_text.py,1150,0,0,0
 citations.py,436,0,0,0
 data_overlap.py,853,0,0,0
-deliverables/Progress_Slides_Fall2026.pdf,2860,0,0,0
-deliverables/Progress_Slides_Fall2026.pptx,1576,0,0,0
-deliverables/Source_Code_and_Data_Description_Fall2026.pdf,4519,0,0,0
-deliverables/build_progress_slides.py,5663,0,0,0
-deliverables/build_source_data_description.py,5136,0,0,0
+deliverables/Progress_Slides_Fall2026.pdf,2881,0,0,0
+deliverables/Progress_Slides_Fall2026.pptx,1597,0,0,0
+deliverables/Source_Code_and_Data_Description_Fall2026.pdf,4541,0,0,0
+deliverables/build_progress_slides.py,5684,0,0,0
+deliverables/build_source_data_description.py,5158,0,0,0
 e1b_fullnote_rag_eval.py,530,0,0,0
 e2_extractive_eval.py,2296,0,0,0
 e3_cove_eval.py,1276,0,0,0
@@ -135,7 +135,7 @@ results/progress_report.pdf,718,0,0,0
 results/progress_slides.pdf,1076,0,0,0
 results/progress_slides.pptx,1022,0,0,0
 results/protected_text_scan.csv,1253,0,0,0
-results/protected_text_scan_history.csv,4187,0,0,0
+results/protected_text_scan_history.csv,4239,0,0,0
 results/protected_text_scan_summary.csv,86,0,0,0
 results/verifact_ai_raters.csv,1713,0,0,0
 results/verifact_judge_eval.csv,278,0,0,0
