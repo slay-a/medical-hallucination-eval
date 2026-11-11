@@ -96,7 +96,7 @@ def generators(M):
 
 def slides(R: Results):
     M = Mimic()
-    cal = R.cal_row("all"); cov = R.cov.set_index("condition")
+    cal = R.cal_row("all")
     var = R.cal_var[R.cal_var.group == "all"].set_index("variant") if R.cal_var is not None else None
     jc = csv("judge_candidates.csv")
     best = jc[jc.group == "all"].sort_values("kappa", ascending=False).iloc[0] if jc is not None else None
@@ -145,48 +145,22 @@ def slides(R: Results):
                         ["RAG, verification and an extractive baseline", "Done in both studies: E0 full note, E1 RAG (excerpts), E1b RAG (course + excerpts), E3 RAG + Chain-of-Verification, E2 extractive"],
                         ["Coverage against a reference", "Done: share of the clinician's discharge-instruction sentences that the summary supports (judge run in reverse)"],
                         ["Citation accuracy", "Done: retrieval conditions cite an excerpt after every sentence; the judge checks each citation"],
-                        ["Retrieval ablations (chunk size, top-k, BM25 vs dense, citations)", "Done: six E1 variants on the same courses"],
+                        ["Retrieval ablations (chunk size, top-k, BM25 vs dense, citations)", "Done: six E1 variants on the same courses; no setting changed faithfulness after correction, coverage follows the amount of retrieved text"],
                         ["Question answering with abstention", "Piloted (exploratory): three questions per course, full course vs retrieved excerpts, 'Not stated in the note.' allowed"]],
                   widths=[4.4, 7.8]))
 
-    # ── 4 pipeline
-    S.append(dict(kind="image", title="Pipeline (identical judge for every condition)", image=RES / "fig_pipeline.png",
-                  caption="Every summary is split into claims; every claim is checked against the same source document by the same NLI judge."))
-
-    # ── 5 data
-    S.append(dict(kind="bullets", title="Data", bullets=[
-        f"MTSamples (public): {R.total_rows:,} transcriptions, {R.n_eligible} eligible consult and discharge notes, {R.n_docs} sampled (seed 42); pilot only",
-        "ann-pt-summ v1.0.1 (PhysioNet): 210 expert-annotated patient summaries (1,781 sentences, 423 unsupported-fact spans) for judge validation and selection; its 110 MIMIC-IV hospital courses with the clinicians' discharge instructions are the main-study corpus",
-        "MedNLI v1.0.0 (PhysioNet): 14,049 clinician-written premise and hypothesis pairs, used to adapt the judge",
-        "MIMIC-III-Ext-VeriFact-BHC v1.0.0 (PhysioNet): 12,614 propositions from brief hospital course summaries of 100 MIMIC-III patients, adjudicated by clinicians, with the admissions' notes; external check of the judge",
-        "MIMIC-IV-Note v2.2 (PhysioNet): the source of the hospital courses; used to check patient overlap between the expert set and the main study",
-        "Ethics: CITI training completed April 10, 2026; every credentialed text is processed by models on the author's laptop; nothing is sent to an API or to cloud storage; an automated scan finds no protected text in the repository"]))
-
-    # ── 6 pilot conditions
-    t10c, t30u, t20u = R.test("CR", "E0", "E1"), R.test("UFR", "E0", "E3"), R.test("UFR", "E0", "E2")
-    conds = [c for c in ["E0", "E1", "E1b", "E3", "E2"] if c in R.conds]
-    S.append(dict(kind="table", title=f"Pilot study: five conditions on {R.n_docs} MTSamples notes (GPT-4o-mini, MiniLM judge)",
-                  columns=["Metric"] + [COND[c] for c in conds],
-                  rows=[["UFR mean"] + [f3(R.mean(c, "UFR")) for c in conds],
-                        ["CR mean"] + [f3(R.mean(c, "CR")) for c in conds],
-                        ["Supported share of claims"] + [pct0((R.label_counts.loc[c, "Supported"] / R.label_counts.loc[c].sum())) for c in conds],
-                        ["Claims per summary"] + [f"{R.claims_per[c]:.1f}" for c in conds],
-                        ["Words per summary"] + [f"{R.words[c].mean():.0f}" for c in conds],
-                        ["Coverage of source sentences (cos ≥ 0.6)"] + [pct(cov.loc[c, "coverage_at_0_6"]) for c in conds]],
-                  widths=[3.0] + [1.85] * len(conds),
-                  note=(f"Paired Wilcoxon versus E0: E3 UFR {fp(t30u.p)}, E1 CR {fp(t10c.p)}, E2 UFR {fp(t20u.p)}. These rates come from a judge "
-                        f"that the next slide shows to be invalid, so the pilot establishes the pipeline and the artifacts it must handle, not hallucination rates.")))
-
-    # ── 7 pilot judge vs experts
-    S.append(dict(kind="table", title="Pilot headline: the small MiniLM judge disagrees with medical experts",
+    # ── 4 pilot: the judge disagrees with the experts
+    S.append(dict(kind="table", title=f"Pilot on {R.n_docs} public notes: the pipeline works, the small MiniLM judge does not",
                   columns=["Group", "Sentences", "Expert-flagged", "Judge-flagged", "Precision", "Recall", "Kappa", "AUROC"],
                   rows=[[r.group.replace("_", " "), f"{int(r.n_sentences):,}", pct(r.expert_flag_rate), pct(r.judge_UFR), f2(r.any_precision), f2(r.any_recall), f2(r.any_kappa), f2(r.auroc_1_minus_p_entail)]
                         for _, r in R.cal.iterrows() if r.group in ("all", "generated", "doctor_written", "gpt4_zero_shot", "llama_70b_original")],
                   widths=[2.2, 1.2, 1.5, 1.5, 1.2, 1.1, 1.0, 1.0],
-                  note=(f"On 1,781 expert-annotated sentences the pilot judge flags {pct0(cal.judge_UFR)} where the experts flag {pct0(cal.expert_flag_rate)}; kappa {f2(cal.any_kappa)} is chance level, "
-                        f"and no evidence-aggregation variant raised it above {f2(var.best_kappa.max()) if var is not None else '—'}. This motivated the judge selection study.")))
+                  note=(f"Five conditions were compared on {R.n_docs} MTSamples notes with GPT-4o-mini (UFR {f2(R.mean('E0','UFR'))} for full-note summaries, {f2(R.mean('E3','UFR'))} with verification, "
+                        f"{f2(R.mean('E2','UFR'))} for verbatim extracts), but on 1,781 expert-annotated sentences this judge flags {pct0(cal.judge_UFR)} where the experts flag {pct0(cal.expert_flag_rate)}: "
+                        f"kappa {f2(cal.any_kappa)} is chance level, and no evidence-aggregation variant raised it above {f2(var.best_kappa.max()) if var is not None else '—'}. "
+                        f"The pilot therefore establishes the pipeline and the artifacts it must handle (header lines, abstentions, citation markers), not hallucination rates.")))
 
-    # ── 8/9 judge selection
+    # ── 5 judge selection
     if jc is not None:
         allr = jc[jc.group == "all"].sort_values("kappa", ascending=False)
         S.append(dict(kind="table", title="Judge selection: seven candidates scored against the expert annotations (1,781 sentences)",
@@ -195,11 +169,10 @@ def slides(R: Results):
                       widths=[4.0, 2.0, 1.1, 1.3, 1.1, 1.1, 1.3],
                       note=(f"Rule fixed in advance: highest kappa on all sentences, threshold chosen on the other subset. Selected: {jname} ({MODE.get(best['mode'])}), "
                             f"kappa {f2(best.kappa)}" + (f" ({f2(cv_kappa)} under nested cross-validation)" if cv_kappa is not None else "")
-                            + f", AUROC {f2(best.auroc)}. Moderate agreement, so main-study rates are judge-estimated and the paired comparisons carry the weight.")))
-        S.append(dict(kind="image", title="Judge selection: AUROC and kappa by candidate and evidence mode", image=RES / "fig_judges.png",
-                      caption="Model size and training data matter more than the aggregation rule; whole-course evidence helps the large models. MedNLI fine-tuning raised MedNLI accuracy but not agreement with the experts."))
+                            + f", AUROC {f2(best.auroc)}. Model size and training data matter more than the aggregation rule; MedNLI fine-tuning raised MedNLI accuracy but not agreement with the experts. "
+                            f"Moderate agreement, so main-study rates are judge-estimated and the paired comparisons carry the weight.")))
 
-    # ── 10 VeriFact external check
+    # ── 6 VeriFact external check
     if E is not None:
         al = E.loc["all"]
         sub = [("all", "All propositions"), ("author=human", "Human-written summaries"), ("author=llm", "LLM-written summaries"), ("type=claim", "Claims"), ("type=sentence", "Sentences")]
@@ -218,14 +191,15 @@ def slides(R: Results):
         S.append(dict(kind="table", title="External check: the selected judge on clinician-labeled propositions (VeriFact-BHC, Section 6.7)",
                       columns=["Propositions", "n", "AUROC", "Sensitivity", "Specificity", "Kappa"], rows=rows, widths=[3.4, 1.4, 1.5, 1.6, 1.6, 1.4], note=note))
 
-    # ── 11 main study design
-    S.append(dict(kind="bullets", title="Main study design: MIMIC-IV hospital courses", bullets=[
-        "110 de-identified Brief Hospital Course sections, each paired with the discharge instructions the treating clinician wrote",
-        "Generator: Qwen2.5-7B-Instruct (4-bit) served on the laptop through an OpenAI-compatible interface; the same prompts, decoding and retrieval rerun with Llama-3.1-8B-Instruct and Mistral-7B-Instruct-v0.3",
-        "Same five conditions; retrieval conditions must cite the excerpt behind every sentence; 'Not stated in the note.' allowed",
-        f"Judge: {jname} with whole-course evidence (400-token windows, τ = {M.tau:.2f}); judge-estimated UFR and CR per summary; the clinicians' instructions scored as a reference",
-        "Coverage of the clinician's instructions (judge in reverse), citation accuracy, six retrieval ablations, length-matched and no-citation variants, repeated generations",
-        "Checks of the judge on these outputs: blind manual audit in two passes, second judge, second threshold, atomic facts, overlapping windows, external check on VeriFact-BHC"]))
+    # ── 7 main study: data and design
+    S.append(dict(kind="bullets", title="Main study: data and design", bullets=[
+        "Corpus: 110 de-identified MIMIC-IV Brief Hospital Course sections (ann-pt-summ, PhysioNet), each paired with the discharge instructions the treating clinician wrote; the same dataset's 210 expert-annotated summaries validated the judge, and no patient is shared between the two",
+        "Generator: Qwen2.5-7B-Instruct (4-bit) served on the laptop; the same prompts, decoding and retrieval rerun with Llama-3.1-8B-Instruct and Mistral-7B-Instruct-v0.3",
+        "Conditions: E0 full note; E1 RAG with excerpts only; E1b RAG with the course and the excerpts; E3 RAG with Chain-of-Verification; E2 extractive; retrieval conditions cite the excerpt behind every sentence, and 'Not stated in the note.' is allowed",
+        f"Judge: {jname}, whole-course evidence in 400-token windows, τ = {M.tau:.2f}; judge-estimated UFR and CR per summary; the clinicians' own instructions scored as a reference",
+        "Measures: coverage of the clinician's instructions (judge in reverse), citation accuracy, six retrieval ablations, length-matched and no-citation variants, repeated generations, question-answering pilot",
+        "Checks of the judge on these outputs: blind manual audit in two passes, second judge, second threshold, atomic facts, overlapping windows",
+        "Ethics: MIMIC-IV-Note, ann-pt-summ, MedNLI and VeriFact-BHC are PhysioNet credentialed data (CITI training completed); every text is processed by models on the author's laptop, nothing is sent to an API or to cloud storage, and an automated scan finds no protected text in the repository"]))
 
     if M.ok:
         mc = [c for c in ["E0", "E1", "E1b", "E3", "E2", "REF"] if c in M.conds]
@@ -238,7 +212,7 @@ def slides(R: Results):
             if not r.cited_claims:
                 return None
             return r.cited_claims / r.claims_total, r.cite_correct / r.cited_claims
-        # ── 12 main results
+        # ── 8 main results
         S.append(dict(kind="table", title=f"Main study results (n = {M.n_docs} hospital courses; judge: {M.judge_name()}, τ = {M.tau:.2f})",
                       columns=["Metric"] + [COND[c] for c in mc],
                       rows=[["UFR mean (judge-estimated)"] + [cell(c, "UFR_mean", f3) for c in mc],
@@ -251,9 +225,7 @@ def slides(R: Results):
                       widths=[3.2] + [1.55] * len(mc),
                       note=" ".join(f"{c} vs E0: UFR {fp(M.test('UFR', c).p)}, CR {fp(M.test('CR', c).p)}, coverage {fp(M.test('coverage_ref', c).p)}." for c in mc if c not in ("E0", "REF") and M.test("UFR", c) is not None)
                            + " Paired two-sided Wilcoxon tests on the same courses; the primary family of twelve tests is Holm-adjusted in the thesis."))
-        # ── 13 distributions
-        S.append(dict(kind="image2", title="Main study: per-document distributions", images=[RES / "fig_mimic_box.png", RES / "fig_mimic_coverage.png"]))
-        # ── 14 what the results say
+        # ── 9 what the results say
         bl = [f"Grounding: E1, E1b and E3 lowered the judge-estimated UFR from {f3(M.mean('E0','UFR'))} to {f3(M.mean('E1','UFR'))}, {f3(M.mean('E1b','UFR'))} and {f3(M.mean('E3','UFR'))} (all {fp(max(M.test('UFR', c).p for c in ('E1','E1b','E3')))}); the three do not differ from one another; CR did not change",
               f"Omission: E1 covered {pct0(M.mean('E1','coverage_ref'))} of the clinician's sentences and E3 {pct0(M.mean('E3','coverage_ref'))}, against {pct0(M.mean('E0','coverage_ref'))} for E0; E1b {pct0(M.mean('E1b','coverage_ref'))}"
               + (", within 5 points of E0 by two one-sided tests" if eq is not None and len(eq[(eq.comparison == "E1b vs E0") & (eq.equivalent_at_margin.astype(str) == "True")]) else ""),
@@ -265,7 +237,7 @@ def slides(R: Results):
         if M.qa_tot is not None:
             bl.append(f"Question answering (exploratory): retrieval raised abstention from {pct0(M.qa_tot.loc['QA-E0','abstention_rate'])} to {pct0(M.qa_tot.loc['QA-E1','abstention_rate'])} and lowered the UFR of the answers given ({f3(M.qa_tot.loc['QA-E0','UFR_mean'])} to {f3(M.qa_tot.loc['QA-E1','UFR_mean'])}); warning-sign questions are rarely answerable from the course")
         S.append(dict(kind="bullets", title="Main study: what the results say", bullets=bl))
-        # ── 15 manual audit
+        # ── 10 manual audit
         if A is not None:
             ca = [c for c in ("E0", "E1", "E1b", "E3") if c in A.index]
             rows = [[COND[c], str(int(A.loc[c, "n_labeled"])), f"{pct(A.loc[c, 'manual_unsupported'])} ({pct(A.loc[c, 'manual_unsupported_lo'])} to {pct(A.loc[c, 'manual_unsupported_hi'])})",
@@ -285,7 +257,7 @@ def slides(R: Results):
             S.append(dict(kind="table", title="Manual audit of the judge on the main-study claims (Section 7.9)",
                           columns=["Condition", "Labeled", "Manual unsupported (95% CI)", "Judge flags", "Precision", "False omission", "Sensitivity", "Specificity", "Kappa"],
                           rows=rows, widths=[1.7, 0.9, 2.6, 1.1, 1.1, 1.2, 1.2, 1.2, 1.0], note=note))
-        # ── 16 robustness: generators and the second judge
+        # ── 11 robustness: generators and the second judge
         if gens:
             gconds = [c for c in ("E0", "E1", "E1b", "E3", "REF") if all(c in gb.index for _, gb, _, _ in gens)]
             rows = [[COND[c], f3(M.mean(c, "UFR"))] + [f3(gb.loc[c, "UFR_mean"]) for _, gb, _, _ in gens] for c in gconds]
@@ -308,23 +280,7 @@ def slides(R: Results):
             note += "The reductions also hold at threshold 0.5 and in each of three generations on 40 courses."
             S.append(dict(kind="table", title="Robustness: the same comparison under three generators (judge-estimated UFR, Section 7.10)",
                           columns=["Condition", "Qwen2.5-7B (main)"] + [g for g, _, _, _ in gens], rows=rows, widths=[3.2] + [2.6] * (1 + len(gens)), note=note))
-        # ── 17 ablations
-        if M.abl is not None and len(M.abl):
-            rows = []
-            for v in [x for x in MVAR if x != "base"]:
-                r = {m: M.ablation(m, v) for m in ("UFR", "CR", "coverage_ref", "citation_accuracy")}
-                rows.append([MVAR[v]] + [(f"{r[m].delta_mean:+.3f} ({fp(r[m].p)})" if r[m] is not None and not pd.isna(r[m].p) else "—") for m in ("UFR", "CR", "coverage_ref", "citation_accuracy")])
-            S.append(dict(kind="table", title="Retrieval ablations: paired difference from the E1 base configuration", columns=["Variant", "Δ UFR (p)", "Δ CR (p)", "Δ coverage (p)", "Δ citation accuracy (p)"],
-                          rows=rows, widths=[3.6, 2.1, 2.1, 2.1, 2.2],
-                          note="Base: 5-sentence chunks, top-3, dense retrieval, citations required. Negative UFR and CR differences and positive coverage and citation differences favor the variant. Coverage follows the amount of retrieved text; after Holm adjustment within each measure no variant changed UFR or CR."))
-        # ── 18 QA
-        if M.qa_tot is not None:
-            S.append(dict(kind="table", title="Question-answering pilot (exploratory; three questions per course)", columns=["Condition", "Question", "n", "Abstained", "UFR", "CR", "Supported by clinician's instructions", "Words"],
-                          rows=[[r.condition, r.question.replace("_", " "), str(int(r.n)), pct0(r.abstention_rate), f3(r.UFR_mean), f3(r.CR_mean), pct0(r.ref_support_mean), f"{r.words_mean:.0f}"]
-                                for _, r in M.qa.sort_values(["condition", "question"]).iterrows()],
-                          widths=[1.3, 1.6, 0.7, 1.2, 1.0, 1.0, 3.2, 0.9],
-                          note="QA-E0 answers from the full hospital course; QA-E1 from the three chunks retrieved with the question. UFR and CR on answered questions only. There are no clinician-written gold answers, so the pilot shows how abstention and grounding interact, not whether answers are correct."))
-        # ── 19 hypotheses
+        # ── 12 hypotheses
         t10c_, t31u_ = R.test("CR", "E0", "E1"), R.test("UFR", "E1", "E3")
         s31 = st2[(st2.measure == "UFR_second") & (st2.comparison == "E3 vs E1")].iloc[0] if st2 is not None and "measure" in st2.columns and len(st2[(st2.measure == "UFR_second") & (st2.comparison == "E3 vs E1")]) else None
         h2v = "Supported for unsupported facts on hospital courses" + (f" with Qwen2.5-7B and {_join(short(repl))}, not with {_join(short(norepl))}" if repl and norepl else "") + "; not for contradictions"
@@ -344,43 +300,28 @@ def slides(R: Results):
                       widths=[3.0, 3.0, 3.6, 2.6],
                       note="Paired two-sided Wilcoxon tests on the same documents. Pilot effects describe a judge later shown invalid and are not interpreted further."))
 
-    # ── 20 thesis status
-    tsline = (f"Revised draft: {ts['pages']} pages in CSUN format (163 in the October draft); {ts['tables']} tables, {ts['figures']} figures, {ts['refs']} references; "
-              if ts else "Revised draft in CSUN format; ")
-    S.append(dict(kind="bullets", title="Thesis status", bullets=[
-        tsline + "nine chapters (Introduction, Literature Review, Data, Methodology, Pilot Study, Selecting a Valid Judge, Main Study, Discussion, Conclusion) and Appendices A to C (prompts; code repository and reproduction; manual audit protocol)",
-        "Written in the form of the department's recent theses: each result is a table or figure with a short paragraph, the methods state what was done, and the discussion interprets without repeating the results; every table, analysis and number of the October draft is kept",
-        "All experiments promised in the proposal are complete, plus the manual audit, the second judge, two further generators and the external check of the judge",
-        "Committee confirmed (Dr. Wang, chair; Dr. McIlhenny; Dr. Ebrahimi); ETD planning form submitted",
-        "Every table and figure is regenerated by one command from the result files; these slides and the source code and data description are built the same way"]))
-
-    # ── 21 changes since the review
-    S.append(dict(kind="bullets", title="What changed since the October review", bullets=[
+    # ── 13 thesis status and what changed since the review
+    tsline = (f"Revised draft: {ts['pages']} pages in CSUN format; {ts['tables']} tables, {ts['figures']} figures, {ts['refs']} references; " if ts else "Revised draft in CSUN format; ")
+    S.append(dict(kind="bullets", title="Thesis status and what changed since the October review", bullets=[
+        tsline + "nine chapters (Introduction, Literature Review, Data, Methodology, Pilot Study, Selecting a Valid Judge, Main Study, Discussion, Conclusion) and Appendices A to C (prompts; code repository and reproduction; manual audit protocol); every table and figure is regenerated by one command from the result files",
+        "Length: 163 to 105 pages by rewriting in the compact form of recent CSUN theses (each result a table or figure with a short paragraph; methods state what was done; the discussion interprets without repeating the results), with nothing removed from the evidence",
         "Judge-estimated versus confirmed rates: every rate is labeled judge-estimated; a blind manual audit in two passes measures the judge on these outputs and confirms the E1b reduction directly (Sections 4.10.5, 7.9)",
-        f"Judge evaluation: claim splitting corrected (citation markers, merged headers); selection optimism measured by nested cross-validation" + (f" (kappa {f2(cv_kappa)})" if cv_kappa is not None else "") + "; no patient shared between the expert set and the main study; external check on VeriFact-BHC (Sections 3.5, 6.5, 6.7)",
+        "Judge evaluation: claim splitting corrected (citation markers, merged headers); selection optimism measured by nested cross-validation" + (f" (kappa {f2(cv_kappa)})" if cv_kappa is not None else "") + "; no patient shared between the expert set and the main study; external check on VeriFact-BHC (Sections 3.5, 6.5, 6.7)",
         "Confounds and inference: length-matched E0, E1b without the citation instruction, repeated generations; equivalence of E1b's coverage tested with two one-sided tests; E2 and the clinicians' instructions reported as references, not bounds (Sections 7.4, 7.5, 7.8)",
         "Robustness: second threshold, second judge with conservative and inclusive rules as alternative estimates, atomic facts, overlapping windows, verifier retrieval failures, and two further generators, with conclusions stated per generator (Section 7.10)",
-        "Question answering marked exploratory; conclusions qualified by the judge's measured validity; reproducibility appendix with model revisions, seeds and what each result needs (Appendix B)",
-        "Length: 163 to 105 pages by rewriting in the compact form of the sample theses, with nothing removed from the evidence"]))
+        "Question answering marked exploratory; conclusions qualified by the judge's measured validity; reproducibility appendix with model revisions, seeds and what each result needs (Appendix B)"]))
 
-    # ── 22 plan
-    S.append(dict(kind="table", title="Plan to the defense (CSUN ETD process)", columns=["Milestone", "Status"],
-                  rows=[["ETD planning form submitted; committee confirmed", "Done, October 9, 2026"],
+    # ── 14 plan and requests
+    S.append(dict(kind="table", title="Plan to the defense (CSUN ETD process) and requests", columns=["Milestone", "Status"],
+                  rows=[["ETD planning form submitted; committee confirmed (Dr. Wang, chair; Dr. McIlhenny; Dr. Ebrahimi)", "Done, October 9, 2026"],
                         ["Second draft and progress report; advisor's review received", "Done, October 12 and 15, 2026"],
                         ["Revised draft answering the review, response memo, these slides and the description", f"Done, {date.today():%B %d, %Y}"],
                         ["Advisor approval; Canvas upload; Turnitin similarity 20% or lower", "Next"],
                         ["Draft to the committee with at least two weeks of review; Doodle poll with 1-hour slots", "After approval"],
                         ["Defense on CSUN Zoom (40 min presentation, 10 min Q&A, 10 min deliberation); slides to the advisor one week before", "Before the ETD deadline"],
                         ["Final ETD upload after revisions; committee approval in the ETD system", "December 4, 2026, 5 pm"]], widths=[7.6, 4.6],
-                  note="The committee approves inside the ETD system, so the defense must be finished before the December 4 upload; the remaining dates are set with the advisor."))
-
-    # ── 23 risks and requests
-    S.append(dict(kind="bullets", title="Risks and requests", bullets=[
-        (f"Judge validity: the selected judge agrees with experts moderately (kappa {f2(best.kappa)}) and understates unsupported content on the main-study outputs; every rate is judge-estimated, the audit, the second judge and the external check bound the error, and the conclusions rest on paired comparisons" if best is not None
-         else "Judge validity: the pilot judge agrees with experts at chance level; the judge selection study addresses this"),
-        "Generality: the grounding effect replicated under " + (_join(short(repl)) if repl else "no further generator") + (f" but not under {_join(short(norepl))}" if norepl else "") + ", so it is stated per generator; the pilot and the main study used different generators and are compared qualitatively",
-        "Schedule: advisor approval, the Turnitin check, two weeks of committee review and the defense must all precede the December 4 ETD upload",
-        "Requests to the advisor: review the revised draft and the response memo; approve the draft for distribution to the committee; advise on the defense date"]))
+                  note=("The committee approves inside the ETD system, so the defense must be finished before the December 4 upload; the remaining dates are set with the advisor. "
+                        "Requests to the advisor: review the revised draft and the response memo; approve the draft for distribution to the committee; advise on the defense date.")))
     return S
 
 
