@@ -1,4 +1,4 @@
-"""mimic_results.py — access layer for the main-study result files (results/mimic_*.csv) used by ch_mimic, ch8_9,
+"""mimic_results.py: access layer for the main-study result files (results/mimic_*.csv) used by ch_mimic, ch8_9,
 the abstract and the slides. Every accessor tolerates missing files so that the thesis still builds before the run."""
 from pathlib import Path
 
@@ -88,7 +88,7 @@ class Mimic:
 
     @staticmethod
     def rel(t):
-        return f"{abs(t.rel_change_mean):.0f} percent" if t is not None and not np.isnan(t.rel_change_mean) else "—"
+        return f"{abs(t.rel_change_mean):.0f} percent" if t is not None and not np.isnan(t.rel_change_mean) else "n/a"
 
     # ---- retrieval ablations: which variants changed a metric significantly
     def ablation_tests(self, metric):
@@ -161,7 +161,7 @@ class Mimic:
         return json.load(open(f)) if f.exists() else None
 
     def judge_name(self):
-        return JUDGE_NAMES.get(self.judge, self.judge or "—")
+        return JUDGE_NAMES.get(self.judge, self.judge or "n/a")
 
     def judge_row(self):
         jc = _csv("judge_candidates.csv")

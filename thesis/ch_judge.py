@@ -1,4 +1,4 @@
-"""ch_judge.py — Chapter 6: Selecting a Valid Judge (candidate judges scored against the expert annotations; MedNLI adaptation)."""
+"""ch_judge.py: Chapter 6: Selecting a Valid Judge (candidate judges scored against the expert annotations; MedNLI adaptation)."""
 import json
 from pathlib import Path
 
@@ -272,7 +272,7 @@ def _retriever_choice_sentence(k, n_cap_texts=None):
 
 
 def verifact_blocks():
-    """6.7 External check on clinician-labeled propositions — rendered only when results/verifact_judge_eval.csv exists."""
+    """6.7 External check on clinician-labeled propositions. Rendered only when results/verifact_judge_eval.csv exists."""
     ev = _res("verifact_judge_eval.csv")
     if ev is None or not len(ev) or "subset" not in ev.columns or "all" not in set(ev.subset):
         return []

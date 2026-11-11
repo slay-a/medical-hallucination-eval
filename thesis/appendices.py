@@ -1,4 +1,4 @@
-"""appendices.py — Appendices A to E."""
+"""appendices.py: Appendices A to E."""
 import sys
 from pathlib import Path
 
@@ -42,7 +42,7 @@ def blocks(R: Results) -> list:
           ("pni", "System prompt:"), ("code", mq.SYSTEM), ("pni", "User prompt, full course (QA-E0):"), ("code", mq.USER_FULL),
           ("pni", "User prompt, retrieved excerpts (QA-E1):"), ("code", mq.USER_EXCERPTS),
           ("pni", "The three questions:"), ("code", "\n".join(f"{k}: {v}" for k, v in mq.QUESTIONS.items())),
-          ("h2", "A.7 Variants Added in Response to the Review"),
+          ("h2", "A.7 Additional Variants of the Main Study"),
           ("pni", "Length-matched E0, user prompt (the system prompt is that of E0 in A.5):"), ("code", mx.USER_FULL_SHORT),
           ("pni", "E1b without citations: the E1b prompts of A.5 with the citation instruction left out. Repeated generations use the base prompts with fixed seeds."),
           ("h2", "A.8 Atomic-Fact Decomposition"),
@@ -128,7 +128,7 @@ def blocks(R: Results) -> list:
           ("pni", "The audit was performed in two blind passes. A review of the first pass found paraphrased statements labeled partly "
                   "supported, against the paraphrase rule above, so the rubric was reissued with one clarification and three named "
                   "mistakes to avoid. The clarification: the question answered for every statement is whether a clinician who has just "
-                  "read the course would agree that the statement is true of this patient — meaning, not wording. The mistakes: "
+                  "read the course would agree that the statement is true of this patient. What counts is the meaning, not the wording. The mistakes: "
                   "rewording alone is not partly supported; a conclusion the course clearly commits to is supported, while one it never "
                   "commits to is not; an invented specific, such as a dose, number, date, duration or side, makes that assertion "
                   "unsupported however plausible it is. The sample was then extended by 105 claims from the same courses under the same "

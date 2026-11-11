@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-render_docx.py — Render structured content blocks into a CSUN-formatted thesis (.docx),
+render_docx.py: Render structured content blocks into a CSUN-formatted thesis (.docx),
 convert it to PDF with LibreOffice, and fill the Table of Contents, List of Tables and
 List of Figures with real page numbers using a two-pass build.
 

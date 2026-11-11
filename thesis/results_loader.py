@@ -1,4 +1,4 @@
-"""results_loader.py — Load every result file into one object with formatting helpers used by the thesis text."""
+"""results_loader.py: Load every result file into one object with formatting helpers used by the thesis text."""
 from __future__ import annotations
 
 import math
@@ -20,15 +20,15 @@ def _csv(name):
 
 
 def f3(x):           # 0.1721 -> "0.172"
-    return "—" if x is None or (isinstance(x, float) and math.isnan(x)) else f"{x:.3f}"
+    return "n/a" if x is None or (isinstance(x, float) and math.isnan(x)) else f"{x:.3f}"
 
 
 def f2(x):
-    return "—" if x is None or (isinstance(x, float) and math.isnan(x)) else f"{x:.2f}"
+    return "n/a" if x is None or (isinstance(x, float) and math.isnan(x)) else f"{x:.2f}"
 
 
 def pct(x, d=1):     # 0.1721 -> "17.2%"
-    return "—" if x is None or (isinstance(x, float) and math.isnan(x)) else f"{100 * x:.{d}f}%"
+    return "n/a" if x is None or (isinstance(x, float) and math.isnan(x)) else f"{100 * x:.{d}f}%"
 
 
 def pct0(x):
@@ -45,12 +45,12 @@ def fp(p):           # p-value text
 
 def fpn(p):          # bare number for tables
     if p is None or (isinstance(p, float) and math.isnan(p)):
-        return "—"
+        return "n/a"
     return "< 0.001" if p < 0.001 else f"{p:.3f}"
 
 
 def signed(x, d=3):
-    return "—" if x is None or (isinstance(x, float) and math.isnan(x)) else f"{x:+.{d}f}"
+    return "n/a" if x is None or (isinstance(x, float) and math.isnan(x)) else f"{x:+.{d}f}"
 
 
 def holm(pvals):

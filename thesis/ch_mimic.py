@@ -1,4 +1,4 @@
-"""ch_mimic.py — Chapter 7: Main Study: Results on MIMIC-IV Hospital Courses (local model, selected judge).
+"""ch_mimic.py: Chapter 7: Main Study: Results on MIMIC-IV Hospital Courses (local model, selected judge).
 
 Every number is read from the aggregate files in results/ written by mimic_evaluate.py, mimic_revision_analysis.py,
 mimic_qa.py, mimic_second_judge.py, atomic_claims.py and audit_summary.py; a section whose file is missing is left out.
@@ -45,11 +45,11 @@ def _join(names):
 
 def pts(x):
     """Coverage difference in percentage points: 0.012 -> '+1.2 points'."""
-    return "—" if _nan(x) else f"{100 * x:+.1f} points"
+    return "n/a" if _nan(x) else f"{100 * x:+.1f} points"
 
 
 def pts_bare(x):
-    return "—" if _nan(x) else f"{100 * x:+.1f}"
+    return "n/a" if _nan(x) else f"{100 * x:+.1f}"
 
 
 def ci3(lo, hi):
@@ -116,12 +116,12 @@ def mean_ci(D, c, metric, fmt=f3):
     mu, lo, hi = D.ci(c, metric)
     if _nan(mu):
         mu = D.m(c, f"{metric}_mean")
-    return f"{fmt(mu)} ({fmt(lo)}–{fmt(hi)})" if not _nan(lo) else fmt(mu)
+    return f"{fmt(mu)} ({fmt(lo)} to {fmt(hi)})" if not _nan(lo) else fmt(mu)
 
 
 def delta_ci(t, unit="rate"):
     if t is None:
-        return "—"
+        return "n/a"
     if unit == "pts":
         return f"{pts_bare(t.delta_mean)} ({ci_pts(t.ci95_low, t.ci95_high)})"
     return f"{signed(t.delta_mean)} ({ci3(t.ci95_low, t.ci95_high)})"
@@ -175,8 +175,8 @@ def blocks(R: Results) -> list:
         for i, c in enumerate(conds):
             t0, t1 = T(metric, f"{c} vs E0"), T(metric, f"{c} vs E1")
             rows.append([metric if i == 0 else "", NAME.get(c, c), mean_ci(D, c, metric), f3(D.m(c, f"{metric}_median")),
-                         delta_ci(t0), fpn(D.holm_p(t0)) if t0 is not None else "—",
-                         f"{signed(t1.delta_mean)} ({fpn(t1.p)})" if t1 is not None else "—"])
+                         delta_ci(t0), fpn(D.holm_p(t0)) if t0 is not None else "n/a",
+                         f"{signed(t1.delta_mean)} ({fpn(t1.p)})" if t1 is not None else "n/a"])
     lower = [c for c in GROUNDED if D.sig(T("UFR", f"{c} vs E0")) and T("UFR", f"{c} vs E0").delta_mean < 0]
     cr_sig = [c for c in GROUNDED if D.sig(T("CR", f"{c} vs E0"))]
     among = [(c, T("UFR", f"{c} vs E1")) for c in ("E1b", "E3")]
@@ -200,7 +200,7 @@ def blocks(R: Results) -> list:
     b += [P(txt),
           ("table", dict(label="mrates", caption="Judge-estimated UFR and CR per summary in the main study: mean with 95 percent bootstrap interval, median, paired mean difference from E0 with 95 percent interval and Holm-adjusted p-value (primary family of twelve tests), and paired difference from E1 with unadjusted Wilcoxon p-value. Negative differences favor the row condition.",
                          columns=["Metric", "Condition", "Mean (95% CI)", "Median", "Δ vs E0 (95% CI)", "Holm p", "Δ vs E1 (p)"],
-                         widths=[0.45, 1.5, 1.1, 0.55, 1.4, 0.55, 0.95], font=8, rows=rows)),
+                         widths=[0.53, 1.37, 1.21, 0.57, 1.32, 0.55, 0.95], font=8, rows=rows)),
           ("figure", dict(label="mbox", path="results/fig_mimic_box.png", width=6.5, caption="Per-document judge-estimated UFR (left) and CR (right) in the main study under each condition and for the clinician's instructions."))]
     ref = _csv("mimic_reference.csv")
     sj = _csv("mimic_judge_agreement.csv")
@@ -227,9 +227,9 @@ def blocks(R: Results) -> list:
     for c in cov_conds:
         t0, t1 = T("coverage_ref", f"{c} vs E0"), T("coverage_ref", f"{c} vs E1")
         rows.append([NAME.get(c, c), mean_ci(D, c, "coverage_ref", fmt=lambda x: f"{100 * x:.1f}"),
-                     f"{D.m(c, 'omitted_ref_mean'):.1f} of {D.m(c, 'ref_sents_mean'):.1f}" if not _nan(D.m(c, "omitted_ref_mean")) else "—",
-                     delta_ci(t0, "pts"), fpn(D.holm_p(t0)) if t0 is not None else "—",
-                     f"{pts_bare(t1.delta_mean)} ({fpn(t1.p)})" if t1 is not None else "—"])
+                     f"{D.m(c, 'omitted_ref_mean'):.1f} of {D.m(c, 'ref_sents_mean'):.1f}" if not _nan(D.m(c, "omitted_ref_mean")) else "n/a",
+                     delta_ci(t0, "pts"), fpn(D.holm_p(t0)) if t0 is not None else "n/a",
+                     f"{pts_bare(t1.delta_mean)} ({fpn(t1.p)})" if t1 is not None else "n/a"])
     eq = _csv("mimic_equivalence.csv")
     E = eq.set_index("comparison") if eq is not None else None
     t_b = T("coverage_ref", "E1b vs E0")
@@ -316,13 +316,13 @@ def blocks(R: Results) -> list:
             u, cv, w = vrow(comp, "UFR", fl), vrow(comp, "coverage_ref", fl), vrow(comp, "words", fl)
             if u is None:
                 continue
-            rows.append([lab, f"{w.mean_a:.0f} → {w.mean_b:.0f}" if w is not None else "—", delta_ci(u), fpn(adjp.get((lab, "UFR"))),
-                         delta_ci(cv, "pts") if cv is not None else "—", fpn(adjp.get((lab, "coverage_ref")))])
+            rows.append([lab, f"{w.mean_a:.0f} → {w.mean_b:.0f}" if w is not None else "n/a", delta_ci(u), fpn(adjp.get((lab, "UFR"))),
+                         delta_ci(cv, "pts") if cv is not None else "n/a", fpn(adjp.get((lab, "coverage_ref")))])
         ab_n = abl[(abl.metric == "UFR") & (abl.variant == "nocite")] if abl is not None else None
         ab_cov = abl[(abl.metric == "coverage_ref") & (abl.variant == "nocite")] if abl is not None else None
         if ab_n is not None and len(ab_n):
             fu = Flip(ab_n.iloc[0]); fc = Flip(ab_cov.iloc[0]) if ab_cov is not None and len(ab_cov) else None
-            rows.append(["E1 minus E1 without citations", "—", delta_ci(fu), "see Section 7.7", delta_ci(fc, "pts") if fc is not None else "—", "see Section 7.7"])
+            rows.append(["E1 minus E1 without citations", "n/a", delta_ci(fu), "see Section 7.7", delta_ci(fc, "pts") if fc is not None else "n/a", "see Section 7.7"])
         short_u = vrow("E0/short vs E0/base", "UFR", False)
         nocite_u = vrow("E1/nocite vs E0/base", "UFR", False)
         nb = vrow("E1b/nocite vs E1b/base", "UFR", False)
@@ -361,7 +361,7 @@ def blocks(R: Results) -> list:
         rows = []
         for c in cited:
             n_all, n_cit, n_ok = int(D.m(c, "claims_total")), int(D.m(c, "cited_claims")), int(D.m(c, "cite_correct"))
-            rows.append([NAME.get(c, c), f"{n_all:,}", f"{n_cit:,}", pct(n_cit / n_all), f"{n_ok:,}", pct(n_ok / n_cit) if n_cit else "—", pct(n_ok / n_all)])
+            rows.append([NAME.get(c, c), f"{n_all:,}", f"{n_cit:,}", pct(n_cit / n_all), f"{n_ok:,}", pct(n_ok / n_cit) if n_cit else "n/a", pct(n_ok / n_all)])
         cc = {c: (int(D.m(c, "claims_total")), int(D.m(c, "cited_claims")), int(D.m(c, "cite_correct"))) for c in cited}
         txt = ("[[tab:mcite]] reports, for the retrieval conditions, citation coverage (the share of claims with a valid citation), "
                "citation accuracy (the share of cited claims whose cited excerpts support the claim under the judge) and citation "
@@ -375,7 +375,7 @@ def blocks(R: Results) -> list:
             n_all, n_cit, n_ok = cc["E1b"]
             txt += (f"E1b cited only {pct0(n_cit / n_all)} of its claims, which its design predicts: it also sees the whole course, and "
                     f"statements drawn from outside the three excerpts have no excerpt to cite; its accuracy is "
-                    f"{pct0(n_ok / n_cit) if n_cit else '—'} and its reliability {pct0(n_ok / n_all)}. ")
+                    f"{pct0(n_ok / n_cit) if n_cit else 'n/a'} and its reliability {pct0(n_ok / n_all)}. ")
         ac = _csv("audit_citations.csv")
         if ac is not None and len(ac):
             A = ac.set_index("condition")
@@ -394,7 +394,7 @@ def blocks(R: Results) -> list:
         b += [("h2", "7.7 Retrieval Ablations")]
         def cell(m, v):
             if v not in F[m]:
-                return "—"
+                return "n/a"
             d, pv, _ = F[m][v]
             return f"{pts_bare(d) if m in ('coverage_ref',) + cite_measures else signed(d)} ({fpn(pv)})"
         rows = [[VAR[v]] + [cell(m, v) for m in ("UFR", "CR", "coverage_ref") + cite_measures] for v in variants]
@@ -422,7 +422,7 @@ def blocks(R: Results) -> list:
         b += [("h2", "7.8 Run-to-Run Variation")]
         n_rep = int(vu.n_docs.max()) if len(vu) else 0
         rows = [[NAME.get(c, c), f3(vu.loc[c, "mean"]), f3(vu.loc[c, "within_doc_sd"]), f3(vu.loc[c, "between_doc_sd"]), f2(vu.loc[c, "icc"]),
-                 f"{100 * vc.loc[c, 'within_doc_sd']:.1f}" if c in vc.index else "—", f2(vc.loc[c, "icc"]) if c in vc.index else "—"]
+                 f"{100 * vc.loc[c, 'within_doc_sd']:.1f}" if c in vc.index else "n/a", f2(vc.loc[c, "icc"]) if c in vc.index else "n/a"]
                 for c in ("E0", "E1", "E1b", "E3") if c in vu.index]
         comps = ["E1 vs E0", "E1b vs E0", "E3 vs E0", "E3 vs E1", "E1b vs E1"]
         crow = []
@@ -436,7 +436,7 @@ def blocks(R: Results) -> list:
                     if g != "mean":
                         sig_all &= r.p < 0.05; dirs.add(np.sign(r.delta_mean))
                 else:
-                    cells.append("—")
+                    cells.append("n/a")
             crow.append([comp] + cells)
             (stable if sig_all and len(dirs) == 1 else unstable).append(comp)
         icc_lo, icc_hi = vu.icc.min(), vu.icc.max()
@@ -466,7 +466,7 @@ def blocks(R: Results) -> list:
         conds_a = [c for c in ("E0", "E1", "E1b", "E3") if c in A.index]
         b += [("h2", "7.9 Manual Audit of the Judge on the Main-Study Outputs")]
         n_lab = int(A.loc[conds_a, "n_labeled"].sum())
-        rows = [[NAME.get(c, c), str(int(A.loc[c, "n_labeled"])), f"{pct(A.loc[c, 'manual_unsupported'])} ({pct(A.loc[c, 'manual_unsupported_lo'])}–{pct(A.loc[c, 'manual_unsupported_hi'])})",
+        rows = [[NAME.get(c, c), str(int(A.loc[c, "n_labeled"])), f"{pct(A.loc[c, 'manual_unsupported'])} ({pct(A.loc[c, 'manual_unsupported_lo'])} to {pct(A.loc[c, 'manual_unsupported_hi'])})",
                  pct(A.loc[c, "judge_flag_share_pipeline"]), f2(A.loc[c, "precision"]), f2(A.loc[c, "false_omission"]), f2(A.loc[c, "sensitivity"]),
                  f2(A.loc[c, "specificity"]), f2(A.loc[c, "kappa"])] for c in conds_a]
         over = [c for c in conds_a if A.loc[c, "judge_flag_share_pipeline"] > A.loc[c, "manual_unsupported_hi"]]
@@ -535,7 +535,7 @@ def blocks(R: Results) -> list:
                              columns=["Condition", f"UFR (τ={D.tau:.2f})", "UFR (τ=0.5)", f"CR (τ={D.tau:.2f})", "CR (τ=0.5)", f"Coverage (τ={D.tau:.2f})", "Coverage (τ=0.5)"],
                              widths=[1.9, 0.75, 0.75, 0.75, 0.75, 0.8, 0.8], font=9,
                              rows=[[NAME.get(c, c), f3(D.m(c, 'UFR_mean')), f3(alt.loc[c, 'UFR_mean']), f3(D.m(c, 'CR_mean')), f3(alt.loc[c, 'CR_mean']),
-                                    (pct(D.m(c, 'coverage_ref_mean')) if c != 'REF' else '—'), (pct(alt.loc[c, 'coverage_ref_mean']) if c != 'REF' else '—')]
+                                    (pct(D.m(c, 'coverage_ref_mean')) if c != 'REF' else 'n/a'), (pct(alt.loc[c, 'coverage_ref_mean']) if c != 'REF' else 'n/a')]
                                    for c in conds if c in alt.index]))]
     wc = _csv("mimic_window_check.csv")
     vc = _csv("mimic_verifier_check.csv")
@@ -665,8 +665,8 @@ def blocks(R: Results) -> list:
         rows = []
         for (c, q), r in Q.sort_index().iterrows():
             u = U.loc[(c, q)] if U is not None and (c, q) in U.index else None
-            rows.append([c, QUESTION.get(q, q), pct0(r.abstention_rate), pct0(u.fully_supported_of_all) if u is not None else "—",
-                         pct0(u.any_unsupported_of_all) if u is not None else "—", f3(r.UFR_mean), pct0(r.ref_support_mean)])
+            rows.append([c, QUESTION.get(q, q), pct0(r.abstention_rate), pct0(u.fully_supported_of_all) if u is not None else "n/a",
+                         pct0(u.any_unsupported_of_all) if u is not None else "n/a", f3(r.UFR_mean), pct0(r.ref_support_mean)])
         txt = ("This exploratory pilot of the proposal's second task has no clinician-written gold answers, so it shows how abstention "
                "and grounding interact, not whether the answers are correct. Three questions per course (medications, follow-up, "
                "warning signs) were answered from the full course (QA-E0) or from three retrieved excerpts (QA-E1), with permission "

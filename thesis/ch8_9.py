@@ -1,4 +1,4 @@
-"""ch8_9.py — Chapters 8 (Discussion) and 9 (Conclusion and Future Work)."""
+"""ch8_9.py: Chapters 8 (Discussion) and 9 (Conclusion and Future Work)."""
 import numpy as np
 import pandas as pd
 
@@ -306,16 +306,16 @@ def blocks(R: Results) -> list:
     b += [H2("8.5 Comparison of the Approaches")]
     def cit_txt(c):
         if not main:
-            return "—"
+            return "n/a"
         n_all, n_cit, n_ok = D.m(c, "claims_total"), D.m(c, "cited_claims"), D.m(c, "cite_correct")
-        return f"{pct0(n_cit / n_all)} of claims cited, {pct0(n_ok / n_cit) if n_cit else '—'} of citations supported" if not _nan(n_all) and n_all else "—"
+        return f"{pct0(n_cit / n_all)} of claims cited, {pct0(n_ok / n_cit) if n_cit else 'n/a'} of citations supported" if not _nan(n_all) and n_all else "n/a"
     if main and tu:
         cmp_text = (f"[[tab:compare]] summarizes the strengths, weaknesses and appropriate uses of the five conditions. No approach "
                     f"dominates on every criterion. RAG with the whole course in view reduced the judge-estimated rate of unsupported "
                     f"claims as much as the other grounded conditions while achieving coverage similar to E0, so it is the design these "
                     f"results favor, conditionally: the recommendation rests on judge-estimated rates for one corpus and one retrieval "
                     f"design, on a coverage measure scored by the same judge, and on citations that cover only "
-                    f"{pct0(D.m('E1b', 'cited_claims') / D.m('E1b', 'claims_total')) if not _nan(D.m('E1b', 'claims_total')) else '—'} of E1b's claims."
+                    f"{pct0(D.m('E1b', 'cited_claims') / D.m('E1b', 'claims_total')) if not _nan(D.m('E1b', 'claims_total')) else 'n/a'} of E1b's claims."
                     f"{gen_note} The extractive summarizer cannot fabricate but produces text no patient should be handed unedited.")
     else:
         cmp_text = "[[tab:compare]] summarizes the strengths, weaknesses and appropriate uses of the five conditions."
@@ -324,8 +324,8 @@ def blocks(R: Results) -> list:
                          columns=["Approach", "Pilot UFR / CR", "Main study UFR / CR", "Coverage of clinician's sentences", "Strengths", "Weaknesses", "Appropriate use"],
                          widths=[0.85, 0.7, 0.75, 0.75, 1.15, 1.15, 1.15], font=8, align=["left", "center", "center", "center", "left", "left", "left"],
                          rows=[[NAME[c], f"{f3(R.mean(c,'UFR'))} / {f3(R.mean(c,'CR'))}",
-                                (f"{f3(M.mean(c,'UFR'))} / {f3(M.mean(c,'CR'))}" if M.ok and c in M.conds else "—"),
-                                (pct0(M.mean(c, "coverage_ref")) if M.ok and c in M.conds else "—"), st, wk, use]
+                                (f"{f3(M.mean(c,'UFR'))} / {f3(M.mean(c,'CR'))}" if M.ok and c in M.conds else "n/a"),
+                                (pct0(M.mean(c, "coverage_ref")) if M.ok and c in M.conds else "n/a"), st, wk, use]
                                for c, st, wk, use in [
                                    ("E0", "Fluent, patient-friendly, complete structure; simplest to deploy", "Highest judge-estimated rate of unsupported claims among the LLM conditions; generic advice and follow-up from priors",
                                     "Drafts reviewed and edited by a clinician; low-stakes communication"),
@@ -354,7 +354,7 @@ def blocks(R: Results) -> list:
         t_b = tcov.get("E1b")
         rows = [
             ["Pilot judge", f"Kappa {f2(cal_all.any_kappa)} against the experts; flags {pct0(cal_all.judge_UFR)} of sentences where they flag {pct0(cal_all.expert_flag_rate)}",
-             "Granularity mismatch, small capacity, decision rule (capacity tested in Chapter 6)", "—"],
+             "Granularity mismatch, small capacity, decision rule (capacity tested in Chapter 6)", "None"],
             ["Selected judge", f"Kappa {f2(jr.kappa)}" + (f"; about {f2(k_cv)} under nested cross-validation" if not _nan(k_cv) else ""),
              "Larger model and whole-course evidence help (tested)", "Agreement on other generators and institutions"],
             ["Clinical adaptation", "MedNLI accuracy up nine points; agreement not improved",
@@ -364,14 +364,14 @@ def blocks(R: Results) -> list:
              + (f"; replicates under {_join(repl_g)}" + (f" but not {_join(norepl_g)}" if norepl_g else "") if repl_g else (f"; does not replicate under {_join(norepl_g)}" if norepl_g else "")),
              "Focus on retrieved passages; fewer claims; citation instruction (separated in part by Section 7.5)",
              "True size of the reduction (Section 8.3)" + (f"; why the effect is absent for {_join(norepl_g)}" if norepl_g else "")],
-            ["Omission", f"E1 and E3 lose coverage; E1b similar to E0 ({pts(t_b.delta_mean) if t_b is not None else '—'})",
+            ["Omission", f"E1 and E3 lose coverage; E1b similar to E0 ({pts(t_b.delta_mean) if t_b is not None else 'n/a'})",
              "Withholding the course causes the loss (associated, via E1b against E1)", "Clinical importance of the omitted sentences"],
             ["Verification", "No difference from E1 under the selected judge; lower UFR under the second judge",
              "Verifier removes claims the judges disagree about (untested)", "Whether verification adds to retrieval"],
             ["Citations", f"E1: {cit_txt('E1')}; E1b: {cit_txt('E1b')}",
              "E1b draws on uncited parts of the course (plausible)", "Whether citations speed clinician review"],
             ["Clinician's instructions", f"Highest judge-estimated UFR ({f3(M.mean('REF','UFR'))})",
-             "They state content the course does not (supported by the experts' spans)", "—"],
+             "They state content the course does not (supported by the experts' spans)", "None"],
             ["Question answering", "Retrieval raised abstention and lowered the UFR of answers",
              "Warning-sign answers come from general knowledge (plausible)", "Correctness against clinician-written answers"]]
         b += [("table", dict(label="findings", caption="Findings of the thesis, the explanations offered for them and the status of each explanation, and the questions that remain open.",

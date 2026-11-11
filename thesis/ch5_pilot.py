@@ -1,4 +1,4 @@
-"""ch5_pilot.py — Chapter 5 (pilot study results on MTSamples) and the abstract."""
+"""ch5_pilot.py: Chapter 5 (pilot study results on MTSamples) and the abstract."""
 import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr

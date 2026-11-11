@@ -1,4 +1,4 @@
-"""ch1_4.py — Chapters 1 to 4 of the thesis (Introduction, Literature Review, Data and Preprocessing, Methodology).
+"""ch1_4.py: Chapters 1 to 4 of the thesis (Introduction, Literature Review, Data and Preprocessing, Methodology).
 
 Every number comes from the Results object (thesis/results_loader.py); nothing is typed in by hand.
 Citations use [[cite:key]] (thesis/references.py); cross-references use [[tab:label]] / [[fig:label]].
@@ -281,7 +281,7 @@ def blocks(R: Results) -> list:
     b += [H2("3.2 MTSamples")]
     b += [P(f"MTSamples is a single comma-separated file with one row per transcription [[cite:mtsamples]]; the copy used here has "
             f"{R.total_rows:,} rows in {R.n_specialties} specialty categories. Two categories resemble the documents from which "
-            f"patient-facing summaries are written in practice, Consult - History and Physical notes and Discharge Summaries; after "
+            f"patient-facing summaries are written in practice, Discharge Summaries and Consult (History and Physical) notes; after "
             f"removing empty transcriptions, {R.n_eligible} documents were eligible and fifty were drawn with seed 42 ({R.n_consult} "
             f"consultations, {R.n_discharge} discharge summaries; [[tab:mtstats]]). Two properties matter for the experiments: the "
             f"transcriptions are heavily structured, with upper-case section headings and many terse negations (\"No nausea, vomiting, or "
@@ -662,4 +662,4 @@ def blocks(R: Results) -> list:
 
 
 def signed_(x):
-    return "—" if x is None else f"{x:+.3f}"
+    return "n/a" if x is None else f"{x:+.3f}"

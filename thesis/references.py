@@ -1,4 +1,4 @@
-"""references.py — Reference database (IEEE style) and in-text citation resolver.
+"""references.py: Reference database (IEEE style) and in-text citation resolver.
 
 Write [[cite:key]] or [[cite:key1,key2]] in any text block.  resolve_citations() numbers the
 references in order of first appearance and returns the formatted reference list.
@@ -52,7 +52,7 @@ REFS = {
  "karpukhin2020": 'V. Karpukhin, B. Oğuz, S. Min, P. Lewis, L. Wu, S. Edunov, D. Chen, and W.-t. Yih, "Dense passage retrieval for open-domain question answering," in *Proc. Conference on Empirical Methods in Natural Language Processing*, 2020, pp. 6769–6781, doi: 10.18653/v1/2020.emnlp-main.550.',
  "gao2023rag": 'Y. Gao, Y. Xiong, X. Gao, K. Jia, J. Pan, Y. Bi, Y. Dai, J. Sun, M. Wang, and H. Wang, "Retrieval-augmented generation for large language models: A survey," 2023, doi: 10.48550/arXiv.2312.10997.',
  "xiong2024": 'G. Xiong, Q. Jin, Z. Lu, and A. Zhang, "Benchmarking retrieval-augmented generation for medicine," in *Findings of the Association for Computational Linguistics: ACL 2024*, 2024, pp. 6233–6251, doi: 10.18653/v1/2024.findings-acl.372.',
- "zakka2024": 'C. Zakka et al., "Almanac — Retrieval-augmented language models for clinical medicine," *NEJM AI*, vol. 1, no. 2, 2024, doi: 10.1056/AIoa2300068.',
+ "zakka2024": 'C. Zakka et al., "Almanac: Retrieval-augmented language models for clinical medicine," *NEJM AI*, vol. 1, no. 2, 2024, doi: 10.1056/AIoa2300068.',
  "dhuliawala2024": 'S. Dhuliawala, M. Komeili, J. Xu, R. Raileanu, X. Li, A. Celikyilmaz, and J. Weston, "Chain-of-Verification reduces hallucination in large language models," in *Findings of the Association for Computational Linguistics: ACL 2024*, 2024, pp. 3563–3578, doi: 10.18653/v1/2024.findings-acl.212.',
  "gao2023rarr": 'L. Gao, Z. Dai, P. Pasupat, A. Chen, A. T. Chaganty, Y. Fan, V. Zhao, N. Lao, H. Lee, D.-C. Juan, and K. Guu, "RARR: Researching and revising what language models say, using language models," in *Proc. 61st Annual Meeting of the Association for Computational Linguistics*, 2023, pp. 16477–16508, doi: 10.18653/v1/2023.acl-long.910.',
  "johnson2023mimic": 'A. E. W. Johnson, L. Bulgarelli, L. Shen, A. Gayles, A. Shammout, S. Horng, T. J. Pollard, S. Hao, B. Moody, B. Gow, L.-w. H. Lehman, L. A. Celi, and R. G. Mark, "MIMIC-IV, a freely accessible electronic health record dataset," *Scientific Data*, vol. 10, art. 1, 2023, doi: 10.1038/s41597-022-01899-x.',
