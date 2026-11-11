@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-build_progress_slides.py — Fall 2026 progress report slides (PDF via reportlab, PPTX via python-pptx).
+build_progress_slides.py: Fall 2026 progress report slides (PDF via reportlab, PPTX via python-pptx).
 
 Every number is read from ../results and from the built thesis at build time; a slide whose result file is
 missing is left out. The deck follows the thesis: one table or figure per result and a short note under it.
@@ -157,7 +157,7 @@ def slides(R: Results):
                   widths=[2.2, 1.2, 1.5, 1.5, 1.2, 1.1, 1.0, 1.0],
                   note=(f"Five conditions were compared on {R.n_docs} MTSamples notes with GPT-4o-mini (UFR {f2(R.mean('E0','UFR'))} for full-note summaries, {f2(R.mean('E3','UFR'))} with verification, "
                         f"{f2(R.mean('E2','UFR'))} for verbatim extracts), but on 1,781 expert-annotated sentences this judge flags {pct0(cal.judge_UFR)} where the experts flag {pct0(cal.expert_flag_rate)}: "
-                        f"kappa {f2(cal.any_kappa)} is chance level, and no evidence-aggregation variant raised it above {f2(var.best_kappa.max()) if var is not None else '—'}. "
+                        f"kappa {f2(cal.any_kappa)} is chance level, and no evidence-aggregation variant raised it above {f2(var.best_kappa.max()) if var is not None else 'n/a'}. "
                         f"The pilot therefore establishes the pipeline and the artifacts it must handle (header lines, abstentions, citation markers), not hallucination rates.")))
 
     # ── 5 judge selection
@@ -205,7 +205,7 @@ def slides(R: Results):
         mc = [c for c in ["E0", "E1", "E1b", "E3", "E2", "REF"] if c in M.conds]
         def cell(c, col, fmt):
             v = M.val(c, col)
-            return "—" if v is None or (isinstance(v, float) and pd.isna(v)) else fmt(v)
+            return "n/a" if v is None or (isinstance(v, float) and pd.isna(v)) else fmt(v)
         def cite(c):
             """Pooled citation coverage and accuracy over the 110 courses, as in Table 7.5 of the thesis."""
             r = M.base.loc[c]
@@ -217,8 +217,8 @@ def slides(R: Results):
                       columns=["Metric"] + [COND[c] for c in mc],
                       rows=[["UFR mean (judge-estimated)"] + [cell(c, "UFR_mean", f3) for c in mc],
                             ["CR mean"] + [cell(c, "CR_mean", f3) for c in mc],
-                            ["Coverage of the clinician's sentences"] + [cell(c, "coverage_ref_mean", pct) if c != "REF" else "—" for c in mc],
-                            ["Claims cited / citation accuracy (pooled)"] + [(f"{pct0(cite(c)[0])} / {pct0(cite(c)[1])}" if cite(c) else "—") for c in mc],
+                            ["Coverage of the clinician's sentences"] + [cell(c, "coverage_ref_mean", pct) if c != "REF" else "n/a" for c in mc],
+                            ["Claims cited / citation accuracy (pooled)"] + [(f"{pct0(cite(c)[0])} / {pct0(cite(c)[1])}" if cite(c) else "n/a") for c in mc],
                             ["Abstentions per summary"] + [cell(c, "abstentions_mean", lambda v: f"{v:.1f}") for c in mc],
                             ["Claims per summary"] + [cell(c, "claims_mean", lambda v: f"{v:.1f}") for c in mc],
                             ["Words per summary"] + [cell(c, "words_mean", lambda v: f"{v:.0f}") for c in mc]],
@@ -287,7 +287,7 @@ def slides(R: Results):
         S.append(dict(kind="table", title="Hypotheses: verdicts across both studies", columns=["Hypothesis", "Pilot (MTSamples, GPT-4o-mini)", "Main study (MIMIC-IV, local models)", "Verdict"],
                       rows=[["H1: unsupported content is measurable, and the judge agrees with experts better than chance",
                              f"UFR {f3(R.mean('E0','UFR'))} under a judge with kappa {f2(cal.any_kappa)} (chance level)",
-                             f"UFR {f3(M.mean('E0','UFR'))} judge-estimated" + (f"; {pct(A.loc['E0','manual_unsupported'])} by manual reading" if A is not None and "E0" in A.index else "") + f"; judge kappa {f2(best.kappa) if best is not None else '—'}",
+                             f"UFR {f3(M.mean('E0','UFR'))} judge-estimated" + (f"; {pct(A.loc['E0','manual_unsupported'])} by manual reading" if A is not None and "E0" in A.index else "") + f"; judge kappa {f2(best.kappa) if best is not None else 'n/a'}",
                              "First half supported (confirmed by the audit); second half only moderately, for the selected judge"],
                             ["H2: RAG reduces unsupported and contradicted statements",
                              f"CR down {abs(t10c_.rel_change_mean):.0f}% ({fp(t10c_.p)}, Holm {fp(t10c_.p_holm)}); UFR unchanged",
@@ -315,13 +315,13 @@ def slides(R: Results):
     S.append(dict(kind="table", title="Plan to the defense (CSUN ETD process) and requests", columns=["Milestone", "Status"],
                   rows=[["ETD planning form submitted; committee confirmed (Dr. Wang, chair; Dr. McIlhenny; Dr. Ebrahimi)", "Done, October 9, 2026"],
                         ["Second draft and progress report; advisor's review received", "Done, October 12 and 15, 2026"],
-                        ["Revised draft answering the review, response memo, these slides and the description", f"Done, {date.today():%B %d, %Y}"],
+                        ["Revised draft answering the review, these slides and the description", f"Done, {date.today():%B %d, %Y}"],
                         ["Advisor approval; Canvas upload; Turnitin similarity 20% or lower", "Next"],
                         ["Draft to the committee with at least two weeks of review; Doodle poll with 1-hour slots", "After approval"],
                         ["Defense on CSUN Zoom (40 min presentation, 10 min Q&A, 10 min deliberation); slides to the advisor one week before", "Before the ETD deadline"],
                         ["Final ETD upload after revisions; committee approval in the ETD system", "December 4, 2026, 5 pm"]], widths=[7.6, 4.6],
                   note=("The committee approves inside the ETD system, so the defense must be finished before the December 4 upload; the remaining dates are set with the advisor. "
-                        "Requests to the advisor: review the revised draft and the response memo; approve the draft for distribution to the committee; advise on the defense date.")))
+                        "Requests to the advisor: review the revised draft; approve the draft for distribution to the committee; advise on the defense date.")))
     return S
 
 

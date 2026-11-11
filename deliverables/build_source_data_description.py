@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-build_source_data_description.py — Source Code and Data Description (Fall 2026), as .docx and .pdf.
+build_source_data_description.py: Source Code and Data Description (Fall 2026), as .docx and .pdf.
 
 Everything factual (file sizes, row counts, versions, commit hash) is read from the repository at build time.
 """
@@ -159,7 +159,7 @@ def main():
 
     heading(doc, "4. Data sources")
     table(doc, ["Source", "Type", "Content", "Size", "Access status and location"], [
-        ["MTSamples", "Public CSV", "4,999 sample medical transcriptions, 40 specialties; 624 eligible Discharge Summary and Consult - History and Physical notes; 50 sampled (seed 42): 40 consultations, 10 discharge summaries; source length 117 to 1,809 words (mean 539); summaries generated under five conditions", "17 MB", "Public. Stored one directory above the repository (../mtsamples.csv), not tracked."],
+        ["MTSamples", "Public CSV", "4,999 sample medical transcriptions, 40 specialties; 624 eligible Discharge Summary and Consult (History and Physical) notes; 50 sampled (seed 42): 40 consultations, 10 discharge summaries; source length 117 to 1,809 words (mean 539); summaries generated under five conditions", "17 MB", "Public. Stored one directory above the repository (../mtsamples.csv), not tracked."],
         ["MIMIC-IV-Note v2.2", "Credentialed CSV (gzip)", "331,794 de-identified discharge summaries and about 2.3 million radiology reports (PhysioNet doi 10.13026/1n74-ne17)", "1.8 GB compressed", "Credentialing approved 4/28/2026; downloaded 5/14/2026; gzip integrity verified; SHA-256 manifest present. Stored locally (~/Desktop/Thesis). Used only to match each hospital course to its discharge note for the patient-overlap check (data_overlap.py); not used for generation."],
         ["ann-pt-summ v1.0.1", "Credentialed JSONL/XML", "Main-study corpus (110 MIMIC-IV hospital courses paired with the discharge instructions their clinicians wrote) and expert span annotations of unsupported facts: 100 doctor-written and 100 LLM-generated patient summaries plus 10 validation summaries; 423 agreed spans in 10 label types (PhysioNet doi 10.13026/gedc-j464)", "2.3 MB used (archive incomplete: 934 MB of >3.4 GB; the 14 annotation and derived files verified against SHA-256)", "DUA accepted; downloaded 5/12/2026. Used for the judge validation and selection and as the main-study corpus, with local models only. Generations, claims and labels in results_private/ (git-ignored)."],
         ["MIMIC-III-Ext-VeriFact-BHC v1.0.0", "Credentialed CSV (gzip)", "13,070 propositions decomposed from human-written and LLM-written Brief Hospital Course summaries of 100 MIMIC-III patients, each adjudicated by clinicians as supported, not supported or not addressed (12,614 valid); the patients' 4,787 EHR notes; and the verdicts of 72 configurations of the dataset's own AI raters (Chung et al., NEJM AI 2026, doi 10.1056/AIdbp2500418)", "400 MB extracted (419 MB archive)", "DUA accepted; downloaded 11/1/2026; the 14 files SHA-256-verified; stored locally (~/Desktop/Thesis/verifact-bhc). Used only for the external check of the judge (Section 6.7) with local models; per-proposition scores in results_private/ (git-ignored)."],
