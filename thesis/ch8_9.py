@@ -97,60 +97,47 @@ def blocks(R: Results) -> list:
     # ══════════════════════════════════ CHAPTER 8 ══════════════════════════════════
     b += [H1("Chapter 8 Discussion"), H2("8.1 Answers to the Research Questions")]
     rq1 = (f"**RQ1.** The pilot's judge answers RQ1 only qualitatively: it labeled {pct0(R.mean('E0','UFR'))} of the sentences in "
-           f"full-note GPT-4o-mini summaries unsupported, but against the medical experts it overstated the problem several-fold "
-           f"(Section 5.3), so the pilot shows that the summaries contain unsupported statements in identifiable categories and that "
-           f"this instrument cannot say how many.")
+           f"full-note GPT-4o-mini summaries unsupported but overstated the problem several-fold against the experts (Section 5.3), "
+           f"so the summaries contain unsupported statements in identifiable categories and that instrument cannot say how many.")
     if main:
-        rq1 += (f" The main study answers it with the judge selected in Chapter 6. Under that judge, {pct(M.mean('E0','UFR'))} of the claims "
-                f"in full-note summaries written by the local model were not supported by the hospital course and {pct(M.mean('E0','CR'))} "
-                f"were contradicted (per-summary means). These are judge-estimated rates from an instrument whose agreement with the "
-                f"experts is moderate (kappa {f2(jr.kappa)}"
-                + (f", about {f2(k_cv)} when the optimism of the selection is removed, Section 6.5" if not _nan(k_cv) else "")
-                + ")")
+        rq1 += (f" Under the selected judge, {pct(M.mean('E0','UFR'))} of the claims in the local model's full-note summaries were "
+                f"not supported by the hospital course and {pct(M.mean('E0','CR'))} contradicted it, judge-estimated rates from an "
+                f"instrument of moderate validity (kappa {f2(jr.kappa)}"
+                + (f", about {f2(k_cv)} once the optimism of the selection is removed" if not _nan(k_cv) else "") + ")")
         if A is not None and "E0" in A.index:
-            rq1 += (f"; the manual audit puts the share of E0 claims that are actually unsupported by the course at "
-                    f"{pct(A.loc['E0', 'manual_unsupported'])} (95 percent interval {pct(A.loc['E0', 'manual_unsupported_lo'])} to "
-                    f"{pct(A.loc['E0', 'manual_unsupported_hi'])}), against the {pct(A.loc['E0', 'judge_flag_share_pipeline'])} that the judge flags")
-        rq1 += (f". The clinicians' own instructions received a judge-estimated UFR of {f3(M.mean('REF','UFR'))} because they state what "
-                f"the course does not, and the verbatim extracts of E2 received {f3(M.mean('E2','UFR'))}, which is judge error on text "
-                f"that is supported by construction. Neither value is a bound on the rates of the generated summaries.")
-    rq2 = ("**RQ2.** The statements that the judges cannot support fall predominantly into follow-up instructions, generic advice, "
-           "restatements of history and paraphrased findings. Two of these categories, follow-up and advice, are largely extrinsic: "
-           "the note says nothing about them, the model supplies them from its knowledge of what patient instructions contain, and "
-           "retrieval does not remove them because they are not generated from the retrieved text. The pilot judge also erred in "
-           "three characteristic ways: it could not match a patient-facing paraphrase that aggregates several sentences of the note "
-           "to any single sentence, it treated negated symptom lists as contradictions, and it inherited sentence fragments from the "
-           "corpus's line-break artifact.")
+            rq1 += (f"; by manual reading the share of E0 claims actually unsupported is {pct(A.loc['E0', 'manual_unsupported'])} "
+                    f"({pct(A.loc['E0', 'manual_unsupported_lo'])} to {pct(A.loc['E0', 'manual_unsupported_hi'])})")
+        rq1 += (f". The clinicians' own instructions score {f3(M.mean('REF','UFR'))} because they state what the course does not, "
+                f"and E2's verbatim extracts {f3(M.mean('E2','UFR'))}, which is judge error on supported text; neither bounds the "
+                f"rates of the generated summaries.")
+    rq2 = ("**RQ2.** The statements the judges cannot support are mostly follow-up instructions, generic advice, restatements of "
+           "history and paraphrased findings. Follow-up and advice are largely extrinsic: the note says nothing about them, the "
+           "model supplies them from its knowledge of what patient instructions contain, and retrieval does not remove them. The "
+           "pilot judge erred in three characteristic ways: it could not match a paraphrase that aggregates several sentences of "
+           "the note to any single sentence, it treated negated symptom lists as contradictions, and it inherited sentence fragments "
+           "from the corpus.")
     if main:
         ty = _csv("audit_types.csv")
         typed = ty[ty.type.notna() & ~ty.type.astype(str).str.strip().isin(["", "nan"])] if ty is not None and len(ty) else None
         if typed is not None and len(typed) and typed.n.sum() >= 0.6 * ty.n.sum():
             tt = typed.groupby("type").n.sum().sort_values(ascending=False)
             from ch_mimic import AUDIT_TYPE
-            rq2 += (f" In the main study the manual audit found the same pattern on the local model's summaries: the most frequent "
-                    f"problems among unsupported claims were {_join([f'{AUDIT_TYPE.get(k, str(k))} ({pct0(v / tt.sum())})' for k, v in tt.head(2).items()])}.")
+            rq2 += (f" The manual audit found the same pattern on the local model's summaries: the most frequent problems were "
+                    f"{_join([f'{AUDIT_TYPE.get(k, str(k))} ({pct0(v / tt.sum())})' for k, v in tt.head(2).items()])}.")
         elif A is not None and "pooled" in A.index and not _nan(A.loc["pooled", "partly_share_of_unsupported"]):
-            rq2 += (f" In the main study's manual audit, most of the claims labeled unsupported, "
-                    f"{pct0(A.loc['pooled', 'partly_share_of_unsupported'])}, were partly supported sentences in which one fact fails "
-                    f"rather than whole fabrications (Section 7.9).")
-        rq2 += (" Questions about warning signs, which a hospital course rarely states, drew the most abstentions and the highest "
-                "judge-estimated rates in the question-answering pilot (Section 7.11)"
-                + (f", and the second judge confirmed {'none' if G.loc['E2', 'first_flags_confirmed'] == 0 else pct0(G.loc['E2', 'first_flags_confirmed'])} "
-                   f"of the selected judge's flags on verbatim sentences, which places that error in the judge rather than in the text "
-                   f"(Section 7.10)." if G is not None and "E2" in G.index else "."))
-    rq3 = ("**RQ3.** The pilot's effects (Section 5.7) describe how a judge later shown to be invalid for this task reacted to the "
-           "conditions, and they are not interpreted further.")
+            rq2 += (f" In the manual audit, {pct0(A.loc['pooled', 'partly_share_of_unsupported'])} of the claims labeled unsupported were "
+                    f"partly supported sentences rather than whole fabrications (Section 7.9).")
+    rq3 = ("**RQ3.** The pilot's effects (Section 5.7) describe how a judge later shown to be invalid reacted and are not "
+           "interpreted further.")
     if main and tu:
-        rq3 += (f" In the main study, excerpt-only retrieval, retrieval with the whole course and verification lowered the "
-                f"judge-estimated UFR by between {lo_u:.3f} and {hi_u:.3f} relative to E0 (all "
-                f"{padj(max(D.holm_p(t) for t in tu.values()))}; intervals in Section 7.3), without a significant change in the "
-                f"contradiction rate, and the three grounded conditions do not differ significantly from one another. The reductions "
-                f"hold at a second threshold and under a second judge (Section 7.10)")
-        if rep is not None and len(rep) and "kind" in rep.columns:
-            rq3 += " and in each of three generations on 40 courses (Section 7.8)"
-        rq3 += (". Part of the reduction comes from saying less: the grounded summaries contain fewer claims, and Section 7.5 "
-                "separates the contributions of length and of the citation instruction. The cost is omission for the conditions that "
-                "withhold the course: E1 and E3 covered fewer of the clinician's sentences than E0")
+        rq3 += (f" In the main study, retrieval with excerpts, retrieval with the whole course and verification lowered the "
+                f"judge-estimated UFR by {lo_u:.3f} to {hi_u:.3f} relative to E0 (all {padj(max(D.holm_p(t) for t in tu.values()))}), "
+                f"without changing the contradiction rate; the three grounded conditions do not differ significantly from one "
+                f"another, and the reductions hold at a second threshold, under a second judge (Section 7.10)"
+                + (" and in each of three generations (Section 7.8)" if rep is not None and len(rep) and "kind" in rep.columns else "")
+                + ". Part of the reduction comes from saying less, and Section 7.5 separates length and the citation instruction "
+                "from retrieval. The cost is omission for the conditions that withhold the course: E1 and E3 covered fewer of "
+                "the clinician's sentences than E0")
         if "E1b" in tcov and tcov["E1b"] is not None:
             rq3 += ", whereas E1b achieved coverage similar to E0, with no statistically significant difference detected (Section 7.4)"
         rq3 += "."
@@ -159,32 +146,25 @@ def blocks(R: Results) -> list:
         t31m = D.T("UFR", "E3 vs E1"); tcr1 = D.T("CR", "E1 vs E0")
         s31 = ST2.loc["E3 vs E1"] if ST2 is not None and "E3 vs E1" in ST2.index else None
         nocite = vrow("E1/nocite vs E0/base", "UFR")
-        b += [P("**Hypotheses.** H1 holds in its first half: full-note summaries contain a measurable share of unsupported statements"
-                + (", confirmed by the manual audit" if A is not None and "E0" in A.index else "")
-                + "; its second half, that a judge detects them with agreement substantially better than chance, is rejected for the "
-                f"pilot judge and holds only moderately for the selected judge. H2, that retrieval reduces unsupported content, is "
-                f"supported for the judge-estimated UFR in the main study ({padj(D.holm_p(tu['E1']))} for E1)"
-                + (", including without the citation instruction" if nocite is not None and nocite.p < 0.05 and nocite.delta_mean < 0 else "")
-                + f", but not for contradictions ({padj(D.holm_p(tcr1))}), which were rare under every condition; in the pilot neither "
-                f"rate changed significantly after the adjustment. H3, that verification adds to retrieval, is not supported under the "
-                f"selected judge (E3 versus E1, {fp(t31m.p)})"
-                + (f"; under the second judge E3 has the lowest UFR of the LLM conditions ({fp(s31.p)}), so the evidence on H3 depends "
-                   f"on the judge and remains open." if s31 is not None else "."))]
+        b += [P("**Hypotheses.** H1 holds in its first half (full-note summaries contain a measurable share of unsupported "
+                "statements" + (", confirmed by the manual audit" if A is not None and "E0" in A.index else "") + ") and only "
+                "moderately in its second, since the pilot judge agrees with experts at chance and the selected judge moderately. "
+                f"H2 is supported for the judge-estimated UFR ({padj(D.holm_p(tu['E1']))} for E1"
+                + (", also without the citation instruction" if nocite is not None and nocite.p < 0.05 and nocite.delta_mean < 0 else "")
+                + f") but not for contradictions ({padj(D.holm_p(tcr1))}), which were rare everywhere. H3, that verification adds "
+                f"to retrieval, is not supported under the selected judge (E3 versus E1, {fp(t31m.p)})"
+                + (f" and is under the second judge ({fp(s31.p)}), so it depends on the judge and remains open." if s31 is not None else "."))]
 
     b += [H2("8.2 Why the Judge Disagrees with the Experts")]
-    b += [P("Four causes are consistent with the pilot judge's disagreement with the experts. The first is a *granularity mismatch*: "
-            "a patient-facing sentence such as \"You came in because of stomach pain after meals and foul-smelling urine, and you were "
-            "found to have a urinary infection and reflux\" compresses the chief complaint, the history and the assessment into one "
-            "sentence that no single source sentence entails, and concatenating a few sentences helps only marginally because the "
-            "model was trained on single-sentence premises [[cite:bowman2015,williams2018]]; sentence-level NLI works when summary "
-            "sentences are roughly co-extensive with source sentences [[cite:laban2022]], which patient-facing paraphrase violates "
-            "systematically. The second is *model capacity and domain*: the pilot judge has six layers and was fine-tuned on "
-            "general-domain pairs, whereas reliable consistency judgments required much larger models trained on diverse consistency "
-            "data [[cite:honovich2022]], and general NLI models lose accuracy on clinical language, abbreviations and negation "
-            "[[cite:romanov2018]]. The third is the *decision rule*: the maximum contradiction probability over several evidence "
-            "sentences turns any spurious contradiction into the claim's label. The fourth is the *definition of the target*: the UFR "
-            "counts every claim that is not entailed, including appropriate extrinsic advice, whereas the experts marked unsupported "
-            "facts, so the two instruments never measured exactly the same construct.")]
+    txt = ("Four causes are consistent with the pilot judge's disagreement with the experts. A *granularity mismatch*: a "
+           "patient-facing sentence compresses the chief complaint, the history and the assessment of a note into one sentence that "
+           "no single source sentence entails, and sentence-level NLI works only when summary sentences are roughly co-extensive "
+           "with source sentences [[cite:laban2022]], which patient-facing paraphrase violates systematically. *Model capacity and "
+           "domain*: a six-layer model fine-tuned on general-domain pairs, whereas reliable consistency judgments required much "
+           "larger models trained on diverse consistency data [[cite:honovich2022]], and general NLI models lose accuracy on "
+           "clinical language and negation [[cite:romanov2018]]. The *decision rule*: a maximum over evidence sentences turns any "
+           "spurious contradiction into the claim's label. And the *definition of the target*: UFR counts every claim that is not "
+           "entailed, including appropriate extrinsic advice, whereas the experts marked unsupported facts. ")
     jc = _csv("judge_candidates.csv")
     if jc is not None:
         AA = jc[jc.group == "all"].set_index(["judge", "mode"])
@@ -192,153 +172,107 @@ def blocks(R: Results) -> list:
             return AA.loc[(j, m)] if (j, m) in AA.index else None
         mini, deb, med = jrow("minilm_nli", "top3"), jrow("deberta_large_nli", "doc"), jrow("mednli_deberta_large", "doc")
         ftj = M.finetune_summary()
-        txt = (f"The judge selection study tests the second cause directly and the first indirectly. Replacing the six-layer "
-               f"cross-encoder with a 24-layer DeBERTa-v3-large model trained on five NLI and fact-verification datasets raised kappa "
-               f"from {f2(mini.kappa)} to {f2(deb.kappa)} and AUROC from {f2(mini.auroc)} to {f2(deb.auroc)}, and whole-course evidence "
-               f"was better than three retrieved sentences, so capacity matters. ")
+        txt += (f"The selection study tests capacity directly: a 24-layer DeBERTa-v3-large model with whole-course evidence raised "
+                f"kappa from {f2(mini.kappa)} to {f2(deb.kappa)}. ")
         if med is not None and ftj is not None and "zero_shot_dev_accuracy" in ftj:
-            txt += (f"Adapting the same model to clinical language with MedNLI raised its MedNLI accuracy from "
-                    f"{pct(ftj['zero_shot_dev_accuracy'])} to {pct(ftj['dev_accuracy'])} but not its agreement with the experts (kappa "
-                    f"{f2(med.kappa)} against {f2(deb.kappa)}). This is consistent with granularity rather than vocabulary limiting "
-                    f"agreement, but it does not establish it")
+            txt += (f"Adapting it to clinical language raised MedNLI accuracy but not agreement (kappa {f2(med.kappa)}), which is "
+                    f"consistent with granularity rather than vocabulary limiting agreement")
             if at is not None and len(at):
                 a_ = at[(at.analysis == "expert_agreement_atomic_min") & (at.group == "all")]
                 s_ = at[(at.analysis == "expert_agreement_sentence") & (at.group == "all")]
                 if len(a_) and len(s_):
                     ka, ks = float(a_.kappa.iloc[0]), float(s_.kappa.iloc[0])
-                    txt += (f". Scoring atomic facts instead of sentences, which should help if granularity were the limit, "
-                            + (f"raised kappa from {f2(ks)} to {f2(ka)} (Section 6.6), which supports the explanation"
-                               if ka > ks + 0.02 else
-                               f"gave a kappa of {f2(ka)} against {f2(ks)} (Section 6.6), so splitting sentences with the same judge "
-                               f"does not remove the limitation, and the granularity explanation remains a plausible hypothesis rather "
-                               f"than a finding"))
+                    txt += (f"; yet scoring atomic facts instead of sentences " + (f"raised kappa to {f2(ka)} (Section 6.6), which supports that explanation"
+                            if ka > ks + 0.02 else f"gave kappa {f2(ka)} against {f2(ks)} (Section 6.6), so the explanation remains plausible rather than established"))
             txt += ". "
         txt += (f"Even the selected judge flags {pct0(jr.flag_rate) if jr is not None else pct0(deb.flag_rate)} of sentences where the "
                 f"experts flag {pct0(deb.expert_rate)} and misses about {100 - round(100 * (jr.recall if jr is not None else deb.recall))} "
                 f"of every 100 expert-flagged sentences, so every main-study rate is an estimate from a moderately valid instrument.")
-        b += [P(txt)]
+    b += [P(txt)]
 
     # ── 8.3 judge errors and comparisons
     if main:
         b += [H2("8.3 What the Judge's Errors Mean for the Comparisons")]
-        b += [P("Every main-study comparison is a comparison of judge-estimated rates, so it is worth stating exactly how the judge's "
-                "errors enter it. Let f be the share of a condition's claims that the judge flags, p its precision on that condition "
-                "(the share of flagged claims that are truly unsupported) and q its false omission rate (the share of accepted claims "
-                "that are truly unsupported). The true unsupported share is then π = q + f (p − q). If p and q were the same in two "
-                "conditions, the true difference would be Δπ = (p − q) Δf. The judge would preserve the direction of a difference, "
-                "but because p − q is less than one, the true difference would be smaller than the judge-estimated one, in absolute "
-                "and in relative terms. If p or q differ between the conditions, for example because the judge falsely flags generic "
-                "advice more often in long summaries, a judge-estimated difference can be larger or smaller than the true one, and a "
-                "small difference can even reverse. Differences between conditions in the judge's error rates are therefore the main "
-                "threat to the comparisons, and they are what the manual audit measures.")]
+        txt = ("Let f be the share of a condition's claims the judge flags, p its precision on that condition and q its false omission "
+               "rate (the share of accepted claims that are truly unsupported). The true unsupported share is π = q + f (p − q), so if "
+               "p and q were the same in two conditions the true difference would be (p − q) times the judge-estimated one: same "
+               "direction, smaller size. If p or q differ between conditions, a judge-estimated difference can be larger or smaller "
+               "than the true one, and a small one can reverse; such differences in the judge's error rates are the main threat to "
+               "the comparisons, and they are what the audit measures. ")
         Se, Sp = float(jr.recall), float(jr.specificity) if "specificity" in jr.index else np.nan
         fs = {c: _flag_share(D, c) for c in ("E0", "E1", "E1b", "E3")}
         rg = {c: (f + Sp - 1) / (Se + Sp - 1) for c, f in fs.items() if not _nan(f)}
         if rg and not _nan(Sp):
             neg = [c for c, v in rg.items() if v < 0]
-            b += [P(f"The error rates measured on the expert set do not transfer to this generator. On the expert set the selected judge "
-                    f"has a sensitivity of {f2(Se)} and a specificity of {f2(Sp)}. Applying them to the main study with the Rogan-Gladen "
-                    f"estimator, π = (f + specificity − 1) / (sensitivity + specificity − 1) [[cite:rogan1978]], gives "
-                    + "; ".join(f"{c} {f3(v)} from a flag share of {pct(fs[c])}" for c, v in rg.items())
-                    + (f". {'All' if len(neg) == len(rg) else _join(neg) + (' give' if len(neg) > 1 else ' gives')} "
-                       f"{'of these estimates are' if len(neg) == len(rg) else ''} negative, which is impossible: the judge flags fewer "
-                       f"of the local model's claims than it would flag falsely at its expert-set specificity, so its specificity on "
-                       f"these summaries must be higher than on the expert set. The validation therefore shows that the judge ranks "
-                       f"sentences moderately well, but it does not supply the error rates needed to convert the main study's flag "
-                       f"shares into true rates; only an audit of the main study's own outputs can." if neg else
-                       ". The estimates assume that the expert-set error rates hold for this generator, which the audit tests."))]
+            txt += (f"The expert-set error rates do not transfer to this generator: applying the selected judge's expert-set "
+                    f"sensitivity ({f2(Se)}) and specificity ({f2(Sp)}) to the main study's flag shares with the Rogan-Gladen "
+                    f"estimator [[cite:rogan1978]] gives "
+                    + (f"negative true shares for {'every condition' if len(neg) == len(rg) else _join(neg)}, which is impossible; the judge "
+                       f"flags fewer of the local model's claims than it would flag falsely at its expert-set specificity, so only an "
+                       f"audit of the main study's own outputs can supply the error rates. " if neg else
+                       "estimates that assume the expert-set error rates hold for this generator, which the audit tests. "))
         if A is not None and AD is not None and len(AD):
             keys = [k for k in ("E1 minus E0", "E1b minus E0", "E3 minus E0") if k in AD.index]
             conf = [k.split(" minus ")[0] for k in keys if AD.loc[k, "diff_hi"] < 0]
-            allneg = bool(keys) and all(AD.loc[k, "diff"] < 0 for k in keys)
             jconf = [k.split(" minus ")[0] for k in keys if AD.loc[k, "judge_diff_hi"] < 0]
             pq = "; ".join(f"{c} p = {f2(A.loc[c, 'precision'])}, q = {f2(A.loc[c, 'false_omission'])}" for c in ("E0", "E1", "E1b", "E3") if c in A.index)
-            b += [P(f"The audit gives these quantities per condition ({pq}; Section 7.9). "
-                    + ((f"For {_join(conf)} the manually confirmed reduction relative to E0 has an interval below zero, so the direction "
-                        f"of the judge's comparison is confirmed by manual reading, and the size of the confirmed differences, rather "
-                        f"than the judge's, is the better estimate of the true effect.") if conf else
-                       ("None of the manual intervals excludes zero at the audit's sample size"
-                        + (", although every manual point estimate lies on the same side as the judge's difference" if allneg else "")
-                        + (f", and the judge's own paired differences on the audited courses do exclude zero for {_join(jconf)}" if jconf else "")
-                        + "; the manual intervals bound the plausible size of the true effects rather than establish them.")))]
-        among = [D.T("UFR", "E1b vs E1"), D.T("UFR", "E3 vs E1")]
-        among = [t for t in among if t is not None]
+            txt += (f"The audit gives these quantities per condition ({pq}; Section 7.9)"
+                    + (f", and for {_join(conf)} the manually confirmed reduction relative to E0 has an interval below zero, so the "
+                       f"direction of the judge's comparison is confirmed and the manual size is the better estimate of the true effect. "
+                       if conf else
+                       "; none of the manual intervals excludes zero at the audit's sample size"
+                       + (f", although the judge's own paired differences on the audited courses do for {_join(jconf)}" if jconf else "") + ". "))
+        among = [t for t in (D.T("UFR", "E1b vs E1"), D.T("UFR", "E3 vs E1")) if t is not None]
         if among:
-            b += [P(f"The same reasoning explains why Chapter 7 does not rank the grounded conditions against one another. Their "
-                    f"judge-estimated UFRs differ by at most {max(abs(t.delta_mean) for t in among):.3f}, a difference that a change of a "
-                    f"few points in the judge's precision or false omission rate between conditions would produce on its own.")]
+            txt += (f"The same reasoning is why the grounded conditions are not ranked: their judge-estimated rates differ by at most "
+                    f"{max(abs(t.delta_mean) for t in among):.3f}, which a change of a few points in the judge's precision or false "
+                    f"omission rate between conditions would produce on its own.")
+        b += [P(txt)]
 
     # ── 8.4 interpreting retrieval and verification
     b += [H2("8.4 Interpreting the Effects of Retrieval and Verification")]
-    b += [P(f"The pilot's RAG effect (Sections 5.3 and 5.4) is modest (a {rel(t10c)} relative reduction of CR, d(z) = {f2(t10c.d_z)}), "
-            f"disappears when the judge is made more conservative, and partly reflects a change in how the model writes rather than "
-            f"in what it asserts: RAG summaries are shorter, with fewer claims and fewer generic sentences, and the categories in "
-            f"which RAG helped most, medications, procedures and findings, are those for which the excerpts contain specific, "
-            f"near-verbatim facts [[cite:lewis2020]], while follow-up instructions and advice come from the model's prior over "
-            f"patient instructions. Pilot verification removed or replaced about a quarter of the draft claims and was the only "
-            f"condition that removed extrinsic follow-up and advice sentences, but it depends on the same retrieval as the judge, so "
-            f"a claim whose support lies in an unretrieved sentence is deleted rather than confirmed ({fewer_e3} of {R.n_docs} E3 "
-            f"summaries have fewer claims than their drafts).")]
+    txt = (f"The pilot's RAG effect (Sections 5.3 and 5.4) was modest, disappeared when the judge was made more conservative, and "
+           f"partly reflected shorter summaries with fewer generic sentences; retrieval helped most where the excerpts contain "
+           f"specific facts (medications, procedures, findings) and not at all for follow-up and advice, which come from the model's "
+           f"prior over patient instructions. ")
     if main and tu:
         short = vrow("E0/short vs E0/base", "UFR")
         lm = {c: vrow(k, "UFR", fl) for c, k, fl in (("E1", "E0/short vs E1/base", True), ("E1b", "E1b/base vs E0/short", False), ("E3", "E3/base vs E0/short", False))}
         nocite = vrow("E1/nocite vs E0/base", "UFR")
-        txt = (f"In the main study the three grounded conditions lowered the judge-estimated UFR by similar amounts, and the variants of "
-               f"Section 7.5 show how much of that is due to the mechanism under study. ")
-        if short is not None:
-            beyond = [c for c in GROUNDED if lm[c] is not None and lm[c].p < 0.05 and lm[c].delta_mean < 0]
-            txt += (f"Shortening E0 to the length of E1 changed its UFR by {signed(short.delta_mean)} ({fp(short.p)})"
-                    + (f", and {_join(beyond)} remained below the length-matched baseline, so their reductions are not a by-product of "
-                       f"brevity alone. " if beyond else ", and no grounded condition remained significantly below the length-matched "
-                       "baseline, so brevity may account for much of the reduction. "))
-        if nocite is not None:
-            txt += (f"Without the citation instruction E1 changed UFR by {signed(nocite.delta_mean)} relative to E0 ({fp(nocite.p)}), so "
-                    + ("retrieval is associated with fewer unsupported claims without any instruction to cite. " if nocite.p < 0.05 and nocite.delta_mean < 0 else
-                       "the reduction cannot be separated from the citation instruction. "))
-        txt += ("Because the grounded summaries also contain fewer claims, the most defensible reading is that grounding lowers the share "
-                "of claims the judge cannot verify, partly by changing what the model writes and partly by how much it writes, and that "
-                "the true size of the reduction is smaller than the judge-estimated one (Section 8.3).")
-        b += [P(txt)]
+        beyond = [c for c in GROUNDED if lm[c] is not None and lm[c].p < 0.05 and lm[c].delta_mean < 0]
+        txt += ("In the main study the grounded conditions lowered the judge-estimated UFR by similar amounts, and the variants of "
+                "Section 7.5 show how much belongs to the mechanism: "
+                + (f"shortening E0 to E1's length changed its UFR by only {signed(short.delta_mean)} ({fp(short.p)})"
+                   + (f" and {_join(beyond)} stayed below the length-matched baseline, so brevity alone does not explain the reductions" if beyond else "") + "; "
+                   if short is not None else "")
+                + (f"without the citation instruction E1 still changed UFR by {signed(nocite.delta_mean)} ({fp(nocite.p)}), so retrieval works "
+                   f"without an instruction to cite. " if nocite is not None and nocite.p < 0.05 and nocite.delta_mean < 0 else "")
+                + "The most defensible reading is that grounding lowers the share of claims the judge cannot verify, partly by changing "
+                "what the model writes and partly by how much, and that the true reduction is smaller than the judge-estimated one "
+                "(Section 8.3). ")
         if "E1b" in tcov and tcov["E1b"] is not None:
             e1c, e3c = tcov.get("E1"), tcov.get("E3")
-            b += [P(f"What separates the grounded conditions is omission. E1 and E3 covered {abs(100 * e1c.delta_mean):.1f} and "
-                    f"{abs(100 * e3c.delta_mean):.1f} percentage points fewer of the clinician's sentences than E0, while E1b achieved "
-                    f"coverage similar to E0. E1b differs from E1 only in also seeing the whole course, so the contrast associates the "
-                    f"coverage loss with withholding the course rather than with retrieval. A plausible mechanism is that the retrieval "
-                    f"query, built from fixed section topics and the opening of the course, misses passages that the clinician chose to "
-                    f"mention; the data show the association, not the mechanism, and they do not show whether the omitted sentences "
-                    f"matter clinically. Verification added nothing to coverage: E3 inherits its draft's excerpts, and its abstentions were "
-                    f"not associated with lower coverage within E3 (Section 7.4).")]
+            txt += (f"What separates the grounded conditions is omission: E1 and E3 covered {abs(100 * e1c.delta_mean):.1f} and "
+                    f"{abs(100 * e3c.delta_mean):.1f} points fewer of the clinician's sentences than E0 while E1b did not, and since E1b "
+                    f"differs from E1 only in also seeing the course, the loss is associated with withholding the course rather than "
+                    f"with retrieval; a plausible mechanism is that the fixed retrieval query misses passages the clinician chose to "
+                    f"mention, and the data do not show whether the omitted sentences matter clinically. ")
         s31 = ST2.loc["E3 vs E1"] if ST2 is not None and "E3 vs E1" in ST2.index else None
-        b31 = SB2.loc["E3 vs E1"] if SB2 is not None and "E3 vs E1" in SB2.index else None
         if s31 is not None:
-            b += [P(f"Whether verification adds to retrieval is the clearest open question. Under the selected judge E3 and E1 do not differ, "
-                    f"under the second judge E3 has a lower UFR ({f3(s31.mean_b)} against {f3(s31.mean_a)}, {fp(s31.p)})"
-                    + (f", and under the conservative rule that requires both judges the difference is {signed(b31.delta_mean)} ({fp(b31.p)})" if b31 is not None else "")
-                    + ". The E3 verifier is the generator itself, and it removes the claims it cannot match to retrieved evidence; the "
-                    "two judges may simply disagree about the claims it removes. The question needs a judge whose error rates on these "
-                    "outputs are known, which the audit provides for the selected judge only.")]
+            txt += (f"Whether verification adds to retrieval is the clearest open question: E3 and E1 do not differ under the "
+                    f"selected judge but do under the second ({f3(s31.mean_b)} against {f3(s31.mean_a)}, {fp(s31.p)}), and the verifier, "
+                    f"which is the generator itself, removes exactly the claims the judges disagree about. ")
         cc = {c: (D.m(c, "claims_total"), D.m(c, "cited_claims"), D.m(c, "cite_correct")) for c in ("E1", "E1b")}
         if all(not _nan(v[0]) and v[0] > 0 for v in cc.values()):
-            b += [P(f"The citation results qualify the value of citations as a grounding device. E1 cited {pct0(cc['E1'][1] / cc['E1'][0])} of "
-                    f"its claims and E1b only {pct0(cc['E1b'][1] / cc['E1b'][0])}; a plausible explanation, consistent with E1b's design, is "
-                    f"that E1b writes many statements from parts of the course outside the three excerpts, which have no excerpt to cite. "
-                    f"A reviewer can use a citation only when it is present and correct, so citation reliability, {pct0(cc['E1'][2] / cc['E1'][0])} "
-                    f"of E1's claims and {pct0(cc['E1b'][2] / cc['E1b'][0])} of E1b's, is the share of a summary that a reviewer could check "
-                    f"by following its citations.")]
-        b += [P(f"Two references guard against over-reading the rates. The clinicians' own instructions received a judge-estimated UFR of "
-                f"{f3(M.mean('REF','UFR'))}, higher than every LLM condition, because they contain medication changes, appointments and "
-                f"advice that the hospital course never states: support by the source measures source faithfulness, not clinical quality. "
-                f"And the verbatim extracts of E2 received {f3(M.mean('E2','UFR'))}, which shows that the judge errs even on text copied from "
-                f"the course; it is a reference for that error, not a floor that the generated summaries cannot go below.")]
+            txt += (f"Citations qualify the value of citing as a grounding device: a reviewer can use a citation only when it is present "
+                    f"and correct, and that holds for {pct0(cc['E1'][2] / cc['E1'][0])} of E1's claims and {pct0(cc['E1b'][2] / cc['E1b'][0])} "
+                    f"of E1b's. ")
         qa = M.qa_tot
         if qa is not None and {"QA-E0", "QA-E1"} <= set(qa.index):
-            b += [P(f"The question-answering pilot points the same way from a different angle. Retrieval "
-                    f"{'raised' if qa.loc['QA-E1', 'abstention_rate'] > qa.loc['QA-E0', 'abstention_rate'] else 'changed'} abstention and "
-                    f"lowered the judge-estimated UFR of the answers given, partly by making the model say less, and questions about "
-                    f"warning signs, which the course rarely states, were answered from the model's general knowledge. Abstention, not "
-                    f"retrieval, is the appropriate response to such questions, but the pilot has no gold answers and does not show "
-                    f"whether the answers given were correct.")]
+            txt += ("The question-answering pilot points the same way: retrieval raised abstention and lowered the rate of the answers "
+                    "given partly by making the model say less, and warning-sign questions, which the course rarely answers, were "
+                    "answered from general knowledge; abstention, not retrieval, is the right response to them.")
+    b += [P(txt)]
 
     # generator-robustness outcome, used by 8.5-8.7 and 9.2 (files written by the Section 7.10 reruns)
     repl_g, norepl_g = [], []
@@ -355,44 +289,36 @@ def blocks(R: Results) -> list:
                     sig = True
         (repl_g if sig else norepl_g).append(gname)
     if repl_g and norepl_g:
-        gen_note = (f" Re-running the conditions with two further generators reproduced the reductions under {_join(repl_g)} but "
-                    f"not under {_join(norepl_g)} (Section 7.10), so the recommendation is also generator-dependent.")
-        gen_lim = (f" The main-study conditions were regenerated with two further generators; the grounding reductions replicated "
-                   f"under {_join(repl_g)} but not under {_join(norepl_g)}, so the condition effects are statements about the "
-                   f"generators tested (Section 7.10).")
+        gen_note = (f" The reductions reproduced under {_join(repl_g)} but not under {_join(norepl_g)} (Section 7.10), so the "
+                    f"recommendation is also generator-dependent.")
+        gen_lim = (f" The grounding reductions replicated under {_join(repl_g)} but not under {_join(norepl_g)}, so the condition "
+                   f"effects are statements about the generators tested (Section 7.10).")
     elif repl_g:
-        gen_note = f" Re-running the conditions with {_join(repl_g)} reproduced the reductions (Section 7.10)."
-        gen_lim = f" The main-study conditions were regenerated with {_join(repl_g)}, where the grounding reductions replicated (Section 7.10)."
+        gen_note = f" The reductions reproduced under {_join(repl_g)} (Section 7.10)."
+        gen_lim = f" The grounding reductions replicated under {_join(repl_g)} (Section 7.10)."
     elif norepl_g:
-        gen_note = f" Re-running the conditions with {_join(norepl_g)} did not reproduce the reductions (Section 7.10)."
-        gen_lim = f" The main-study conditions were regenerated with {_join(norepl_g)}, where the grounding reductions did not replicate (Section 7.10)."
+        gen_note = f" The reductions did not reproduce under {_join(norepl_g)} (Section 7.10)."
+        gen_lim = f" The grounding reductions did not replicate under {_join(norepl_g)} (Section 7.10)."
     else:
         gen_note = gen_lim = ""
 
     # ── 8.5 comparison of the approaches
     b += [H2("8.5 Comparison of the Approaches")]
-    if main and tu:
-        cut = {c: abs(tu[c].rel_change_mean) for c in GROUNDED}
-        cc = {c: (D.m(c, "claims_total"), D.m(c, "cited_claims"), D.m(c, "cite_correct")) for c in ("E1", "E1b")}
-        cmp_text = (f"[[tab:compare]] summarizes the strengths, weaknesses and appropriate uses of the five conditions in the light of both "
-                    f"studies. No approach dominates on every criterion. RAG with the whole course in view reduced the judge-estimated "
-                    f"rate of unsupported claims as much as the other grounded conditions ({min(cut.values()):.0f} to "
-                    f"{max(cut.values()):.0f} percent below E0 under the judge) while achieving coverage similar to E0, so it is the "
-                    f"design these results favor. The recommendation is conditional: it rests on judge-estimated "
-                    f"rates for one corpus and one retrieval design, on a coverage measure scored by the same judge, and on "
-                    f"citations that cover only {pct0(cc['E1b'][1] / cc['E1b'][0]) if not _nan(cc['E1b'][0]) else '—'} of E1b's claims."
-                    f"{gen_note} "
-                    f"The extractive summarizer cannot fabricate but produces text that no patient should be handed unedited. That the "
-                    f"ordering of E0 and the grounded conditions is the same under both judges, at both thresholds and in repeated "
-                    f"generations is some assurance that the judges respond to real differences when those differences are large; it does "
-                    f"not settle the smaller differences among the grounded conditions.")
-    else:
-        cmp_text = "[[tab:compare]] summarizes the strengths, weaknesses and appropriate uses of the five conditions."
     def cit_txt(c):
         if not main:
             return "—"
         n_all, n_cit, n_ok = D.m(c, "claims_total"), D.m(c, "cited_claims"), D.m(c, "cite_correct")
         return f"{pct0(n_cit / n_all)} of claims cited, {pct0(n_ok / n_cit) if n_cit else '—'} of citations supported" if not _nan(n_all) and n_all else "—"
+    if main and tu:
+        cmp_text = (f"[[tab:compare]] summarizes the strengths, weaknesses and appropriate uses of the five conditions. No approach "
+                    f"dominates on every criterion. RAG with the whole course in view reduced the judge-estimated rate of unsupported "
+                    f"claims as much as the other grounded conditions while achieving coverage similar to E0, so it is the design these "
+                    f"results favor, conditionally: the recommendation rests on judge-estimated rates for one corpus and one retrieval "
+                    f"design, on a coverage measure scored by the same judge, and on citations that cover only "
+                    f"{pct0(D.m('E1b', 'cited_claims') / D.m('E1b', 'claims_total')) if not _nan(D.m('E1b', 'claims_total')) else '—'} of E1b's claims."
+                    f"{gen_note} The extractive summarizer cannot fabricate but produces text no patient should be handed unedited.")
+    else:
+        cmp_text = "[[tab:compare]] summarizes the strengths, weaknesses and appropriate uses of the five conditions."
     b += [P(cmp_text),
           ("table", dict(label="compare", caption="Comparison of the five conditions across both studies. Pilot values are per-document means under the MiniLM judge on MTSamples; main-study values are judge-estimated per-document means under the selected judge on MIMIC-IV hospital courses; coverage is the judge-estimated share of the clinician's discharge-instruction sentences supported by the summary.",
                          columns=["Approach", "Pilot UFR / CR", "Main study UFR / CR", "Coverage of clinician's sentences", "Strengths", "Weaknesses", "Appropriate use"],
@@ -418,9 +344,8 @@ def blocks(R: Results) -> list:
     # ── 8.6 findings, explanations and open questions
     if main and tu:
         b += [H2("8.6 Findings, Explanations and Open Questions")]
-        b += [P("The discussion has mixed three kinds of statement, which [[tab:findings]] separates: findings, which the data measure "
-                "directly; explanations, which are offered for a finding and are tested only in part or not at all; and open questions, "
-                "which this thesis cannot answer.")]
+        b += [P("[[tab:findings]] separates what the data measure directly from the explanations offered for it, with the status of "
+                "each explanation, and from the questions this thesis cannot answer.")]
         ka = ks = np.nan
         if at is not None and len(at):
             a_ = at[(at.analysis == "expert_agreement_atomic_min") & (at.group == "all")]; s_ = at[(at.analysis == "expert_agreement_sentence") & (at.group == "all")]
@@ -457,38 +382,25 @@ def blocks(R: Results) -> list:
     b += [H2("8.7 Threats to Validity and Limitations")]
     jk = (f"kappa {f2(jr.kappa)}, precision {f2(jr.precision)}, recall {f2(jr.recall)}" if jr is not None else "moderate agreement")
     bullets = [
-        "**Construct validity of the judge.** The pilot judge agrees with medical experts at near-chance levels, so the pilot's UFR and CR "
-        "are indices of how a small NLI model reacts to a summary rather than measurements of hallucination. The main-study judge was "
-        f"selected for its agreement with the same experts ({jk}), which is moderate, and every rate in Chapter 7 is judge-estimated. "
-        "The second judge and the two combined flagging rules are alternative estimates of the same quantity, not bounds on it, "
-        "because the judges can share errors.",
+        f"**Construct validity of the judge.** The pilot judge agrees with experts at chance, so the pilot's rates index how a small NLI "
+        f"model reacts to a summary rather than hallucination. The main-study judge is moderate ({jk}), every rate in Chapter 7 is "
+        "judge-estimated, and the second judge and the combined flagging rules are alternative estimates, not bounds, because judges share errors.",
         "**Optimism of the selection and overlap with the main study.** The judge was chosen on the sentences on which its agreement is "
-        "reported" + (f"; nested cross-validation puts the procedure's kappa at about {f2(k_cv)} against an apparent {f2(jr.kappa)}" if not _nan(k_cv) and jr is not None else "")
-        + ". The doctor-written half of the expert set belongs to the main-study courses, so the judge was selected partly on text "
-        "written for the courses it later scores (Section 6.5).",
-        "**Transfer of the validation.** The expert annotations cover doctor-written instructions and summaries by GPT-4 and Llama "
-        "models, not the local model's output, and the expert-set error rates do not transfer to it (Section 8.3). The manual audit "
-        "measures the judge on the local model's output, but with one annotator, the author, who is not a clinician, and with a "
-        "sample of 60 courses.",
-        "**Sample size and generation variability.** The 110 courses give adequate power for moderate paired effects. Each summary "
-        "was generated once at temperature 0.3; repeated generation on 40 courses measures the run-to-run variation (Section 7.8), but "
-        "most results rest on one generation.",
-        "**External validity of the corpora.** MTSamples documents are sample transcriptions, shorter and more formulaic than hospital "
-        "notes, with corrupted line breaks, and the corpus is public and may be in the generator's training data. The main-study courses "
-        "come from one institution and one section of the discharge summary, and the clinician's instructions used as the coverage "
-        "reference contain content that the course does not, so complete coverage of them is neither attainable nor desirable.",
-        "**Generators.** The pilot used GPT-4o-mini through an API and the main study a four-bit, "
-        "seven-billion-parameter open-weight model, the largest that the data use agreement and the hardware allowed. Results are "
-        "compared across the studies qualitatively, and each study used one prompt per condition, one retriever and one verifier."
-        + gen_lim,
-        "**Heuristic components.** The header filter, the abstention rule and the citation parser are rule-based. An earlier version of "
-        "the main-study parser mishandled citation markers and merged headers (Section 3.5); the corrected parser is used throughout, "
-        "but rule-based components remain a source of error.",
-        "**Measures scored by the same judge.** Coverage and citation accuracy run the selected judge in new directions (summary as "
-        "premise, instruction sentence as hypothesis; cited excerpt as premise, claim as hypothesis) whose agreement with experts was not "
-        "validated; the audit verified a sample of citations manually.",
-        "**Verification design.** E3 uses one verifier (the generator itself, at temperature 0), one prompt and the judge's own retriever, "
-        "and the abstention rule was written after the mislabeling of abstentions was observed in the pilot.",
+        "reported" + (f" (nested cross-validation: about {f2(k_cv)} against an apparent {f2(jr.kappa)})" if not _nan(k_cv) and jr is not None else "")
+        + ", and the doctor-written half of the expert set belongs to the main-study courses (Section 6.5).",
+        "**Transfer of the validation.** The expert annotations cover other generators' output, and their error rates do not transfer to "
+        "the local model (Section 8.3); the manual audit measures the judge on its output, but with one non-clinician annotator and 60 courses.",
+        "**Sample size and generation variability.** 110 courses give adequate power for moderate paired effects; each summary was generated "
+        "once, and the repeated generations on 40 courses (Section 7.8) show that per-course values are noisy.",
+        "**External validity of the corpora.** MTSamples documents are public sample transcriptions that may be in the generator's training "
+        "data; the main-study courses come from one institution and one section of the discharge summary, and the clinician's "
+        "instructions used as the coverage reference contain content the course does not, so complete coverage is neither attainable nor desirable.",
+        "**Generators and design choices.** One API model in the pilot and one four-bit seven-billion-parameter model in the main study, "
+        "compared qualitatively, each with one prompt per condition, one retriever and one verifier (the generator itself)." + gen_lim,
+        "**Heuristic components.** The header filter, the abstention rule and the citation parser are rule-based; an earlier parser "
+        "mishandled citation markers and merged headers (Section 3.5), and the corrected one remains a source of error.",
+        "**Measures scored by the same judge.** Coverage and citation accuracy run the judge in directions whose agreement with experts was "
+        "not validated; the audit verified a sample of citations manually.",
         "**Question-answering pilot.** Three fixed questions without clinician-written gold answers; agreement with the clinician's "
         "instructions is a proxy for correctness."]
     b += [("bullets", bullets)]
@@ -496,75 +408,67 @@ def blocks(R: Results) -> list:
     # ── 8.8 implications
     b += [H2("8.8 Implications for the Design and Evaluation of Clinical Summarization Systems")]
     b += [("numbers", [
-        "**Validate the evaluator before the system, and again on the system's own outputs.** An automatic hallucination metric should "
-        "be reported with its agreement with clinician annotations on the target domain, corrected for the optimism of choosing it, "
-        "and with an audit of the outputs it scores, because error rates measured on other generators do not transfer.",
-        "**Choose the judge by capacity and evidence mode, not by aggregation tweaks.** Changing how a small model's evidence was "
-        "aggregated changed little; a larger consistency-trained NLI model with the whole document as evidence raised kappa markedly.",
-        "**Report paired differences with intervals and read small differences with caution.** A judge preserves the direction of a "
-        "large difference when its error rates are similar across systems, but a small difference can come from a difference in error "
-        "rates alone.",
-        "**Report counts, length and coverage with every rate.** A lower share of unsupported claims can come from writing fewer "
-        "claims; supported and unsupported counts, length and coverage of a clinician-written reference make that visible.",
-        "**Separate the variables that differ between conditions.** Length-matched and instruction-matched variants are cheap and show "
-        "how much of an effect belongs to the mechanism under study.",
-        "**Use an extractive and a human reference as references, not as bounds.** Verbatim extracts show how the judge scores text "
-        "that is supported by construction, and the clinician's own text shows what the metric measures; neither is a floor or a "
-        "ceiling for a generated summary.",
-        "**Parse citations before splitting sentences, and report coverage as well as accuracy.** A citation is useful only when it is "
-        "present and correct, and naive sentence splitting misattributes many markers.",
-        "**Keep protected text local and check the repository.** An open-weight model on a laptop made a study on real hospital "
-        "courses possible without any data leaving the machine, and an automated scan confirms that no protected text was published."])]
+        "**Validate the evaluator before the system, and again on the system's own outputs**, with agreement against clinician labels "
+        "corrected for the optimism of choosing it, because error rates measured on other generators do not transfer.",
+        "**Choose the judge by capacity and evidence mode, not by aggregation tweaks**: re-aggregating a small model's evidence changed "
+        "little, while a larger consistency-trained model with the whole document as evidence raised kappa markedly.",
+        "**Report counts, length and coverage with every rate, and paired differences with intervals**: a lower share of unsupported "
+        "claims can come from writing fewer claims, and a small difference can come from the judge's error rates alone.",
+        "**Separate the variables that differ between conditions** with length-matched and instruction-matched variants, and use "
+        "extractive and human references as references, not as bounds.",
+        "**Parse citations before splitting sentences, report citation coverage as well as accuracy, and keep protected text local**, "
+        "with an automated check that none of it reaches the repository."])]
 
     # ══════════════════════════════════ CHAPTER 9 ══════════════════════════════════
     b += [H1("Chapter 9 Conclusion and Future Work"), H2("9.1 Summary")]
-    s1 = (f"This thesis asked whether LLM-generated patient-facing summaries of clinical notes contain unsupported statements, "
-          f"whether an automatic judge can measure them, and whether retrieval and verification reduce them. It built a reproducible "
-          f"claim-level evaluation pipeline from open components, found the pilot's judge invalid against medical-expert annotations, "
-          f"selected a better judge by the same validation and audited it on the main study's own outputs, and compared five "
-          f"summarization conditions on {M.n_docs if M.ok else 110} MIMIC-IV hospital courses with an open-weight model running on the "
-          f"author's computer, measuring omission against the discharge instructions the clinicians wrote. The findings below are "
-          f"conditional on the measured validity of that judge; Chapter 8 interprets them.")
-    b += [P(s1)]
+    b += [P(f"This thesis asked whether LLM-generated patient-facing summaries of clinical notes contain unsupported statements, whether "
+            f"an automatic judge can measure them, and whether retrieval and verification reduce them. It built a reproducible "
+            f"claim-level evaluation pipeline, found the pilot's judge invalid against medical-expert annotations, selected a better "
+            f"judge by the same validation and audited it on the main study's own outputs, and compared five summarization conditions "
+            f"on {M.n_docs if M.ok else 110} MIMIC-IV hospital courses with an open-weight model running locally, measuring omission "
+            f"against the discharge instructions the clinicians wrote. The findings are conditional on the measured validity of that judge.")]
     b += [H2("9.2 Key Findings")]
     kf = [f"**Pilot judge.** Against 1,781 expert-annotated sentences the pilot judge agreed with the experts at chance level (kappa "
-          f"{f2(cal_all.any_kappa)}, AUROC {f2(cal_all.auroc_1_minus_p_entail)}), and no evidence-aggregation rule raised kappa above "
-          f"{f2(var_all.best_kappa.max()) if var_all is not None else '—'}, so its pilot rates are not hallucination rates.",
-          "**Evaluation artifacts.** Counting markdown header lines as claims and labeling abstentions as contradictions distort "
-          "claim-level rates; both, and the misattribution of citation markers in the main study, were corrected."]
+          f"{f2(cal_all.any_kappa)}), and no evidence-aggregation rule repaired it, so its pilot rates are not hallucination rates.",
+          "**Evaluation artifacts.** Header lines counted as claims, abstentions labeled as contradictions and misattributed citation "
+          "markers distort claim-level rates; all three were corrected."]
     if main and tu:
         kf += [f"**Judge selection.** DeBERTa-v3-large NLI with whole-course evidence reached kappa {f2(jr.kappa)} and AUROC {f2(jr.auroc)}"
                + (f" (about {f2(k_cv)} under nested cross-validation)" if not _nan(k_cv) else "")
-               + "; MedNLI fine-tuning raised MedNLI accuracy by nine points but not agreement with the experts.",
+               + "; MedNLI fine-tuning raised MedNLI accuracy but not agreement with the experts.",
                f"**Grounding.** On the hospital courses, E1, E1b and E3 lowered the judge-estimated UFR from {f3(M.mean('E0','UFR'))} to "
-               f"{f3(M.mean('E1','UFR'))}, {f3(M.mean('E1b','UFR'))} and {f3(M.mean('E3','UFR'))} (all {padj(max(D.holm_p(t) for t in tu.values()))}), "
-               f"without changing CR; the three do not differ significantly from one another, and part of the reduction comes from shorter summaries.",
+               f"{f3(M.mean('E1','UFR'))}, {f3(M.mean('E1b','UFR'))} and {f3(M.mean('E3','UFR'))} (all {padj(max(D.holm_p(t) for t in tu.values()))}) "
+               f"without changing CR; the three do not differ from one another, and part of the reduction comes from shorter summaries.",
                (f"**Coverage.** E1 and E3 covered fewer of the clinician's sentences than E0; E1b achieved coverage similar to E0, with no "
                 f"statistically significant difference detected ({pts(tcov['E1b'].delta_mean)}, 95 percent interval "
                 f"{ci_pts(tcov['E1b'].ci95_low, tcov['E1b'].ci95_high)})." if tcov.get("E1b") is not None else ""),
                (f"**Citations.** E1 cited {pct0(D.m('E1', 'cited_claims') / D.m('E1', 'claims_total'))} of its claims and E1b "
                 f"{pct0(D.m('E1b', 'cited_claims') / D.m('E1b', 'claims_total'))}; {pct0(D.m('E1', 'cite_correct') / D.m('E1', 'cited_claims'))} of "
                 f"E1's citations were supported by the cited excerpts." if not _nan(D.m('E1', 'claims_total')) else ""),
-               "**Robustness.** The reductions relative to E0 hold at a second threshold and under a second judge"
+               "**Robustness.** The reductions relative to E0 hold at a second threshold, under a second judge"
                + (" and in repeated generations" if rep is not None and len(rep) and "kind" in rep.columns else "")
-               + "; verification is better than retrieval alone only under the second judge."
-               + (f" Under other generators the reductions replicate for {_join(repl_g)}" + (f" but not for {_join(norepl_g)}" if norepl_g else "") + " (Section 7.10)."
-                  if repl_g else (f" Under {_join(norepl_g)} the reductions do not replicate (Section 7.10)." if norepl_g else ""))]
+               + "; verification beats retrieval alone only under the second judge."
+               + (f" They replicate for {_join(repl_g)}" + (f" but not for {_join(norepl_g)}" if norepl_g else "") + " (Section 7.10)."
+                  if repl_g else (f" They do not replicate under {_join(norepl_g)} (Section 7.10)." if norepl_g else ""))]
         if A is not None and AD is not None and len(AD):
             keys = [k for k in ("E1 minus E0", "E1b minus E0", "E3 minus E0") if k in AD.index]
             conf = [k for k in keys if AD.loc[k, "diff_hi"] < 0]
             ag_ = _csv("audit_agreement.csv")
-            agk = (f" after two blind passes that agree with kappa {f2(ag_[ag_.kind == 'claim'].iloc[0].kappa)} on claims"
+            agk = (f" after two blind passes that agree at kappa {f2(ag_[ag_.kind == 'claim'].iloc[0].kappa)}"
                    if ag_ is not None and len(ag_) and "claim" in set(ag_.kind) else "")
             if conf:
-                parts = "; ".join(f"{k.split(' minus ')[0]} {pts(AD.loc[k, 'diff'])} (95 percent interval "
-                                  f"{ci_pts(AD.loc[k, 'diff_lo'], AD.loc[k, 'diff_hi'])})" for k in conf)
-                kf.append(f"**Manual audit.** The manually confirmed reduction relative to E0 excludes zero for {parts}{agk}; "
-                          f"the remaining condition differences are unresolved at the audit's sample size, and the judge "
-                          f"understates the absolute unsupported shares.")
+                parts = "; ".join(f"{k.split(' minus ')[0]} {pts(AD.loc[k, 'diff'])} ({ci_pts(AD.loc[k, 'diff_lo'], AD.loc[k, 'diff_hi'])})" for k in conf)
+                kf.append(f"**Manual audit.** The judge understates absolute unsupported shares; the manually confirmed reduction relative "
+                          f"to E0 excludes zero for {parts}{agk}, and the other condition differences are unresolved at the audit's sample size.")
             else:
-                kf.append(f"**Manual audit.** None of the manually confirmed condition differences excludes zero at the audit's "
-                          f"sample size{agk}; the judge understates the absolute unsupported shares.")
+                kf.append(f"**Manual audit.** The judge understates absolute unsupported shares, and none of the manually confirmed "
+                          f"condition differences excludes zero at the audit's sample size{agk}.")
+        ev = _csv("verifact_judge_eval.csv")
+        if ev is not None and "subset" in ev.columns and "all" in set(ev.subset):
+            al = ev.set_index("subset").loc["all"]
+            kf.append(f"**External check.** On {int(al.n):,} clinician-labeled propositions from another institution the judge reaches "
+                      f"AUROC {f2(al.auroc)} and kappa {f2(al.kappa)} (sensitivity {f2(al.sensitivity)}, specificity {f2(al.specificity)}): "
+                      f"it still separates supported from unsupported statements, with the same low sensitivity the audit found.")
         if M.qa_tot is not None and {"QA-E0", "QA-E1"} <= set(M.qa_tot.index):
             kf.append(f"**Question answering (exploratory).** Retrieval raised abstention from {pct0(M.qa_tot.loc['QA-E0','abstention_rate'])} to "
                       f"{pct0(M.qa_tot.loc['QA-E1','abstention_rate'])} and lowered the judge-estimated UFR of the answers given; warning-sign "
@@ -572,18 +476,12 @@ def blocks(R: Results) -> list:
     b += [("numbers", [k for k in kf if k])]
     b += [H2("9.3 Future Work")]
     b += [("numbers", [
-        "**Clinician annotation of the generator's own output.** The audit of this thesis was performed by one non-clinician annotator; "
-        "two clinicians labeling the same sample would give agreement between annotators and clinically validated error rates for the "
-        "selected judge on these outputs."] + ([
-        "**External validation of the judge.** Clinician-labeled statements about other patients, such as the VeriFact-BHC annotations "
-        "of MIMIC-III hospital courses [[cite:chung2026verifact]], would test the selected judge outside the courses it was chosen on."]
-        if _csv("verifact_judge_eval.csv") is None else []) + [
-        "**Better judges for patient-facing paraphrase.** LLM-based judges calibrated against expert labels, alignment models trained "
-        "on clinical consistency data, and decomposition designs that keep the context of each fact are natural candidates for the same "
-        "selection protocol.",
-        "**Larger generators and more generations.** A workstation-class GPU would allow open-weight models of 30 to 70 billion "
-        "parameters, several generations for every course, and more institutions and note types.",
-        "**A clinician study of omission and of the question-answering task.** Clinicians rating the importance of omitted sentences, "
-        "and clinician-written gold answers for a broader question set, would turn the coverage measure and the question-answering "
-        "pilot into validated measures."])]
+        "**Clinician annotation of the generator's own output.** Two clinicians labeling the audit sample would give agreement between "
+        "annotators and clinically validated error rates for the selected judge on these outputs.",
+        "**Better judges for patient-facing paraphrase.** LLM-based judges calibrated against expert labels, alignment models trained on "
+        "clinical consistency data, and decomposition designs that keep each fact's context are candidates for the same selection protocol.",
+        "**Larger generators and more generations.** A workstation-class GPU would allow open-weight models of 30 to 70 billion parameters, "
+        "several generations per course, and more institutions and note types.",
+        "**A clinician study of omission and of question answering.** Clinicians rating the importance of omitted sentences, and "
+        "clinician-written gold answers, would turn the coverage measure and the question-answering pilot into validated measures."])]
     return b

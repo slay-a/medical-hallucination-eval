@@ -53,313 +53,219 @@ def blocks(R: Results) -> list:
 
     # ══════════════════════════════════ CHAPTER 1 ══════════════════════════════════
     b += [H1("Chapter 1 Introduction"), H2("1.1 Motivation")]
-    b += [P("Clinical care generates large volumes of free-text documentation written by clinicians for clinicians, and "
-            "patients often leave a hospital with instructions they do not fully understand. Large language models (LLMs) can "
-            "condense such documentation into fluent summaries: in a reader study across four clinical summarization tasks, "
-            "adapted LLMs produced summaries that physicians judged equivalent to or better than expert-written ones "
-            "[[cite:vanveen2024]], they encode substantial clinical knowledge [[cite:singhal2023]], and they can rewrite "
-            "technical language into plain patient-facing prose [[cite:hegselmann2024,adams2021]]. The same models are prone "
-            "to *hallucination*, fluent text that the input does not support or that contradicts it "
-            "[[cite:ji2023,huang2025,maynez2020,kryscinski2019,tam2023]]. In medicine the consequences are serious: a "
-            "patient-facing summary that names a medication that was never prescribed, invents a follow-up appointment, "
-            "reverses a negation or states a diagnosis the clinician only suspected can change what a patient does after "
-            "leaving care, which is why Asgari et al. argue that hallucination rates must be measured within clinically "
-            "grounded safety frameworks before deployment [[cite:asgari2025]] and why medical hallucination benchmarks have "
-            "begun to appear [[cite:pal2023]]. Unsupported statements are not unique to machines: when Hegselmann et al. asked "
-            "medical experts to annotate doctor-written discharge instructions from MIMIC-IV, a substantial share of sentences "
-            "contained facts that the preceding hospital course did not support [[cite:hegselmann2024]]."),
-          P("Measuring hallucination is harder than it appears. ROUGE, BLEU and BERTScore quantify overlap with a reference "
-            "summary [[cite:lin2004,papineni2002,zhang2020]]; they were never designed to detect factual errors, they "
-            "correlate weakly with human judgments of consistency [[cite:fabbri2021,kryscinski2020]] and with clinicians' "
-            "assessments of generated notes [[cite:moramarco2022]], and a reference summary is usually not available for a "
-            "patient-facing summary of an individual note. What is needed is a *reference-free* procedure that checks each "
-            "statement of a generated summary against the source document itself.")]
+    b += [P("Clinical documentation is written by clinicians for clinicians, and patients often leave a hospital with instructions "
+            "they do not fully understand. Large language models (LLMs) can condense such documentation into fluent patient-facing "
+            "summaries: in a reader study across four clinical summarization tasks, physicians judged adapted LLMs equivalent to or "
+            "better than expert-written summaries [[cite:vanveen2024]], and the models encode substantial clinical knowledge "
+            "[[cite:singhal2023,hegselmann2024,adams2021]]. The same models are prone to *hallucination*, fluent text that the input "
+            "does not support or that contradicts it [[cite:ji2023,huang2025,maynez2020,kryscinski2019,tam2023]]. In medicine the "
+            "consequences are serious: a summary that names a medication never prescribed, invents a follow-up appointment, reverses a "
+            "negation or states a diagnosis the clinician only suspected can change what a patient does after leaving care, which is "
+            "why hallucination rates must be measured within clinically grounded safety frameworks before deployment "
+            "[[cite:asgari2025,pal2023]]. Unsupported statements are not unique to machines: when Hegselmann et al. had medical experts "
+            "annotate doctor-written discharge instructions from MIMIC-IV, a substantial share of sentences contained facts the hospital "
+            "course did not support [[cite:hegselmann2024]]."),
+          P("Measuring hallucination is harder than it appears. ROUGE, BLEU and BERTScore quantify overlap with a reference summary "
+            "[[cite:lin2004,papineni2002,zhang2020]]; they were never designed to detect factual errors, they correlate weakly with human "
+            "judgments of consistency [[cite:fabbri2021,kryscinski2020,moramarco2022]], and a reference summary is usually not available "
+            "for a patient-facing summary of an individual note. What is needed is a *reference-free* procedure that checks each "
+            "statement of a summary against the source document itself.")]
     b += [H2("1.2 Problem Statement")]
-    b += [P("This thesis addresses two linked problems. The first is a *measurement* problem: how can the unsupported and "
-            "contradicted content of an LLM-generated medical summary be quantified automatically, at the level of "
-            "individual claims, in a way that is reproducible and independent of any reference summary? Natural language "
-            "inference (NLI) models, which classify whether a hypothesis is entailed by, contradicted by, or neutral with "
-            "respect to a premise, have been proposed as the core of such procedures [[cite:falke2019,maynez2020,laban2022,"
-            "honovich2022]], but their validity for patient-facing clinical summaries has not been established. An automatic "
-            "judge that is itself unreliable would produce misleading conclusions about every mitigation strategy tested "
-            "with it."),
-          P("The second is a *mitigation* problem: does grounding the generator in retrieved passages of the source note, "
-            "the strategy known as retrieval-augmented generation (RAG) [[cite:lewis2020]], actually reduce unsupported and "
-            "contradicted content, and at what cost? Retrieval focuses the model on selected passages, which may suppress "
-            "fabrication but may also omit clinically relevant content that was not retrieved. A credible answer requires a "
-            "controlled comparison on the same documents, an extractive reference that shows how the evaluator scores text "
-            "copied verbatim from the source, paired statistical tests, and an explicit measure of coverage."),
-          P("Both problems must be answered together. This thesis therefore builds a claim-level NLI judge, applies it in a "
-            "controlled comparison of five summarization conditions built on three approaches (full-note generation without retrieval, "
-            "retrieval-augmented generation with and without verification, and extractive summarization), validates the "
-            "judge against sentence-level annotations produced by medical experts [[cite:hegselmann2025data]], replaces it "
-            "with the candidate that agrees best with those experts, and repeats the comparison on real hospital courses. The "
-            "validation step turns out to be decisive for how every comparison must be interpreted.")]
+    b += [P("This thesis addresses two linked problems. The first is a *measurement* problem: how can the unsupported and contradicted "
+            "content of an LLM-generated medical summary be quantified automatically, claim by claim, reproducibly and without a "
+            "reference summary? Natural language inference (NLI) models, which classify whether a hypothesis is entailed by, "
+            "contradicted by, or neutral to a premise, have been proposed as the core of such procedures "
+            "[[cite:falke2019,maynez2020,laban2022,honovich2022]], but their validity for patient-facing clinical summaries has not been "
+            "established, and an unreliable judge would mislead every conclusion drawn with it. The second is a *mitigation* problem: "
+            "does grounding the generator in retrieved passages of the source note, retrieval-augmented generation (RAG) "
+            "[[cite:lewis2020]], reduce unsupported content, and at what cost in omitted content? The thesis therefore builds a "
+            "claim-level NLI judge, validates it against sentence-level annotations by medical experts [[cite:hegselmann2025data]], "
+            "replaces it with the candidate that agrees best with them, and uses that judge in a controlled comparison of five "
+            "summarization conditions on real hospital courses. The validation step turns out to be decisive for how every comparison "
+            "must be read.")]
     b += [H2("1.3 Research Questions and Hypotheses")]
-    b += [P("The study is organized around three research questions that were fixed in the thesis proposal and carried "
-            "through the two progress reports of Spring 2026."),
+    b += [P("Three research questions were fixed in the thesis proposal."),
           ("numbers", [
-              "**RQ1.** How frequently do statements in patient-facing summaries generated by a modern LLM (GPT-4o-mini) lack "
-              "support in, or contradict, the source clinical note, when measured by a claim-level NLI judge?",
-              "**RQ2.** Which kinds of statements are unsupported, and how does the automatic judge itself err when compared "
-              "with medical experts?",
-              "**RQ3.** To what extent does document-grounded RAG reduce unsupported and contradicted statements relative to "
-              "full-note generation without retrieval, how does it compare with a conservative extractive summarizer, and what does it cost "
-              "in coverage of the source note?"]),
-          P("The pilot study answers these questions for GPT-4o-mini on public notes; the main study asks them again of a "
-            "locally run open-weight model on MIMIC-IV hospital courses, with a judge selected against the expert annotations. "
-            "Three hypotheses were stated in advance of the experiments."),
+              "**RQ1.** How frequently do statements in patient-facing summaries generated by a modern LLM lack support in, or "
+              "contradict, the source clinical note, when measured by a claim-level NLI judge?",
+              "**RQ2.** Which kinds of statements are unsupported, and how does the automatic judge itself err when compared with "
+              "medical experts?",
+              "**RQ3.** To what extent does document-grounded RAG reduce unsupported and contradicted statements relative to full-note "
+              "generation without retrieval, how does it compare with a conservative extractive summarizer, and what does it cost in "
+              "coverage of the source note?"]),
+          P("The pilot study asks these questions of GPT-4o-mini on public notes; the main study asks them of a locally run open-weight "
+            "model on MIMIC-IV hospital courses with a judge selected against the expert annotations. Three hypotheses were stated in "
+            "advance."),
           ("numbers", [
-              "**H1 (measurability and validity).** Full-note LLM summarization without retrieval exhibits a measurable rate of unsupported "
-              "facts, and the claim-level NLI judge agrees with medical-expert annotations of unsupported facts substantially "
-              "better than chance.",
+              "**H1 (measurability and validity).** Full-note LLM summarization without retrieval exhibits a measurable rate of "
+              "unsupported facts, and the claim-level NLI judge agrees with medical-expert annotations substantially better than chance.",
               "**H2 (retrieval grounding).** Document-grounded RAG reduces the Unsupported Fact Rate and the Contradiction Rate "
               "relative to full-note generation without retrieval.",
-              "**H3 (verification).** Adding a structured verification and revision step (Chain-of-Verification) on top of "
-              "RAG further reduces unsupported and contradicted statements. This hypothesis is tested with condition E3."])]
+              "**H3 (verification).** A structured verification and revision step (Chain-of-Verification) on top of RAG further reduces "
+              "unsupported and contradicted statements (condition E3)."])]
     b += [H2("1.4 Overview of the Approach")]
-    b += [P(f"The pilot study summarizes {R.n_docs} de-identified clinical transcriptions sampled from the public MTSamples "
-            f"corpus [[cite:mtsamples]] under five conditions, illustrated in [[fig:pipeline]]: full-note LLM summarization "
-            f"without retrieval (E0), retrieval-augmented generation from the three most relevant excerpts of the note (E1), "
-            f"the same excerpts together with the full note (E1b), RAG followed by Chain-of-Verification, which checks and "
-            f"revises every claim of the draft (E3), and a centroid-based extractive summarizer that copies the five most "
-            f"representative sentences without any language model (E2). Because every E2 sentence is verbatim, E2 cannot "
-            f"introduce unsupported content, and any unsupported label it receives measures the judge's error on verbatim "
-            f"text. Chapter 4 specifies each condition."),
-          P("Every summary is scored by the same claim-level NLI judge: the summary is segmented into sentence-level claims, "
-            "the source sentences most similar to each claim are retrieved, an NLI model labels each claim Supported, "
-            "Not-Supported or Contradicted, and two judge-estimated rates are computed per summary, the Unsupported Fact Rate "
-            "(UFR) and the Contradiction Rate (CR). They are estimates from an imperfect automatic judge, not expert-confirmed "
-            "hallucination rates, and conditions are compared with paired non-parametric tests and bootstrap intervals. The "
-            "pilot judge is validated against 210 patient summaries annotated by two medical experts in the ann-pt-summ "
-            "dataset [[cite:hegselmann2025data]] and found wanting; a judge-selection study then scores six off-the-shelf "
-            "candidates and a seventh adapted with MedNLI [[cite:romanov2018]] against the same annotations and selects the "
-            "best. The main study repeats the five conditions on 110 MIMIC-IV hospital courses with a language model that runs "
-            "on the author's computer, requires citations from the retrieval conditions, measures omission against the "
-            "discharge instructions the treating clinicians wrote, and pilots document-grounded question answering. Because "
-            "the selected judge is still far from perfect, the main study adds a second judge, atomic-fact scoring, repeated "
-            "generations, two further generators, conditions that isolate the citation instruction and the summary length, "
-            "an analysis of the independence of the judge-selection data, an external check on clinician-labeled data, and "
-            "a blind manual audit of a sample of the main-study claims.")]
+    b += [P(f"The pilot study summarizes {R.n_docs} public MTSamples transcriptions [[cite:mtsamples]] under five conditions "
+            f"([[fig:pipeline]]): full-note LLM summarization without retrieval (E0), RAG from the three most relevant excerpts of the "
+            f"note (E1), the same excerpts together with the full note (E1b), RAG followed by Chain-of-Verification of every draft claim "
+            f"(E3), and an extractive summarizer that copies the five most representative sentences without any language model (E2); "
+            f"because every E2 sentence is verbatim, any unsupported label it receives measures the judge's error. Every summary is "
+            f"scored by the same claim-level NLI judge, which segments it into sentence-level claims, retrieves the most similar source "
+            f"sentences for each, labels each claim Supported, Not-Supported or Contradicted, and reports two judge-estimated rates per "
+            f"summary, the Unsupported Fact Rate (UFR) and the Contradiction Rate (CR). Conditions are compared with paired "
+            f"non-parametric tests and bootstrap intervals."),
+          P("The pilot judge is validated against 210 patient summaries annotated by two medical experts [[cite:hegselmann2025data]] "
+            "and found wanting; a selection study scores six candidates and a seventh adapted with MedNLI [[cite:romanov2018]] against "
+            "the same annotations and keeps the best. The main study repeats the five conditions on 110 MIMIC-IV hospital courses with "
+            "a model running on the author's computer, requires citations from the retrieval conditions, measures omission against the "
+            "discharge instructions the clinicians wrote, and adds the checks a moderate judge demands: a second judge, atomic-fact "
+            "scoring, repeated generations, two further generators, length- and instruction-matched variants, an analysis of the "
+            "judge-selection data's independence, an external check on clinician-labeled data, and a blind manual audit of the "
+            "main-study claims.")]
     b += [H2("1.5 Contributions")]
     b += [("numbers", [
-              "An open, fully reproducible claim-level evaluation pipeline for source-grounded summaries, built from "
-              "open-weight components (spaCy, all-MiniLM-L6-v2, cross-encoder/nli-MiniLM2-L6-H768) with a fixed sampling seed "
-              "and pinned dependencies.",
-              f"A controlled comparison of five summarization conditions, spanning full-note generation without retrieval, two forms of retrieval "
-              f"grounding, generation with verification and an extractive control, on {R.n_docs} clinical notes with paired statistics, "
-              "including the first correction of two evaluation artifacts, markdown section headers counted as claims and "
-              "comma-encoded line breaks in MTSamples, that had inflated previously reported effects.",
-              "A validation of the NLI judge against medical-expert annotations of unsupported facts, including sentence-level "
-              "agreement, threshold sweeps, summary-level correlation and five evidence-aggregation variants, which shows how "
-              "far an off-the-shelf NLI judge can and cannot be trusted for this task.",
-              "A quantitative analysis of the coverage cost of excerpt-only RAG, and a keyword-assisted taxonomy of the "
-              "statements that remain unsupported under every condition.",
-              "A judge-selection study that scores six off-the-shelf candidate judges and a MedNLI-adapted clinical NLI model against "
-              "medical-expert annotations, with nested cross-validation by hospital course and a patient-disjoint transfer test "
-              "that estimate how optimistic the selected judge's agreement is.",
-              "A main study on real MIMIC-IV hospital courses with a locally run open-weight model, measuring judge-estimated "
-              "unsupported content, coverage of the clinician-written discharge instructions, citation coverage and accuracy, "
-              "retrieval ablations and a question-answering pilot, together with the robustness checks listed above.",
-              "Open, documented implementations of every condition and every study, so that each can be re-run or extended with "
-              "a single command and without sending protected text to any external service."])]
+              "An open, reproducible claim-level evaluation pipeline for source-grounded summaries, built from open-weight components "
+              "with fixed seeds and pinned dependencies, and the correction of two evaluation artifacts (markdown headers counted as "
+              "claims, comma-encoded line breaks) that had inflated previously reported effects.",
+              "A validation of an off-the-shelf NLI judge against medical-expert annotations, showing how far it can and cannot be "
+              "trusted, and a judge-selection study with nested cross-validation and a patient-disjoint transfer test that estimate how "
+              "optimistic the selected judge's agreement is.",
+              "A controlled comparison of five summarization conditions on real MIMIC-IV hospital courses with a locally run model, "
+              "measuring judge-estimated unsupported content, coverage of the clinician-written instructions, citation coverage, "
+              "accuracy and reliability, retrieval ablations and a question-answering pilot.",
+              "A blind manual audit of the judge on the main study's own outputs, an external check on clinician-labeled propositions "
+              "from another institution, and replication of the main comparison with two further generators.",
+              "Open, documented implementations of every condition and study, re-runnable with a single command without sending "
+              "protected text to any external service."])]
     b += [H2("1.6 Scope and Delimitations")]
-    b += [P("The scope of the empirical work is deliberately narrow so that every comparison is controlled. Within each "
-            "study a single generator is used for all LLM conditions: GPT-4o-mini [[cite:openai2024]] in the pilot study on the "
-            "public MTSamples corpus, and Qwen2.5-7B-Instruct, run locally, in the main study on MIMIC-IV hospital courses, "
-            "because the OpenAI API cannot receive credentialed MIMIC text without a zero-data-retention agreement. The two "
-            "studies therefore differ in generator as well as in corpus and are compared qualitatively, not "
-            "numerically. The proposal's question-answering task is implemented as a pilot with three fixed questions per "
-            "hospital course rather than as a full benchmark. Each condition was generated once per document; for a random "
-            "subset of 40 main-study courses, two further generations of the four LLM conditions measure run-to-run "
-            "variation, and the four conditions were regenerated on all 110 courses with two further open-weight "
-            "generators, Llama-3.1-8B-Instruct and Mistral-7B-Instruct-v0.3, as a generator-robustness check "
-            "(Section 7.10)."),
-          P("Within this scope the thesis makes no claim about the clinical acceptability, safety or usefulness of any "
-            "summary. The metrics measure whether statements are supported by the note as judged by an automatic model; a lower "
-            "judge-estimated unsupported fact rate does not by itself make a summary better or more useful, because a summary "
-            "can lower it by saying less. Chapters 5 and 6 show how the judges' labels relate to the judgment of medical "
-            "experts, and Section 7.9 compares the selected judge with a blind manual audit of the main-study claims.")]
+    b += [P("Within each study a single generator is used for all LLM conditions: GPT-4o-mini [[cite:openai2024]] in the pilot on public "
+            "MTSamples notes, and Qwen2.5-7B-Instruct, run locally, in the main study on MIMIC-IV courses, because the OpenAI API cannot "
+            "receive credentialed MIMIC text. The two studies therefore differ in generator and corpus and are compared qualitatively. "
+            "The proposal's question-answering task is implemented as a pilot with three fixed questions per course. Each condition was "
+            "generated once per document, with two further generations on 40 courses and two further generators on all courses as "
+            "robustness checks (Section 7.10). The thesis makes no claim about the clinical acceptability, safety or usefulness of any "
+            "summary: the metrics measure support by the note as judged by an automatic model, and a lower judge-estimated unsupported "
+            "fact rate does not by itself make a summary better, because a summary can lower it by saying less.")]
     b += [H2("1.7 Organization of the Thesis")]
-    b += [P("Chapter 2 reviews the literature, Chapter 3 describes the data, preprocessing and governance, and Chapter 4 "
-            "specifies the evaluation framework, the summarization conditions, the statistical analysis, the judge validation "
-            "and selection, the main study and the question-answering pilot. Chapter 5 reports the pilot study, Chapter 6 the "
-            "selection of a valid judge and its external checks, Chapter 7 the main study, Chapter 8 the discussion and "
-            "limitations, and Chapter 9 the conclusions and future work. The appendices contain the exact prompts, a "
-            "description of the code repository, and the manual audit protocol.")]
+    b += [P("Chapter 2 reviews the literature, Chapter 3 the data and preprocessing, and Chapter 4 the methodology. Chapter 5 reports the "
+            "pilot study, Chapter 6 the selection of a valid judge and its checks, Chapter 7 the main study, Chapter 8 the discussion and "
+            "limitations, and Chapter 9 the conclusions. The appendices contain the prompts, the code repository and the audit protocol.")]
 
     # ══════════════════════════════════ CHAPTER 2 ══════════════════════════════════
     b += [H1("Chapter 2 Literature Review"), H2("2.1 Hallucination in Natural Language Generation")]
-    b += [P("The term hallucination entered the natural language generation literature to describe output that is fluent "
-            "but unfaithful to its input. Maynez et al. distinguished *intrinsic* hallucinations, which misrepresent "
-            "information that is present in the source, from *extrinsic* hallucinations, which introduce information that "
-            "the source does not contain, and showed that both are frequent in abstractive news summarization even for "
-            "models with strong ROUGE scores [[cite:maynez2020]]. Ji et al. organized the field in a survey covering "
-            "definitions, causes (noisy training data, exposure bias, decoding strategies and parametric knowledge that "
-            "overrides the input), metrics and mitigation methods across summarization, dialogue, question answering and "
-            "translation [[cite:ji2023]]. For large language models specifically, Huang et al. separate *factuality* "
-            "hallucinations, statements that conflict with world knowledge, from *faithfulness* hallucinations, statements "
-            "that conflict with the user-provided context or instructions [[cite:huang2025]]. Source-grounded summarization "
-            "of a clinical note is a faithfulness problem: the note is the only ground truth that matters, and a statement "
-            "that is medically plausible but absent from the note is still an error."),
-          P("Two further observations from this literature shape the present work. First, the rate of unfaithful content in "
-            "abstractive summaries has historically been high; Kryściński et al. estimated that about thirty percent of "
-            "summaries produced by then state-of-the-art models on news data contained factual inconsistencies "
-            "[[cite:kryscinski2019]], and Tam et al. found that even instruction-tuned LLMs frequently produce factually "
-            "inconsistent news summaries [[cite:tam2023]]. Second, extrinsic content is not always wrong; a patient "
-            "summary that adds standard safety advice may be extrinsic yet appropriate. Whether such content should count as "
-            "hallucination is a question of the intended use, and Section 8.2 returns to it.")]
+    b += [P("Hallucination describes output that is fluent but unfaithful to its input. Maynez et al. distinguished *intrinsic* "
+            "hallucinations, which misrepresent information in the source, from *extrinsic* ones, which add information the source does "
+            "not contain, and found both frequent in abstractive summarization even for models with strong ROUGE scores "
+            "[[cite:maynez2020]]; Ji et al. surveyed definitions, causes (noisy training data, exposure bias, decoding, and parametric "
+            "knowledge that overrides the input), metrics and mitigations [[cite:ji2023]]; and Huang et al. separate *factuality* "
+            "hallucinations, which conflict with world knowledge, from *faithfulness* hallucinations, which conflict with the given "
+            "context [[cite:huang2025]]. Source-grounded summarization of a clinical note is a faithfulness problem: a statement that is "
+            "medically plausible but absent from the note is still an error. Unfaithful content has historically been common, about "
+            "thirty percent of summaries from the models of 2019 [[cite:kryscinski2019]] and still frequent for instruction-tuned LLMs "
+            "[[cite:tam2023]], and extrinsic content is not always wrong: a patient summary that adds standard safety advice is "
+            "extrinsic yet appropriate, a question of intended use to which Section 8.2 returns.")]
     b += [H2("2.2 Limitations of Overlap-Based Evaluation")]
     b += [P("ROUGE, BLEU and BERTScore measure n-gram or embedding overlap with a reference summary "
-            "[[cite:lin2004,papineni2002,zhang2020]] and assume that a good reference exists and that similarity to it "
-            "indicates quality. Neither assumption holds for faithfulness: a summary can reproduce the vocabulary of a note "
-            "while inverting a negation or changing a dose and still score well. In the SummEval meta-evaluation such metrics "
-            "correlated weakly with human ratings of consistency [[cite:fabbri2021]], a dedicated consistency classifier "
-            "detected errors that overlap metrics missed [[cite:kryscinski2020]], and in clinical note generation the common "
-            "metrics correlated only weakly to moderately with clinician judgments and post-editing effort "
-            "[[cite:moramarco2022]]. Asgari et al. argue that clinical deployments need hallucination rates in clinically "
-            "meaningful units within an explicit safety framework [[cite:asgari2025]], which motivates reference-free, "
-            "source-grounded evaluation.")]
+            "[[cite:lin2004,papineni2002,zhang2020]] and assume that a good reference exists and that similarity to it indicates quality. "
+            "Neither holds for faithfulness: a summary can reproduce the vocabulary of a note while inverting a negation or changing a "
+            "dose. Such metrics correlated weakly with human ratings of consistency in SummEval [[cite:fabbri2021]], a dedicated "
+            "consistency classifier detected errors they missed [[cite:kryscinski2020]], and in clinical note generation they correlated "
+            "only weakly to moderately with clinician judgments [[cite:moramarco2022]]; clinical deployments need hallucination rates in "
+            "clinically meaningful units within a safety framework [[cite:asgari2025]], which motivates reference-free, source-grounded "
+            "evaluation.")]
     b += [H2("2.3 Automatic Faithfulness Evaluation")]
-    b += [P("Three families of reference-free faithfulness metrics have emerged. *Entity-based* methods compare the entities "
-            "and numbers in the summary with those in the source [[cite:goodrich2019,nan2021]]; *question-answering* methods "
-            "such as QAGS, FEQA and QuestEval generate questions from the summary and answer them from the source "
-            "[[cite:wang2020qags,durmus2020,scialom2021]], correlating better with human judgments than overlap metrics at "
-            "the price of two further models whose errors propagate into the score."),
-          P("*Entailment-based* methods use an NLI classifier to decide whether the source entails the summary. Early "
-            "attempts were sobering: Falke et al. found that NLI models of 2019 could not reliably re-rank summaries by "
-            "correctness because they were trained on short, artificial sentence pairs [[cite:falke2019]]. Maynez et al. "
-            "nonetheless observed that entailment probabilities correlated with human faithfulness judgments better than "
-            "other automatic measures [[cite:maynez2020]]. Laban et al. identified *granularity* as the decisive design "
-            "choice: applying NLI to whole documents fails because premises are far longer than anything the model saw in "
-            "training, whereas splitting both document and summary into sentences and aggregating sentence-pair scores "
-            "(SummaC) yields state-of-the-art inconsistency detection [[cite:laban2022]]. The TRUE meta-evaluation confirmed "
-            "that large NLI models fine-tuned on diverse consistency data are among the strongest reference-free metrics "
-            "available [[cite:honovich2022]], and AlignScore unified NLI, QA and paraphrase signals into a single alignment "
-            "model [[cite:zha2023]]. FActScore pushed granularity further by decomposing long outputs into atomic facts and "
-            "checking each against a knowledge source [[cite:min2023]]. SelfCheckGPT takes a different route, detecting "
-            "hallucinations without a source by measuring the inconsistency of multiple sampled generations "
-            "[[cite:manakul2023]]."),
-          P("The judge built in this thesis belongs to the entailment family and follows SummaC's sentence-level design, "
-            "with two differences that turn out to matter: the premise for each claim is the few most similar source "
-            "sentences retrieved by a bi-encoder rather than the whole document, and the pilot's classifier is a small "
-            "distilled cross-encoder (Section 2.4). Section 5.3 tests the consequences, and Chapter 6 replaces the small "
-            "classifier with larger candidates selected against expert labels."),
-          P("Two recent lines of work bear directly on that choice. The first is grounding-specific checkers. MiniCheck "
-            "trains small classifiers and a seven-billion-parameter model on synthetic examples that require reasoning across "
-            "several sentences, and on the LLM-AggreFact benchmark it matches GPT-4 at a fraction of the cost "
-            "[[cite:tang2024minicheck]]. The second is mounting evidence that even the best checkers are unreliable "
-            "instruments. Godbole and Jia re-tested five recent factuality metrics on eleven datasets and found that they "
-            "disagree with each other, misestimate how good whole systems are, and penalize paraphrase and evidence drawn "
-            "from distant parts of the source; they recommend validating any metric in the target domain before trusting it "
-            "[[cite:godbole2025]]. On FaithBench, a summarization benchmark assembled from the cases on which detectors "
-            "disagree, most state-of-the-art detectors, including GPT-4o used as a judge, are close to 50 percent accurate "
-            "[[cite:bao2025faithbench]]. These findings make the validation step of this thesis a requirement rather than "
-            "an extra.")]
+    b += [P("Three families of reference-free faithfulness metrics exist. *Entity-based* methods compare the entities and numbers in the "
+            "summary with those in the source [[cite:goodrich2019,nan2021]]; *question-answering* methods such as QAGS, FEQA and "
+            "QuestEval generate questions from the summary and answer them from the source [[cite:wang2020qags,durmus2020,scialom2021]]; "
+            "*entailment-based* methods use an NLI classifier to decide whether the source entails the summary. Early NLI models could not "
+            "re-rank summaries by correctness [[cite:falke2019]], but entailment probabilities correlated with human faithfulness "
+            "judgments better than other measures [[cite:maynez2020]], and Laban et al. identified granularity as decisive: NLI on whole "
+            "documents fails, whereas splitting document and summary into sentences and aggregating sentence-pair scores (SummaC) "
+            "detects inconsistency well [[cite:laban2022]]. The TRUE meta-evaluation confirmed that large NLI models fine-tuned on diverse "
+            "consistency data are among the strongest reference-free metrics [[cite:honovich2022]], AlignScore unified NLI, QA and "
+            "paraphrase signals [[cite:zha2023]], FActScore decomposes outputs into atomic facts [[cite:min2023]], and SelfCheckGPT "
+            "detects hallucination without a source from the inconsistency of sampled generations [[cite:manakul2023]]."),
+          P("The judge built here is entailment-based and follows SummaC's sentence-level design, with two differences that matter: the "
+            "premise is the few most similar source sentences rather than the whole document, and the pilot's classifier is a small "
+            "distilled cross-encoder (Section 2.4); Section 5.3 tests the consequences and Chapter 6 replaces it with larger candidates. "
+            "Two recent lines of work bear on that choice. Grounding-specific checkers such as MiniCheck match GPT-4 on the "
+            "LLM-AggreFact benchmark at a fraction of the cost [[cite:tang2024minicheck]]; and mounting evidence shows that even the best "
+            "checkers are unreliable instruments: Godbole and Jia found five recent factuality metrics disagreeing with each other and "
+            "penalizing paraphrase and distant evidence, and recommend validating any metric in the target domain [[cite:godbole2025]], "
+            "while on FaithBench most state-of-the-art detectors, GPT-4o included, are close to 50 percent accurate "
+            "[[cite:bao2025faithbench]]. These findings make the validation step of this thesis a requirement rather than an extra.")]
     b += [H2("2.4 Natural Language Inference Models")]
-    b += [P("NLI is the task of deciding whether a hypothesis sentence is *entailed* by, *contradicts*, or is *neutral* with "
-            "respect to a premise sentence. The Stanford NLI corpus [[cite:bowman2015]] and the Multi-Genre NLI corpus "
-            "[[cite:williams2018]] provided hundreds of thousands of crowd-sourced sentence pairs and made NLI the standard "
-            "benchmark for sentence understanding. Transformer encoders [[cite:vaswani2017,devlin2019]] fine-tuned on these "
-            "corpora reach high accuracy on in-distribution test sets."),
-          P("Two architectural choices govern how a transformer is used for pairwise classification. A *bi-encoder* embeds "
-            "each sentence independently and compares the embeddings, which allows the embeddings of a large collection to "
-            "be pre-computed and searched efficiently; Sentence-BERT is the canonical example [[cite:reimers2019]]. A "
-            "*cross-encoder* concatenates the two sentences and processes them jointly with full attention, which is far "
-            "more accurate for fine-grained decisions such as entailment but must be run once per pair [[cite:reimers2019,"
-            "thakur2021]]. The pipeline in this thesis uses both in their natural roles: a bi-encoder (all-MiniLM-L6-v2) "
-            "to retrieve candidate evidence sentences by cosine similarity, and a cross-encoder (nli-MiniLM2-L6-H768) to "
-            "classify each claim against the retrieved sentences. Both models are MiniLM distillations, which transfer the "
-            "self-attention behavior of a large teacher into a six-layer student that runs quickly on a CPU "
-            "[[cite:wang2020minilm]]."),
-          P("The clinical domain poses a known challenge for such models. Romanov and Shivade created MedNLI from MIMIC "
-            "clinical notes and showed that models trained on general-domain NLI transfer poorly: clinical entailment "
-            "depends on abbreviations, negation, temporal qualifiers and medical knowledge that crowd-sourced corpora do not "
-            "contain [[cite:romanov2018]]. The judge used here was not trained on clinical data. Its agreement with medical "
-            "experts is therefore an empirical question, which Chapters 5 and 6 answer; Chapter 6 also tests whether "
+    b += [P("NLI asks whether a premise entails, contradicts or is neutral to a hypothesis; SNLI [[cite:bowman2015]] and MultiNLI "
+            "[[cite:williams2018]] made it the standard sentence-understanding benchmark, and transformer encoders "
+            "[[cite:vaswani2017,devlin2019]] fine-tuned on them reach high in-distribution accuracy. Two architectures govern pairwise "
+            "classification: a *bi-encoder* embeds each sentence independently so that a collection can be pre-computed and searched "
+            "[[cite:reimers2019]], and a *cross-encoder* processes both sentences jointly, which is far more accurate for entailment but "
+            "must run once per pair [[cite:reimers2019,thakur2021]]. The pipeline uses both in their natural roles, a bi-encoder "
+            "(all-MiniLM-L6-v2) to retrieve evidence and a cross-encoder (nli-MiniLM2-L6-H768) to classify, both MiniLM distillations "
+            "that run quickly on a CPU [[cite:wang2020minilm]]. Clinical text is a known challenge: Romanov and Shivade built MedNLI from "
+            "MIMIC notes and showed that general-domain NLI models transfer poorly, because clinical entailment depends on "
+            "abbreviations, negation, temporal qualifiers and medical knowledge [[cite:romanov2018]]. The judge used here was not "
+            "trained on clinical data, so its agreement with medical experts is an empirical question, and Chapter 6 also tests whether "
             "fine-tuning on MedNLI closes the gap.")]
     b += [H2("2.5 Large Language Models for Clinical Summarization")]
-    b += [P("Large language models summarize without task-specific training [[cite:brown2020]] and encode clinical knowledge "
-            "sufficient to pass medical licensing questions [[cite:singhal2023]]. Adams et al. laid the groundwork for "
-            "hospital-course summarization from MIMIC-III [[cite:adams2021]]; Van Veen et al. found, in a blinded reader study "
-            "with ten physicians, that the best adapted model was preferred to or judged equivalent to medical experts in most "
-            "comparisons [[cite:vanveen2024]]; and Tang et al. documented factual inconsistency and over-generalization as the "
-            "main failure modes of LLM summaries of medical evidence [[cite:tang2023]]."),
-          P("Most relevant to this thesis, Hegselmann et al. generated patient-facing summaries from the hospital course "
-            "of MIMIC-IV discharge summaries, had two medical experts annotate unsupported facts in both doctor-written and "
-            "LLM-generated summaries, and showed that cleaning the training data of unsupported facts yields models whose "
-            "summaries contain fewer unsupported facts than the doctors' own instructions [[cite:hegselmann2024]]. In the same "
-            "study, GPT-4 prompted to mark unsupported facts was the best automatic detector tested, yet it reached a span-level "
-            "F1 of only 0.16 to 0.20 against the experts. The resulting annotation dataset, ann-pt-summ, is the reference "
-            "standard against which this thesis validates and selects its judge [[cite:hegselmann2025data]]. Complementary "
-            "benchmarks such as Med-HALT probe medical hallucination with reasoning and memory tests rather than summaries "
-            "[[cite:pal2023]]."),
-          P("Closest to the judge problem of this thesis, Chung et al. built VeriFact, which splits a generated Brief "
-            "Hospital Course into propositions, retrieves the most relevant facts from the patient's entire electronic health "
-            "record, and asks a 70-billion-parameter language model whether each proposition is supported; on 13,290 "
-            "propositions annotated by clinicians it agreed with an adjudicated clinician reference more often than individual "
-            "clinicians agreed with each other [[cite:chung2026verifact]]. It ran on a server with four data-center GPUs. That "
-            "marks the scale at which agreement with clinicians currently becomes high, whereas the judges compared in this "
-            "thesis are limited to models that run on a laptop, as the data use agreement and the available hardware require.")]
+    b += [P("Large language models summarize without task-specific training [[cite:brown2020]] and encode clinical knowledge sufficient "
+            "to pass medical licensing questions [[cite:singhal2023]]. Adams et al. laid the groundwork for hospital-course summarization "
+            "from MIMIC-III [[cite:adams2021]]; Van Veen et al. found in a blinded reader study that the best adapted model was preferred "
+            "to or judged equivalent to medical experts in most comparisons [[cite:vanveen2024]]; and Tang et al. documented factual "
+            "inconsistency and over-generalization as the main failure modes of LLM summaries of medical evidence [[cite:tang2023]]. Most "
+            "relevant here, Hegselmann et al. generated patient-facing summaries from the hospital course of MIMIC-IV discharge summaries, "
+            "had two medical experts annotate unsupported facts in doctor-written and LLM-generated summaries, and showed that cleaning "
+            "the training data yields models whose summaries contain fewer unsupported facts than the doctors' own instructions "
+            "[[cite:hegselmann2024]]; GPT-4 prompted to mark unsupported facts was their best automatic detector, yet reached a span-level "
+            "F1 of only 0.16 to 0.20. Their annotation dataset, ann-pt-summ, is the reference standard of this thesis "
+            "[[cite:hegselmann2025data]]. Closest to the judge problem, Chung et al. built VeriFact, which splits a generated brief "
+            "hospital course into propositions, retrieves the most relevant facts from the patient's whole record, and asks a "
+            "70-billion-parameter model whether each is supported; on 13,290 clinician-annotated propositions it agreed with an "
+            "adjudicated clinician reference more often than individual clinicians agreed with each other [[cite:chung2026verifact]], on "
+            "a server with four data-center GPUs, whereas the judges compared here are limited to models that run on a laptop.")]
     b += [H2("2.6 Retrieval-Augmented Generation")]
-    b += [P("Retrieval-augmented generation combines a parametric model with a non-parametric memory: passages retrieved "
-            "from an index are placed in the generator's context so that the output can be conditioned on explicit "
-            "evidence [[cite:lewis2020,guu2020]]. Dense retrieval with learned passage encoders [[cite:karpukhin2020]] "
-            "replaced sparse retrieval in many systems, and a growing body of engineering knowledge covers chunking, the "
-            "number of passages retrieved and re-ranking [[cite:gao2023rag]]. In medicine, Xiong et al. benchmarked RAG on "
-            "medical question answering and reported accuracy improvements of up to eighteen percent over the same LLMs "
-            "without retrieval [[cite:xiong2024]], and Zakka et al. showed that a retrieval-grounded clinical assistant "
-            "produced answers that clinicians judged more factual and safer than an unaugmented chat model "
-            "[[cite:zakka2024]]."),
-          P("The RAG studied here differs from these systems in one important respect: the retrieval corpus is the source "
-            "note itself, not an external knowledge base. The purpose is not to add knowledge but to focus and constrain the "
-            "generator on the passages most relevant to the requested summary sections, in the expectation that a model "
-            "shown only relevant excerpts will fabricate less. The same design also creates an obvious risk. Whatever the "
-            "retriever does not return, the generator cannot summarize, so document-grounded RAG may trade unsupported "
-            "content for omissions. The thesis proposal identified this trade-off as a risk to be monitored, and Section 4.8 "
-            "defines a coverage proxy for that purpose; Section 4.10 replaces it in the main study with coverage of the "
-            "discharge instructions that the treating clinician actually wrote.")]
+    b += [P("Retrieval-augmented generation places passages retrieved from an index in the generator's context so that the output is "
+            "conditioned on explicit evidence [[cite:lewis2020,guu2020]]; dense retrieval with learned encoders [[cite:karpukhin2020]] "
+            "replaced sparse retrieval in many systems, and engineering knowledge covers chunking, the number of passages and re-ranking "
+            "[[cite:gao2023rag]]. In medicine, RAG improved accuracy on medical question answering by up to eighteen percent "
+            "[[cite:xiong2024]], and a retrieval-grounded clinical assistant produced answers that clinicians judged more factual and "
+            "safer [[cite:zakka2024]]. The RAG studied here differs in one respect: the retrieval corpus is the source note itself, and "
+            "the purpose is not to add knowledge but to focus the generator on the passages relevant to the requested sections, in the "
+            "expectation that a model shown only relevant excerpts fabricates less. The obvious risk is omission, since whatever the "
+            "retriever does not return cannot be summarized; the proposal identified this trade-off, Section 4.8 defines a coverage proxy "
+            "for it, and the main study measures coverage of the instructions the treating clinician actually wrote.")]
     b += [H2("2.7 Verification and Revision Methods")]
-    b += [P("A complementary strategy checks the generator's own output. Chain-of-Verification (CoVe) has the model draft a "
-            "response, plan verification questions, answer them independently of the draft so that it does not simply "
-            "repeat its errors, and produce a revised response; factored variants that answer each question in a separate "
-            "prompt reduced hallucination most in list-based, closed-book and long-form tasks [[cite:dhuliawala2024]]. RARR "
-            "researches evidence for each claim of a generated text and revises the text to be attributable to that "
-            "evidence while preserving its original intent [[cite:gao2023rarr]]. SelfCheckGPT detects unreliable sentences "
-            "from the disagreement among sampled generations [[cite:manakul2023]]. These methods are natural complements "
-            "to RAG for source-grounded summarization: retrieval constrains what the model sees, verification catches what "
-            "it nevertheless invents. Condition E3 in this thesis implements a factored CoVe on top of RAG in which each "
-            "draft claim is verified against evidence retrieved for that claim from the full note.")]
+    b += [P("A complementary strategy checks the generator's own output. Chain-of-Verification has the model draft a response, plan "
+            "verification questions, answer them independently of the draft and revise; factored variants that answer each question in "
+            "a separate prompt reduced hallucination most [[cite:dhuliawala2024]]. RARR researches evidence for each claim and revises "
+            "the text to be attributable to it [[cite:gao2023rarr]], and SelfCheckGPT detects unreliable sentences from the disagreement "
+            "among sampled generations [[cite:manakul2023]]. Retrieval constrains what the model sees and verification catches what it "
+            "nevertheless invents; condition E3 implements a factored CoVe on top of RAG, verifying each draft claim against evidence "
+            "retrieved for it from the full note.")]
     b += [H2("2.8 Datasets for Clinical Summarization Research")]
     b += [P("MIMIC-IV is a de-identified electronic health record database from Beth Israel Deaconess Medical Center "
-            "[[cite:johnson2023mimic]], and MIMIC-IV-Note adds its free-text discharge summaries [[cite:johnson2023note]]; both "
-            "are distributed through PhysioNet [[cite:goldberger2000]] under a credentialing process with a signed data use "
-            "agreement. The ann-pt-summ dataset derived from MIMIC-IV-Note contains one hundred doctor-written and one hundred "
-            "LLM-generated patient summaries with expert span annotations of unsupported facts [[cite:hegselmann2025data]]. "
-            "MTSamples is a public collection of roughly five thousand sample medical transcriptions created for "
-            "transcriptionist training [[cite:mtsamples]]; its documents are realistic in structure and vocabulary but are not "
-            "real patient records, and because the corpus is public it may be present in the pre-training data of commercial "
-            "LLMs. Chapter 3 explains how each dataset is used.")]
+            "[[cite:johnson2023mimic]], and MIMIC-IV-Note adds its free-text discharge summaries [[cite:johnson2023note]]; both are "
+            "distributed through PhysioNet [[cite:goldberger2000]] under a credentialing process with a signed data use agreement. The "
+            "ann-pt-summ dataset derived from MIMIC-IV-Note contains one hundred doctor-written and one hundred LLM-generated patient "
+            "summaries with expert span annotations of unsupported facts [[cite:hegselmann2025data]]. MTSamples is a public collection of "
+            "roughly five thousand sample medical transcriptions created for transcriptionist training [[cite:mtsamples]]; its documents "
+            "are realistic in structure and vocabulary but are not real patient records, and because the corpus is public it may be in "
+            "the pre-training data of commercial LLMs.")]
     b += [H2("2.9 Summary of the Research Gap")]
-    b += [P("The literature establishes that LLMs hallucinate, that overlap metrics cannot detect it, that sentence-level "
-            "NLI can detect inconsistency when granularity and aggregation are handled carefully, that general-domain NLI "
-            "models transfer imperfectly to clinical text, and that retrieval and verification are promising mitigations. "
-            "What has been missing is a single study that (i) applies a claim-level NLI judge to patient-facing summaries "
-            "of clinical notes in a controlled comparison of full-note generation without retrieval, document-grounded RAG and an "
-            "extractive reference, (ii) quantifies the coverage cost of retrieval, (iii) validates the judge itself against "
-            "medical-expert annotations before drawing conclusions from it, and (iv) selects a better judge by that validation "
-            "and repeats the comparison on real hospital courses against what the treating clinician wrote. This thesis fills "
-            "that gap.")]
+    b += [P("The literature establishes that LLMs hallucinate, that overlap metrics cannot detect it, that sentence-level NLI can detect "
+            "inconsistency when granularity and aggregation are handled carefully, that general-domain NLI models transfer imperfectly to "
+            "clinical text, and that retrieval and verification are promising mitigations. Missing is a single study that applies a "
+            "claim-level NLI judge to patient-facing summaries in a controlled comparison of full-note generation, document-grounded RAG "
+            "and an extractive reference, quantifies the coverage cost of retrieval, validates the judge against medical-expert "
+            "annotations before drawing conclusions, and selects a better judge by that validation and repeats the comparison on real "
+            "hospital courses against what the treating clinician wrote. This thesis fills that gap.")]
 
     # ══════════════════════════════════ CHAPTER 3 ══════════════════════════════════
     b += [H1("Chapter 3 Data and Preprocessing"), H2("3.1 Overview of the Data Sources")]
-    b += [P("Four data sources play distinct roles ([[tab:datasources]]). MTSamples supplies the fifty notes of the pilot study, "
-            "on which the five summarization conditions are first generated and compared with GPT-4o-mini. The ann-pt-summ "
-            "expert annotations supply the reference standard for validating and selecting the judge, and their 110 hospital "
-            "courses, each paired with the discharge instructions written by the treating clinician, are the documents of the "
-            "main study. MIMIC-IV-Note, from which those courses are drawn, was obtained under PhysioNet credentialing. MedNLI, "
-            "also credentialed, is used to adapt a candidate judge to clinical language. The governance rules under which the "
-            "credentialed sources are handled are given in Section 3.7."),
+    b += [P("Four data sources play distinct roles ([[tab:datasources]]). MTSamples supplies the fifty notes of the pilot study. The "
+            "ann-pt-summ expert annotations supply the reference standard for validating and selecting the judge, and their 110 hospital "
+            "courses, each paired with the discharge instructions written by the treating clinician, are the documents of the main "
+            "study. MIMIC-IV-Note, from which those courses are drawn, and MedNLI, used to adapt a candidate judge, were obtained under "
+            "PhysioNet credentialing (Section 3.7)."),
           ("table", dict(label="datasources", caption="Data sources used in this thesis, their access conditions and their roles.",
                          columns=["Source", "Access", "Content", "Size", "Role in this thesis"],
                          widths=[1.1, 1.0, 2.1, 0.8, 1.5], font=9.5, align=["left", "left", "left", "center", "left"],
@@ -373,15 +279,14 @@ def blocks(R: Results) -> list:
                                ["MedNLI v1.0.0 [[cite:romanov2018]]", "PhysioNet credentialed, DUA", "14,049 clinician-written premise and hypothesis pairs from MIMIC-III notes (11,232 train, 1,395 dev, 1,422 test), labels entailment, contradiction, neutral", "1.5 MB",
                                 "Adaptation of the candidate judge to clinical language (Chapter 6)"]]))]
     b += [H2("3.2 MTSamples")]
-    b += [P(f"MTSamples is distributed as a single comma-separated file with one row per transcription and the columns "
-            f"description, medical specialty, sample name, transcription and keywords [[cite:mtsamples]]. The copy used "
-            f"here contains {R.total_rows:,} rows in {R.n_specialties} specialty categories. Two categories were selected "
-            f"because they resemble the documents from which patient-facing summaries are written in practice: Consult - "
-            f"History and Physical notes and Discharge Summaries. After removing rows with an empty transcription, "
-            f"{R.n_eligible} documents were eligible ({R.n_consult_eligible} consultations and {R.n_discharge_eligible} discharge "
-            f"summaries). Fifty documents were drawn with pandas' sampling routine and random seed 42, giving "
-            f"{R.n_consult} consultations and {R.n_discharge} discharge summaries. The sample is therefore weighted toward "
-            f"consultation notes in the same proportion as the eligible pool. [[tab:mtstats]] summarizes the sample."),
+    b += [P(f"MTSamples is a single comma-separated file with one row per transcription [[cite:mtsamples]]; the copy used here has "
+            f"{R.total_rows:,} rows in {R.n_specialties} specialty categories. Two categories resemble the documents from which "
+            f"patient-facing summaries are written in practice, Consult - History and Physical notes and Discharge Summaries; after "
+            f"removing empty transcriptions, {R.n_eligible} documents were eligible and fifty were drawn with seed 42 ({R.n_consult} "
+            f"consultations, {R.n_discharge} discharge summaries; [[tab:mtstats]]). Two properties matter for the experiments: the "
+            f"transcriptions are heavily structured, with upper-case section headings and many terse negations (\"No nausea, vomiting, or "
+            f"diarrhea\"), and the public file has lost its line breaks, so that wherever the source had a new line the file has a comma "
+            f"(\"CHIEF COMPLAINT:,  Foul-smelling urine...,HISTORY OF PRESENT ILLNESS:,\"), which Section 3.5 handles."),
           ("table", dict(label="mtstats", caption="Characteristics of the fifty sampled MTSamples documents.",
                          columns=["Characteristic", "Value"], widths=[3.4, 3.1], font=10, align=["left", "left"],
                          rows=[["Eligible documents (two note types, non-empty)", f"{R.n_eligible} ({R.n_consult_eligible} consultation, {R.n_discharge_eligible} discharge)"],
@@ -389,25 +294,14 @@ def blocks(R: Results) -> list:
                                ["Source length, words: mean (SD)", f"{R.src_words['mean']:.0f} ({R.src_words['sd']:.0f})"],
                                ["Source length, words: minimum / median / maximum", f"{R.src_words['min']:.0f} / {R.src_words['median']:.0f} / {R.src_words['max']:.0f}"],
                                ["Characters passed to the E0 generator", "first 4,500 characters of the note"],
-                               ["Characters of retrieved excerpts passed to the E1 generator", "at most 4,000"]])),
-          P("Two properties of MTSamples matter for the experiments. First, the transcriptions are heavily structured: "
-            "they contain upper-case section headings such as CHIEF COMPLAINT, HISTORY OF PRESENT ILLNESS, PHYSICAL "
-            "EXAMINATION and ASSESSMENT AND PLAN, and many findings are stated as terse negations (\"No nausea, vomiting, "
-            "or diarrhea\"). Second, the public file has lost its original line breaks. Wherever the source document had a "
-            "new line, the CSV contains a comma, so that text reads \"CHIEF COMPLAINT:,  Foul-smelling urine and stomach "
-            "pain after meals.,HISTORY OF PRESENT ILLNESS:,  Stomach pain with most meals\". Section 3.5 describes how "
-            "this artifact affects sentence segmentation and how it is handled.")]
+                               ["Characters of retrieved excerpts passed to the E1 generator", "at most 4,000"]]))]
     b += [H2("3.3 MIMIC-IV-Note")]
-    b += [P("MIMIC-IV-Note version 2.2 contains 331,794 de-identified discharge summaries and about 2.3 million radiology "
-            "reports for patients of the Beth Israel Deaconess Medical Center [[cite:johnson2023note,johnson2023mimic]]. "
-            "Protected health information has been replaced by placeholders, so names, dates and locations appear as "
-            "underscores, and the notes are therefore not suitable for direct display in a patient-facing summary without "
-            "further processing. Credentialed access was approved on April 28, 2026, after completion of the required CITI "
-            "training, and the files were downloaded and verified against the published checksums on May 14, 2026. Because "
-            "the notes are real patient records, the data use agreement prohibits sharing them with third parties, which "
-            "includes commercial API providers unless a compliant data-handling agreement is in place. The pilot "
-            "generation experiments were therefore run on MTSamples with GPT-4o-mini, and every experiment on MIMIC-derived "
-            "text, including the whole main study, uses models that run on the author's computer (Sections 3.7 and 4.10).")]
+    b += [P("MIMIC-IV-Note version 2.2 contains 331,794 de-identified discharge summaries and about 2.3 million radiology reports from "
+            "the Beth Israel Deaconess Medical Center [[cite:johnson2023note,johnson2023mimic]], with protected health information "
+            "replaced by placeholders. Credentialed access was approved on April 28, 2026, and the files were verified against the "
+            "published checksums. Because the notes are real patient records, the data use agreement prohibits sharing them with third "
+            "parties, including commercial API providers, so the pilot ran on MTSamples with GPT-4o-mini and every experiment on "
+            "MIMIC-derived text uses models that run on the author's computer (Sections 3.7 and 4.10).")]
     b += [H2("3.4 Expert Annotations: ann-pt-summ")]
     lab_rows = []
     lab_desc = {"word_unsupported": "A word or short phrase without support in the hospital course", "condition_unsupported": "A diagnosis, symptom or condition not supported by the source",
@@ -421,254 +315,180 @@ def blocks(R: Results) -> list:
         n_spans = int(R.cal_labcounts.n_spans.sum())
     else:
         n_spans = 0
-    b += [P("The ann-pt-summ dataset [[cite:hegselmann2025data]] was created for the study of Hegselmann et al. "
-            "[[cite:hegselmann2024]]. Its source texts are the Brief Hospital Course sections of MIMIC-IV discharge "
-            "summaries, restricted to at most 4,000 characters, and its summaries are the corresponding Discharge "
-            "Instructions, either written by the discharging clinician or generated by one of five LLM configurations "
-            "(Llama-2 70B before and after training-data cleaning, GPT-4 zero-shot, and GPT-4 with two prompting variants). "
-            "Two medical experts independently marked every span of a summary that was not supported by the hospital "
-            "course and then reconciled their annotations; each agreed span carries a start and end character offset and "
-            f"one of the labels in [[tab:expertlabels]]. The portion of the archive used here comprises 100 doctor-written "
-            f"summaries, 100 LLM-generated summaries (20 hospital courses times five systems) and 10 validation summaries, "
-            f"with {n_spans} annotated spans in total. Every span offset was verified to match its quoted text exactly "
-            "before use. In the main study the 110 hospital courses are the source documents and the clinician-written "
-            "discharge instructions are the reference against which omission is measured; the instructions were written for "
-            "the same admission by the discharging clinician, so a generated summary that omits what the clinician chose to "
-            "tell the patient has omitted something a clinician judged important."),
+    b += [P("The ann-pt-summ dataset [[cite:hegselmann2025data]] was created for the study of Hegselmann et al. [[cite:hegselmann2024]]. "
+            "Its source texts are the Brief Hospital Course sections of MIMIC-IV discharge summaries (at most 4,000 characters) and its "
+            "summaries are the corresponding Discharge Instructions, written by the discharging clinician or generated by one of five LLM "
+            "configurations (Llama-2 70B before and after training-data cleaning, GPT-4 zero-shot, and GPT-4 with two prompting variants). "
+            "Two medical experts independently marked every span not supported by the hospital course and reconciled their annotations; "
+            f"each agreed span carries character offsets and one of the labels in [[tab:expertlabels]]. The portion used here comprises "
+            f"100 doctor-written summaries, 100 LLM-generated summaries (20 courses times five systems) and 10 validation summaries, with "
+            f"{n_spans} annotated spans, every offset verified against its quoted text. In the main study the 110 courses are the source "
+            "documents and the clinician-written instructions the reference against which omission is measured: a summary that omits "
+            "what the clinician chose to tell the patient has omitted something a clinician judged important. (The PhysioNet download "
+            "was incomplete; the fourteen annotation files, stored at the start of the archive, were extracted sequentially and each "
+            "matched its published SHA-256 digest, and the missing portion is training data this thesis does not use.)"),
           ("table", dict(label="expertlabels", caption="Expert annotation labels in ann-pt-summ and the number of agreed spans of each type in the 210 summaries used. Descriptions paraphrase the label names of the published annotation protocol.",
-                         columns=["Label", "Spans", "Description"], widths=[1.7, 0.7, 4.1], font=9.5, align=["left", "center", "left"], rows=lab_rows)),
-          P("The archive downloaded from PhysioNet in May 2026 was incomplete: the download stopped after 934 MB of an "
-            "archive of more than 3.4 GB, so that the compressed index at the end of the file is missing. The fourteen "
-            "annotation and derived files, which are stored at the beginning of the archive, were extracted with a "
-            "sequential reader and every one of them matched the SHA-256 digest published in the archive's manifest. The "
-            "missing portion consists of the 100,175-pair reconstruction of MIMIC-IV-Note used to train the models of the "
-            "original study, which this thesis does not need.")]
+                         columns=["Label", "Spans", "Description"], widths=[1.7, 0.7, 4.1], font=9.5, align=["left", "center", "left"], rows=lab_rows))]
     b += [H2("3.5 Preprocessing Pipeline")]
-    b += [P("Preprocessing determines what the judge sees, and two of its steps changed the conclusions of the study. The "
-            "steps are listed in the order in which they are applied."),
+    b += [P("Preprocessing determines what the judge sees, and two of its steps changed the conclusions of the study. In order:"),
           ("numbers", [
-              "**Filtering and sampling.** Rows of MTSamples are filtered to the two note types, rows with an empty "
-              "transcription are dropped, and fifty rows are sampled with seed 42. The description field of each row, a "
-              "one-sentence account of the visit, is retained because the E1 retrieval query is built from it.",
-              "**Truncation.** The E0 prompt receives the first 4,500 characters of the transcription and the E1 prompt at most "
-              "4,000 characters of retrieved excerpts; source sentences for the judge are drawn from the complete transcription.",
-              "**Sentence segmentation.** Source notes and summaries are segmented with spaCy's en_core_web_sm pipeline "
-              "[[cite:honnibal2020]]; sentences shorter than ten characters are discarded as residual punctuation or numbering.",
-              "**Chunking for retrieval (E1 only).** Source sentences are grouped into consecutive, non-overlapping chunks of "
-              "five sentences; the last chunk of a document may be shorter.",
-              "**Removal of section headers from summaries.** The models mark the requested four-part structure with bold "
-              "markdown headers such as \"**Key Findings:**\" on their own line; such lines contain no verifiable proposition "
-              "and are removed from the claim set by a pattern for bold text, markdown headings and short title-case phrases "
-              "ending in a colon (Section 3.6 quantifies why).",
-              "**Removal of explicit abstentions.** Condition E3 of the pilot study, and every LLM condition of the main study, "
-              "whose prompts allow it, writes \"Not stated in the note.\" for a section that has no supported content. Such a line is an abstention, not a claim about the patient. Abstention lines are excluded "
-              "from the claim set and counted separately; Section 5.4 shows why this matters, since the judge labels almost all "
-              "of them as contradictions.",
-              "**Repair of comma-encoded line breaks (ablation only).** A cleaning function restores the line breaks that the "
-              "MTSamples file replaced with commas and drops heading-only lines before segmentation; because the summaries "
-              "were generated from the unrepaired text, the repair is applied only on the evidence side and reported as an "
-              "ablation (Section 4.8).",
-              "**Character offsets for validation.** For the expert-annotated summaries, every sentence is stored with its "
-              "start and end character offsets so that it can be matched against the experts' span annotations."]
+              "**Filtering and sampling.** MTSamples rows of the two note types with a non-empty transcription; fifty sampled with seed "
+              "42, keeping the description field, from which the E1 retrieval query is built.",
+              "**Truncation.** The E0 prompt receives the first 4,500 characters of the note and the E1 prompt at most 4,000 characters of "
+              "excerpts; the judge's source sentences come from the complete note.",
+              "**Sentence segmentation.** spaCy's en_core_web_sm pipeline [[cite:honnibal2020]]; sentences shorter than ten characters are "
+              "discarded as residual punctuation or numbering.",
+              "**Chunking for retrieval (E1 only).** Consecutive, non-overlapping chunks of five sentences.",
+              "**Removal of section headers from summaries.** Bold markdown headers such as \"**Key Findings:**\" contain no verifiable "
+              "proposition and are removed by a pattern for bold text, markdown headings and short title-case phrases ending in a colon "
+              "(Section 3.6 quantifies why).",
+              "**Removal of explicit abstentions.** \"Not stated in the note.\" is an abstention, not a claim about the patient; such lines "
+              "are excluded from the claim set and counted separately (Section 5.4 shows that the judge labels almost all of them as "
+              "contradictions).",
+              "**Repair of comma-encoded line breaks (ablation only).** A cleaning function restores the line breaks MTSamples replaced with "
+              "commas; because the summaries were generated from the unrepaired text, the repair is applied only on the evidence side and "
+              "reported as an ablation (Section 4.8).",
+              "**Character offsets for validation.** Every sentence of an expert-annotated summary is stored with its offsets so that it "
+              "can be matched against the experts' spans."]
               + ([(f"**Citation markers (main study).** The retrieval conditions write excerpt numbers such as \"[2]\" after their "
                    f"sentences, before or after the final period. Splitting the raw text, as the first version of the evaluation did, "
                    f"discarded a marker before the period as a short fragment and credited a marker after it to the next sentence: "
                    f"{pct0(sc.loc['E1', 'markers_dropped_share'])} of E1's {int(sc.loc['E1', 'marker_groups'])} citation groups were "
                    f"discarded and {pct0(sc.loc['E1', 'markers_moved_share'])} moved, and {pct0(sc.loc['E1b', 'markers_dropped_share'])} "
                    f"and {pct0(sc.loc['E1b', 'markers_moved_share'])} of E1b's {int(sc.loc['E1b', 'marker_groups'])}. The corrected "
-                   f"procedure removes the markers before segmentation, records their positions, and assigns each to the sentence "
-                   f"that contains it or, at a boundary, to the sentence that precedes it.")] if sc is not None and {"E1", "E1b"} <= set(sc.index) else [])
-              + ([(f"**Headers merged into sentences (main study).** The local model marks the four parts of its summaries with "
-                   f"bold or # headers, and the sentence splitter sometimes joins a header line to the sentence that follows it, "
-                   f"so that the header escapes the filter above. In the first version of the evaluation "
-                   f"{pct(sc.loc['E0', 'merged_header_share'])} of the E0 claims and {pct(sc.loc['E3', 'merged_header_share'])} of "
-                   f"the E3 claims carried a merged header"
-                   + (f", and {int(sc.abstentions_counted_as_claims.sum())} abstentions hidden behind a header were counted as claims"
-                      if "abstentions_counted_as_claims" in sc and sc.abstentions_counted_as_claims.sum() > 0 else "")
-                   + ". Header lines and a leading bold or # header are now removed from every claim before it is scored. "
-                   "All main-study results in this thesis use the corrected claims; compared with an earlier version of this "
-                   "analysis, the corrections change the rates slightly and the citation results substantially (Section 7.6).")] if sc is not None and {"E0", "E3"} <= set(sc.index) else []))]
+                   f"procedure removes the markers before segmentation and assigns each to the sentence that contains it.")] if sc is not None and {"E1", "E1b"} <= set(sc.index) else [])
+              + ([(f"**Headers merged into sentences (main study).** The local model's bold or # headers are sometimes joined by the "
+                   f"splitter to the sentence that follows, escaping the filter above: {pct(sc.loc['E0', 'merged_header_share'])} of the "
+                   f"E0 claims and {pct(sc.loc['E3', 'merged_header_share'])} of the E3 claims carried a merged header in the first version "
+                   f"of the evaluation. Such headers are now stripped from every claim; all main-study results use the corrected claims, "
+                   f"which change the rates slightly and the citation results substantially (Section 7.6).")] if sc is not None and {"E0", "E3"} <= set(sc.index) else []))]
     b += [H2("3.6 Why Preprocessing Matters: Two Artifacts")]
-    b += [P(f"The original April 2026 pipeline treated every spaCy sentence of a summary as a claim, including markdown "
-            f"headers, although the accompanying draft stated that headers had been excluded. Re-examination of the stored "
-            f"claims showed that {hdr0} of the {e0_claims_before} E0 claims and {hdr1} of the {e1_claims_before} E1 claims "
-            f"were header lines, and that the NLI model had labeled {hc0} of the E0 headers and {hc1} of the E1 headers as "
-            f"Contradicted. Because the full-note condition emits about four times as many headers as the RAG condition, "
-            f"part of the contradiction-rate difference that had been reported between E0 and E1 was an artifact of "
-            f"formatting rather than of medical content. [[tab:headerfilter]] shows the effect of removing header lines. "
-            f"The mean E0 contradiction rate falls from {f3(R.hdr('E0','CR','mean_before'))} to {f3(R.hdr('E0','CR','mean_after'))}, "
-            f"the E1 rate from {f3(R.hdr('E1','CR','mean_before'))} to {f3(R.hdr('E1','CR','mean_after'))}, and the paired "
-            f"E1 versus E0 difference in CR shrinks from {signed_(t_cr_before.delta_mean)} ({fp(t_cr_before.p)}) to "
-            f"{signed_(t_cr_after.delta_mean)} ({fp(t_cr_after.p)}). All results in this thesis use the corrected claim set."),
+    b += [P(f"The original pipeline treated every spaCy sentence of a summary as a claim, including markdown headers: {hdr0} of the "
+            f"{e0_claims_before} E0 claims and {hdr1} of the {e1_claims_before} E1 claims were header lines, and the NLI model labeled "
+            f"{hc0} of the E0 headers and {hc1} of the E1 headers as Contradicted. Because the full-note condition emits about four times "
+            f"as many headers as the RAG condition, part of the contradiction-rate difference first reported between E0 and E1 was an "
+            f"artifact of formatting ([[tab:headerfilter]]): removing header lines shrinks the paired E1 versus E0 difference in CR from "
+            f"{signed_(t_cr_before.delta_mean)} ({fp(t_cr_before.p)}) to {signed_(t_cr_after.delta_mean)} ({fp(t_cr_after.p)}). The second "
+            f"artifact is the comma-encoded line break of Section 3.2, which produces evidence fragments such as \",CARDIOVASCULAR: "
+            f",RESPIRATORY:\" that the extractive baseline copies into its summaries; the cleaned-evidence ablation of Section 5.4 "
+            f"measures how much of the judge's error on verbatim sentences it explains."),
           ("table", dict(label="headerfilter", caption="Effect of removing markdown header lines from the claim set. Means are per-document means over the fifty documents.",
                          columns=["Condition", "Claim rows before", "Header lines", "Claims after", "Headers labeled Contradicted", "Mean CR before", "Mean CR after", "Mean UFR before", "Mean UFR after"],
                          widths=[0.8, 0.75, 0.7, 0.7, 0.9, 0.7, 0.7, 0.7, 0.7], font=9,
                          rows=[[c, str(int(R.hdr(c, "CR", "n_claims_before"))), str(int(R.hdr(c, "CR", "n_headers"))), str(int(R.hdr(c, "CR", "n_claims_after"))),
                                 str(int(R.hdr(c, "CR", "headers_contradicted"))), f3(R.hdr(c, "CR", "mean_before")), f3(R.hdr(c, "CR", "mean_after")),
-                                f3(R.hdr(c, "UFR", "mean_before")), f3(R.hdr(c, "UFR", "mean_after"))] for c in R.conds])),
-          P("The second artifact is the comma-encoded line break described in Section 3.2. When the unrepaired text is "
-            "segmented, evidence sentences such as \",CARDIOVASCULAR: ,RESPIRATORY:\" or \"Renal insufficiency.,4.\" are "
-            "produced, and the extractive baseline copies such fragments into its summaries. The cleaned-evidence ablation "
-            "in Section 5.4 measures how much of the judge's error on verbatim sentences this artifact explains.")]
+                                f3(R.hdr(c, "UFR", "mean_before")), f3(R.hdr(c, "UFR", "mean_after"))] for c in R.conds]))]
     b += [H2("3.7 Ethics, Data Governance and Reproducibility")]
-    b += [P("The study involves no interaction with human subjects and no identifiable patient data. MTSamples is a public "
-            "corpus of sample transcriptions that were never real patient records. MIMIC-IV-Note, ann-pt-summ, MedNLI and "
-            "VeriFact-BHC are de-identified under the HIPAA Safe Harbor standard [[cite:hipaa]] and were obtained through "
-            "PhysioNet's credentialed-access process (CITI training completed April 10, 2026; credentialing approved April 28, "
-            "2026; each data use agreement accepted before download). Under those agreements the data may not be shared, "
-            "redistributed, used in any attempt at re-identification or transmitted to third parties, so no MIMIC-derived text "
-            "was ever sent to the OpenAI API: the judge validation, the judge selection, the MedNLI adaptation, the external "
-            "check and the entire main study run with models executed on the author's computer. Outputs that contain "
-            "MIMIC-derived text are written to a directory excluded from version control, only aggregate statistics are "
-            "published, and the credentialed files are stored on a single encrypted personal computer, never in shared cloud "
-            "storage."),
-          P("The summaries of the fifty public MTSamples notes were produced with the OpenAI API, which raises no privacy "
-            "concern but a validity concern that Section 8.7 discusses: the corpus may be part of the model's pre-training "
-            "data. Reproducibility rests on the fixed sampling seed, pinned package versions, storage of every generated "
-            "summary and claim label, and a recomputation script that reproduces every pilot number without any API or model "
-            "call; for the main study, whose generations contain protected text, the aggregate result files are published and "
-            "the scripts regenerate them on any machine that holds the credentialed data. The code repository is described in "
-            "Appendix B.")]
+    b += [P("The study involves no interaction with human subjects and no identifiable patient data. MTSamples is a public corpus of "
+            "sample transcriptions that were never real patient records. MIMIC-IV-Note, ann-pt-summ, MedNLI and VeriFact-BHC are "
+            "de-identified under the HIPAA Safe Harbor standard [[cite:hipaa]] and were obtained through PhysioNet's credentialed-access "
+            "process (CITI training completed April 10, 2026; credentialing approved April 28, 2026; each data use agreement accepted "
+            "before download). Under those agreements the data may not be shared, redistributed, used in any attempt at re-identification "
+            "or transmitted to third parties, so no MIMIC-derived text was ever sent to the OpenAI API: the judge validation and "
+            "selection, the MedNLI adaptation, the external check and the entire main study run with models on the author's computer, "
+            "outputs that contain MIMIC-derived text are written to a directory excluded from version control, only aggregate statistics "
+            "are published, and the credentialed files are stored on a single encrypted computer. The pilot's summaries were produced "
+            "with the OpenAI API from public text, which raises a validity rather than a privacy concern (Section 8.7): the corpus may "
+            "be in the model's pre-training data. Reproducibility rests on fixed seeds, pinned package versions, storage of every "
+            "generated summary and claim label, and a recomputation script that reproduces every pilot number without any API or model "
+            "call; for the main study the aggregate result files are published and the scripts regenerate them on any machine that holds "
+            "the credentialed data (Appendix B).")]
     scan = _scan()
     if scan is not None:
         n_src, n_pilot = int(scan["files with a source-text match"]), int(scan["of which pilot result files"])
-        b += [P("An automated check confirms that the repository contains no protected text. Every text used under a data use "
-                "agreement (the ann-pt-summ hospital courses and summaries and the MedNLI sentences) and every MIMIC-derived output "
-                "kept privately (generations, excerpts, answers and atomic facts) is cut into overlapping eight-word sequences, and "
-                f"each of the {int(scan['tracked files scanned'])} files under version control, including the text of the PDF, "
-                "Word and PowerPoint files, is searched for them; sequences that also occur in the public MTSamples corpus are "
-                "ignored. "
+        b += [P("An automated check confirms that the repository contains no protected text: every credentialed text and every "
+                "MIMIC-derived output kept privately is cut into overlapping eight-word sequences, and every tracked file, including the "
+                "text of the PDF, Word and PowerPoint files, is searched for them, ignoring sequences that also occur in public MTSamples. "
                 + (f"No tracked file shares a sequence with the credentialed texts. " if n_src == 0 else
                    f"The {int(scan['distinct shingles shared with the source texts'])} distinct sequences shared with the credentialed "
                    f"texts all occur in {'pilot result files' if n_pilot == n_src else 'the files listed in results/protected_text_scan.csv'}, "
-                   f"that is, in summaries that GPT-4o-mini wrote from public MTSamples notes without any access to the protected data, "
-                   f"and they are generic patient-instruction phrases such as \"follow up with your primary care provider\"; none occurs in "
-                   f"more than {int(scan['largest number of source documents containing one of them'])} credentialed documents. ")
-                + (f"The {int(scan['files with a model-output match only'])} files that share a sequence only with the private model "
-                   "outputs are scripts and documentation whose matching text is the thesis's own question wording and the model's "
-                   "name, which the private output files repeat." if int(scan["files with a model-output match only"]) else "")
-                + (f" The same check over all {int(scan['file versions in the history scanned'])} file versions in the repository's "
-                   f"history finds matches only in earlier versions of the pilot result files."
+                   f"written by GPT-4o-mini from public notes without access to the protected data, and are generic patient-instruction "
+                   f"phrases such as \"follow up with your primary care provider\"; none occurs in more than "
+                   f"{int(scan['largest number of source documents containing one of them'])} credentialed documents. ")
+                + (f"The same check over all {int(scan['file versions in the history scanned'])} file versions in the repository's history "
+                   f"finds matches only in earlier versions of the pilot result files. "
                    if "file versions in the history scanned" in scan and int(scan["history versions with a source-text match"]) == int(scan["of which versions of pilot result files"]) else "")
-                + " The check, check_no_protected_text.py, prints only counts and is part of the repository.")]
+                + "The check, check_no_protected_text.py, prints only counts and is part of the repository.")]
 
-    # ══════════════════════════════════ CHAPTER 4 ══════════════════════════════════
     b += [H1("Chapter 4 Methodology"), H2("4.1 Overview")]
-    b += [P("The methodology has two layers ([[fig:pipeline]]). The *generation layer* produces one summary per document "
-            "under each of five conditions. The *evaluation layer* applies an identical claim-level NLI judge to every "
-            "summary, so that differences between conditions cannot be attributed to differences in measurement. A third "
-            "component, the validation study, applies the same judge to expert-annotated summaries to establish how the "
-            "judge's labels relate to expert judgment, and a fourth, the robustness analyses, varies the judge's own design "
-            "choices. Sections 4.9 to 4.11 extend this design to the judge selection study, the main study on MIMIC-IV "
-            "hospital courses and the question-answering pilot, and Section 4.12 lists the software and hardware. Throughout, "
-            "UFR and CR are judge-estimated quantities: they describe how an automatic judge labels the claims of a summary, "
-            "and only the expert annotations of Section 4.7 and the manual audit of Section 4.10 provide human-confirmed labels "
-            "against which those estimates can be checked."),
+    b += [P("The methodology has two layers ([[fig:pipeline]]): a *generation layer* that produces one summary per document under each "
+            "of five conditions, and an *evaluation layer* that applies the same claim-level NLI judge to every summary, so that "
+            "differences between conditions cannot come from differences in measurement. A validation study applies the judge to "
+            "expert-annotated summaries, robustness analyses vary its design choices, and Sections 4.9 to 4.11 extend the design to "
+            "the judge selection study, the main study on MIMIC-IV hospital courses and the question-answering pilot. UFR and CR are "
+            "judge-estimated throughout; only the expert annotations (Section 4.7) and the manual audit (Section 4.10.5) provide "
+            "human-confirmed labels."),
           ("figure", dict(label="pipeline", path=f"{FIG}/fig_pipeline.png", width=6.5,
                           caption="Overview of the experimental pipeline. Each source note is summarized under five conditions; every summary is scored by the same claim-level NLI judge, whose evidence sentences are retrieved from the same note."))]
     b += [H2("4.2 The Claim-Level Evaluation Framework"), H3("4.2.1 Claim Segmentation")]
-    b += [P("A summary is decomposed into claims at sentence granularity. Segmentation uses spaCy, sentences under ten "
-            "characters are dropped, and section header lines and explicit abstention lines are removed as described in "
-            "Section 3.5; in the main study, header lines that the sentence splitter merges into the following sentence are "
-            "also stripped from the claim, and citation markers are removed before splitting (Section 4.10)."),
-          P("A sentence-level claim is not the same as an atomic fact. A single patient-facing sentence often combines a "
-            "diagnosis, a treatment, a medication with its dose and an instruction, and a sentence-level decision assigns one "
-            "label to all of them: a sentence whose dose is wrong but whose diagnosis is right may be labeled Supported if the "
-            "judge weighs the supported parts more, or Not-Supported as a whole, which hides which part failed. Atomic facts "
-            "in the sense of FActScore [[cite:min2023]], each carrying one piece of information, avoid this ambiguity but "
-            "require an additional generation step whose errors propagate into the metric, and the literature shows that "
-            "decomposition helps neither uniformly nor reliably [[cite:wanner2024]]. Sentence-level claims are therefore the "
-            "primary unit, because they match the granularity at which the expert annotations are mapped (Section 4.7), and "
-            "atomic-fact decomposition is evaluated as an additional analysis on the expert annotations and on the main-study "
-            "claims (Section 4.10).")]
+    b += [P("A summary is decomposed into claims at sentence granularity with spaCy; sentences under ten characters, section header "
+            "lines and explicit abstention lines are removed (Section 3.5), and in the main study merged headers are stripped and "
+            "citation markers are removed before splitting (Section 4.10.3). A sentence-level claim is not an atomic fact: one "
+            "patient-facing sentence can combine a diagnosis, a medication with its dose and an instruction, and a single label hides "
+            "which part failed. Atomic facts in the sense of FActScore [[cite:min2023]] avoid this ambiguity but need an extra "
+            "generation step whose errors propagate into the metric, and decomposition does not help reliably [[cite:wanner2024]]. "
+            "Sentences are therefore the primary unit, because they match the granularity of the expert annotations, and atomic-fact "
+            "scoring is an additional analysis (Sections 6.6 and 7.10).")]
     b += [H3("4.2.2 Evidence Retrieval")]
-    b += [P("For each claim c, the source note is segmented into sentences s(1), ..., s(n) and each sentence and the claim "
-            "are embedded with the all-MiniLM-L6-v2 bi-encoder, which maps a sentence to a 384-dimensional vector "
-            "[[cite:reimers2019,wang2020minilm]]. The evidence set for the claim is the set of the k = 3 source sentences with "
-            "the highest cosine similarity to the claim:"),
+    b += [P("For each claim c the source note is segmented into sentences, claim and sentences are embedded with the all-MiniLM-L6-v2 "
+            "bi-encoder [[cite:reimers2019,wang2020minilm]], and the evidence set is the k = 3 source sentences with the highest "
+            "cosine similarity to the claim:"),
           ("eq", "sim(c, s) = (e(c) · e(s)) / (‖e(c)‖ ‖e(s)‖),     E(c) = top-3 sentences by sim(c, s)"),
-          P("Retrieval limits the premise presented to the NLI model to short, relevant text, following the granularity "
-            "argument of Laban et al. [[cite:laban2022]], and it makes the judge's cost linear in the number of claims rather "
-            "than in the product of claims and source sentences. Whether three sentences are enough, and whether they should "
-            "be scored separately or together, is examined in Sections 5.3 and 5.4.")]
+          P("Retrieval keeps the premise short and relevant, following the granularity argument of Laban et al. [[cite:laban2022]], "
+            "and makes the judge's cost linear in the number of claims. Whether three sentences are enough, and whether they should be "
+            "scored separately or together, is examined in Sections 5.3 and 5.4.")]
     b += [H3("4.2.3 Natural Language Inference Classification")]
-    b += [P("Each (evidence sentence, claim) pair is passed to the cross-encoder/nli-MiniLM2-L6-H768 model, a six-layer "
-            "MiniLM cross-encoder with hidden size 768 fine-tuned on SNLI and MultiNLI [[cite:bowman2015,williams2018,"
-            "wang2020minilm]], with the evidence sentence as premise and the claim as hypothesis. The model outputs three "
-            "logits, for contradiction, entailment and neutral, which are converted to probabilities with the softmax "
-            "function. Because a claim may be supported by any one of its evidence sentences, the claim's entailment score "
-            "p(e) is the maximum entailment probability over the three pairs and its contradiction score p(c) is the "
-            "maximum contradiction probability over the three pairs. The label is then assigned by a symmetric rule with "
-            "decision threshold τ = 0.5:"),
+    b += [P("Each (evidence sentence, claim) pair is passed to cross-encoder/nli-MiniLM2-L6-H768, a six-layer MiniLM cross-encoder "
+            "fine-tuned on SNLI and MultiNLI [[cite:bowman2015,williams2018,wang2020minilm]], with the evidence as premise and the claim "
+            "as hypothesis; its three logits (contradiction, entailment, neutral) are converted to probabilities. The claim's "
+            "entailment score p(e) is the maximum entailment probability over its three pairs and its contradiction score p(c) the "
+            "maximum contradiction probability, and the label follows a symmetric rule with threshold τ = 0.5:"),
           ("eq", "Supported if p(e) ≥ τ and p(e) > p(c);   Contradicted if p(c) ≥ τ and p(c) > p(e);   Not-Supported otherwise"),
-          P("Not-Supported therefore covers two situations: the model considers the claim neutral with respect to every "
-            "evidence sentence, or its entailment and contradiction probabilities are both below the threshold. The "
-            "threshold is varied in Section 5.4.")]
+          P("Not-Supported therefore covers both a claim the model finds neutral to every evidence sentence and one whose probabilities "
+            "are both below the threshold. The threshold is varied in Section 5.4.")]
     b += [H3("4.2.4 Metrics")]
-    b += [P("Two rates are computed for every summary from its N claims, of which N(c) are labeled Contradicted and N(n) "
-            "Not-Supported:"),
+    b += [P("Two rates are computed for every summary from its N claims, of which N(c) are labeled Contradicted and N(n) Not-Supported:"),
           ("eq", "UFR = (N(c) + N(n)) / N          CR = N(c) / N"),
-          P("The Unsupported Fact Rate is the share of claims that the judge could not verify against the note, and the "
-            "Contradiction Rate is the share that the judge considers to conflict with it. CR is a subset of UFR. Both rates "
-            "are computed per summary and then summarized across the documents of each study by their mean, standard deviation and "
-            "median, so that every document has equal weight regardless of the number of claims it produced."),
-          P("Both rates are judge-estimated: they count the claims that an automatic judge fails to verify, which includes "
-            "the judge's false positives and excludes the unsupported claims it misses. They are therefore distinguished in "
-            "this thesis from expert-confirmed rates, which exist only for the expert-annotated summaries of ann-pt-summ, and "
-            "from the manually confirmed rates estimated from the audit of the main-study claims (Section 4.10). Because a "
-            "rate is a share of claims, it is reported together with the number of claims, the number of supported and of "
-            "unsupported claims per summary and, in the main study, the coverage of the clinician's instructions: a summary can "
-            "lower its rate by saying less, and a lower rate is not by itself a better summary.")]
+          P("The Unsupported Fact Rate is the share of claims the judge could not verify against the note and the Contradiction Rate "
+            "the share it considers to conflict with it; CR is a subset of UFR, and both are computed per summary and then summarized "
+            "across documents so that every document has equal weight. Both are judge-estimated: they count the claims an automatic "
+            "judge fails to verify, including its false positives and excluding the unsupported claims it misses, and they are "
+            "distinguished throughout from expert-confirmed rates (the expert annotations) and manually confirmed rates (the audit). "
+            "Because a rate is a share of claims, it is reported with the number of claims, the supported and unsupported counts per "
+            "summary and, in the main study, coverage: a summary can lower its rate by saying less, and a lower rate is not by itself "
+            "a better summary.")]
     b += [H3("4.2.5 Statistical Analysis")]
-    b += [P("Within each study all conditions are applied to the same documents, so comparisons are paired. For each pair of "
-            "conditions and each metric the per-document differences are tested with the two-sided Wilcoxon signed-rank "
-            "test [[cite:wilcoxon1945]], which makes no distributional assumption; zero differences are discarded as in the "
-            "original procedure. The mean difference is accompanied by a 95 percent percentile bootstrap confidence "
-            "interval from 10,000 resamples of the paired differences [[cite:efron1993]]. Two effect sizes are reported: "
-            "the standardized mean difference of the paired differences, d(z) [[cite:cohen1988]], and the matched-pairs "
-            "rank-biserial correlation, computed as the difference between the proportions of favorable and unfavorable "
-            "signed ranks [[cite:kerby2014]]. The share of documents whose metric improved, was unchanged or worsened is also "
-            "reported. In the pilot study, Holm's step-down procedure [[cite:holm1979]] controls the family-wise error rate "
-            "across all twenty pairwise tests (ten condition pairs times two metrics), and both raw and adjusted p-values are "
-            "reported. In the main study Holm's procedure is applied to the primary family, the comparison of each of E1, E1b, "
-            "E2 and E3 with E0 on UFR, CR and coverage (twelve tests), and, for the retrieval ablations, within each measure "
-            "(six tests). In both studies a result is called significant only when it remains so after the adjustment, and "
-            "unadjusted p-values below 0.05 are described as suggestive. Bootstrap 95 percent intervals accompany every principal "
-            "difference. A difference that is not significant is not evidence of equivalence: where the thesis compares two "
-            "conditions on coverage, it reports the interval of differences compatible with the data and, as a post hoc check, "
-            "whether that interval lies within a margin of five percentage points (two one-sided tests at the 5 percent level, "
-            "using the bootstrap 90 percent interval). The unit of analysis is the hospital course: in the main study every "
-            "course comes from a different patient and admission (Section 6.5), so the paired observations are independent. "
-            "Analyses were implemented with SciPy [[cite:virtanen2020]] and scikit-learn "
-            "[[cite:pedregosa2011]].")]
+    b += [P("All conditions are applied to the same documents, so comparisons are paired. Per-document differences are tested with "
+            "the two-sided Wilcoxon signed-rank test [[cite:wilcoxon1945]]; the mean difference carries a 95 percent percentile "
+            "bootstrap interval from 10,000 resamples [[cite:efron1993]]; the standardized mean difference d(z) [[cite:cohen1988]], "
+            "the matched-pairs rank-biserial correlation [[cite:kerby2014]] and the share of documents improved, unchanged or worsened "
+            "are reported. Holm's step-down procedure [[cite:holm1979]] controls the family-wise error rate: in the pilot over all "
+            "twenty pairwise tests, in the main study over the primary family (E1, E1b, E2 and E3 against E0 on UFR, CR and coverage, "
+            "twelve tests) and within each measure for the retrieval ablations. A result is called significant only after the "
+            "adjustment, and an unadjusted p-value below 0.05 is called suggestive. A difference that is not significant is not "
+            "evidence of equivalence: where two conditions are compared on coverage, the interval of differences compatible with the "
+            "data is reported and, as a post hoc check, whether it lies within a margin of five percentage points (two one-sided tests "
+            "at the 5 percent level with the bootstrap 90 percent interval). The unit of analysis is the hospital course; in the main "
+            "study every course comes from a different patient and admission (Section 6.5). Analyses use SciPy [[cite:virtanen2020]] "
+            "and scikit-learn [[cite:pedregosa2011]].")]
     b += [H2("4.3 Approach 1: Full-Note LLM Summarization Without Retrieval (E0)")]
-    b += [P("The baseline condition represents the way LLM summarization is most often deployed: the whole document is "
-            "placed in the prompt and the model is asked for a summary. GPT-4o-mini [[cite:openai2024]], a cost-efficient "
-            "member of the GPT-4o family released in July 2024, is used through the chat completions API with temperature "
-            "0.3 and a limit of 450 output tokens. The system prompt instructs the model to act as a medical scribe "
-            "assistant, to produce patient-facing summaries \"accurate and grounded only in the provided clinical note\", "
-            "and not to \"add or invent information\". The user prompt requests 150 to 250 words in four parts, reason for "
-            "visit or diagnosis, key findings, treatment or procedures performed, and follow-up instructions, and asks the "
-            "model to avoid medical jargon. The first 4,500 characters of the transcription follow the instruction. The exact "
-            "prompts are reproduced in Appendix A. Faithfulness failures arise when the model's parametric knowledge of what "
-            "discharge instructions usually say dominates the conditioning on the specific note [[cite:ji2023,huang2025]]; E0 "
-            "measures how often that happens when the model is merely asked not to invent.")]
+    b += [P("The baseline represents the way LLM summarization is most often deployed: the whole document is placed in the prompt and "
+            "the model is asked for a summary. GPT-4o-mini [[cite:openai2024]] is called with temperature 0.3 and at most 450 output "
+            "tokens; the system prompt asks for patient-facing summaries \"accurate and grounded only in the provided clinical note\" "
+            "without adding or inventing information, and the user prompt asks for 150 to 250 words in four parts (reason for visit, key "
+            "findings, treatments, follow-up) without jargon, followed by the first 4,500 characters of the note (prompts in Appendix "
+            "A). Faithfulness failures arise when the model's parametric knowledge of what discharge instructions usually say dominates "
+            "the conditioning on the specific note [[cite:ji2023,huang2025]]; E0 measures how often that happens when the model is merely "
+            "asked not to invent.")]
     b += [H2("4.4 Approach 2: Retrieval-Augmented Generation (E1)")]
-    b += [P("The RAG condition tests whether narrowing the model's view to retrieved excerpts reduces unsupported content. "
-            "The source note is segmented into sentences and grouped into consecutive non-overlapping chunks of five "
-            "sentences. A retrieval query is formed from the document's description field followed by the first 300 "
-            "characters of the note, which simulates the topical intent of a summarizer before writing. Query and chunks are "
-            "embedded with all-MiniLM-L6-v2 and the three chunks with the highest cosine similarity are concatenated, "
-            "numbered as excerpts, and truncated to 4,000 characters. GPT-4o-mini then receives a system prompt that says "
-            "\"Use ONLY the supplied excerpts to write the summary\" and a user prompt with the same four-part structure and "
-            "length requirement as E0, but in which the excerpts replace the note. Generation parameters are identical to "
-            "E0. [[tab:conditions]] contrasts the conditions."),
-          P("Two design decisions distinguish this RAG from the RAG of question-answering systems [[cite:lewis2020,"
-            "gao2023rag]]. The retrieval corpus is the document itself, and the generator sees the excerpts *only*. The "
-            "second decision is deliberate: if the model also saw the full note, nothing would prevent it from drawing on "
-            "unretrieved passages, and the effect of retrieval could not be isolated. It also implies a predictable cost: "
-            "content in unretrieved chunks cannot appear in the summary, which the coverage proxy of Section 4.8 measures; "
-            "the variant that also sees the note is E1b (Section 4.6)."),
+    b += [P("E1 tests whether narrowing the model's view to retrieved excerpts reduces unsupported content. The note is split into "
+            "consecutive five-sentence chunks, a query is formed from the document's description field and the first 300 characters of "
+            "the note, query and chunks are embedded with all-MiniLM-L6-v2, and the three most similar chunks, numbered as excerpts and "
+            "truncated to 4,000 characters, replace the note in a prompt that says \"Use ONLY the supplied excerpts\"; everything else is "
+            "as in E0 ([[tab:conditions]]). Unlike the RAG of question-answering systems [[cite:lewis2020,gao2023rag]], the retrieval "
+            "corpus is the document itself and the generator sees the excerpts only, so that the effect of retrieval can be isolated; "
+            "the predictable cost is that content in unretrieved chunks cannot appear in the summary, which the coverage proxy of "
+            "Section 4.8 measures, and the variant that also sees the note is E1b (Section 4.6)."),
           ("table", dict(label="conditions", caption="Generation settings of the five evaluated conditions.",
                          columns=["Condition", "Generator", "Input to the generator", "Retrieval", "Decoding"],
                          widths=[0.8, 1.0, 2.3, 1.5, 0.9], font=9, align=["left", "left", "left", "left", "left"],
@@ -678,131 +498,82 @@ def blocks(R: Results) -> list:
                                ["E1b", "GPT-4o-mini", "Full note plus the same excerpts", "as E1", "as E1"],
                                ["E3", "GPT-4o-mini", "E1 draft; per-claim verification against top-3 sentences from the full note; revision keeps, corrects or removes each claim", "as the judge (k = 3)", "verification T = 0; revision T = 0.3"]]))]
     b += [H2("4.5 Approach 3: Centroid-Based Extractive Summarization (E2)")]
-    b += [P("The third approach contains no language model. Following the centroid principle of Radev et al. "
-            "[[cite:radev2004]], every source sentence is embedded with all-MiniLM-L6-v2, the cosine similarity between every "
-            "pair of sentences is computed, and each sentence is scored by its mean similarity to all other sentences of "
-            "the document. The five highest-scoring sentences are returned in their original order as the summary. Documents "
-            "with five or fewer sentences are returned whole."),
-          P("E2 serves two purposes. As a summarization approach it is the conservative extreme of the faithfulness and "
-            "readability trade-off: it cannot fabricate, but it cannot paraphrase into patient-friendly language either, and "
-            "it copies the fragments and abbreviations of the note. As a methodological control it is more important still. "
-            "Every E2 claim is a verbatim sentence of the note, so a perfect judge would label every E2 claim Supported. Any "
-            "Not-Supported or Contradicted label on an E2 claim is a judge error, and the E2 rates therefore measure the "
-            "judge's error rate on verbatim extracted text. They are an empirical reference, not a general lower bound: the "
-            "judge's errors on paraphrased statements, generated explanations, compound sentences or negated findings can be "
-            "more or less frequent than on verbatim sentences, so the E2 rate cannot be subtracted from the rate of an "
-            "abstractive summarizer.")]
+    b += [P("E2 contains no language model. Following the centroid principle of Radev et al. [[cite:radev2004]], every source sentence "
+            "is embedded with all-MiniLM-L6-v2 and scored by its mean cosine similarity to all other sentences, and the five "
+            "highest-scoring sentences are returned in document order. As a summarizer it is the conservative extreme: it cannot "
+            "fabricate, but it cannot paraphrase into patient-friendly language either. As a methodological control it matters more: "
+            "every E2 claim is a verbatim sentence of the note, so any Not-Supported or Contradicted label on it is a judge error, and "
+            "the E2 rates measure the judge's error on verbatim extracted text. They are an empirical reference, not a general lower "
+            "bound, because the judge's errors on paraphrased, generated or negated sentences can be more or less frequent than on "
+            "verbatim ones.")]
     b += [H2("4.6 Approaches 4 and 5: RAG with the Full Note (E1b) and RAG with Chain-of-Verification (E3)")]
-    b += [P("Two further conditions extend E1 and share its interfaces, so that their outputs enter the same result files and the "
-            "same judge without any other change. E1b gives "
-            "GPT-4o-mini the retrieved excerpts *and* the full note, with an instruction to give the excerpts priority; it "
-            "separates the effect of focusing attention from the effect of withholding content. E3 implements a factored "
-            "Chain-of-Verification [[cite:dhuliawala2024]] on top of E1: the E1 summary is taken as the draft; each of its "
-            "claims is verified in a separate prompt against the three source sentences retrieved for that claim from the "
-            "full note, with the verifier returning SUPPORTED, NOT SUPPORTED or CONTRADICTED together with a corrected "
-            "statement or the instruction REMOVE; and a final prompt rewrites the draft applying every verdict, writing "
-            "\"Not stated in the note\" where a section has no supported content. In the revision prompt a claim verified as "
-            "SUPPORTED is marked keep unchanged, a claim with a usable correction is marked replace, and a claim without one is "
-            "marked remove. Verification uses temperature 0 and revision temperature 0.3. E1b required 50 API calls and E3 about "
-            "500; both are scored by the unchanged judge, so any difference from E1 is attributable to the extra note context "
-            "(E1b) or to the verification and revision step (E3).")]
+    b += [P("Two further conditions extend E1 and share its interfaces. E1b gives the model the retrieved excerpts *and* the full note, "
+            "with an instruction to give the excerpts priority, which separates the effect of focusing attention from the effect of "
+            "withholding content. E3 implements a factored Chain-of-Verification [[cite:dhuliawala2024]] on top of E1: each claim of the "
+            "E1 draft is verified in a separate prompt against the three source sentences retrieved for it from the full note (verdict "
+            "SUPPORTED, NOT SUPPORTED or CONTRADICTED, with a corrected statement or REMOVE), and a final prompt rewrites the draft "
+            "applying every verdict, writing \"Not stated in the note\" where a section has no supported content; verification runs "
+            "at temperature 0 and revision at 0.3, about ten model calls per note. Both are scored by the unchanged judge, so any "
+            "difference from E1 is attributable to the extra note context (E1b) or to verification and revision (E3).")]
     b += [H2("4.7 Validation of the Judge Against Expert Annotations")]
-    b += [P("A judge is only useful if its labels track the judgments that matter. The validation study applies the judge, "
-            "unchanged, to the 210 expert-annotated summaries of ann-pt-summ (Section 3.4), segmented and filtered exactly as "
-            "in the main pipeline, with the hospital course as the source from which evidence is retrieved. A sentence is "
+    b += [P("The validation study applies the judge, unchanged, to the 210 expert-annotated summaries of ann-pt-summ (Section 3.4), "
+            "segmented and filtered exactly as in the main pipeline, with the hospital course as the source. A sentence is "
             "*expert-flagged* if it overlaps an annotated span; the *any* detector flags a sentence labeled Not-Supported or "
-            "Contradicted (the UFR definition) and the *contradiction* detector only a Contradicted one (the CR definition). "
-            "Agreement is reported as precision, recall, specificity, F1 and Cohen's kappa [[cite:cohen1960]] at the sentence "
-            "level, overall and by subset, with the entailment threshold swept from 0.30 to 0.95 and the area under the ROC "
-            "curve [[cite:hanley1982]] as a threshold-free measure; at the summary level, Spearman's correlation between the "
-            "judge's rates and the experts' flagged share tests whether the judge at least ranks summaries as the experts do. "
-            "Five evidence-aggregation variants are compared with the same cross-encoder: the pipeline's maximum over three "
-            "retrieved sentences, the three or five retrieved sentences concatenated, the maximum over every sentence of the "
-            "course (the SummaC zero-shot design [[cite:laban2022]]), and the whole course as one premise truncated at 512 "
-            "tokens. Sentences of one summary share a hospital course and the 100 LLM-generated summaries were written from "
-            "only 20 courses, so intervals for the selected judge's agreement come from a bootstrap over courses (Section 6.5).")]
+            "Contradicted (the UFR definition) and the *contradiction* detector only a Contradicted one. Agreement is reported as "
+            "precision, recall, specificity, F1 and Cohen's kappa [[cite:cohen1960]] at the sentence level, overall and by subset, "
+            "with the threshold swept from 0.30 to 0.95 and the area under the ROC curve [[cite:hanley1982]] as a threshold-free "
+            "measure, and at the summary level as Spearman's correlation between the judge's rates and the experts' flagged share. "
+            "Five evidence-aggregation variants are compared with the same cross-encoder: the pipeline's maximum over three retrieved "
+            "sentences, three or five sentences concatenated, the maximum over every sentence of the course (the SummaC zero-shot "
+            "design [[cite:laban2022]]), and the whole course as one premise. Sentences of one summary share a course and the 100 "
+            "LLM-generated summaries come from only 20 courses, so intervals for the selected judge are bootstrapped over courses "
+            "(Section 6.5).")]
     b += [H2("4.8 Robustness Analyses")]
-    b += [P("Six analyses, all run offline on the stored generations, examine whether the pilot comparison depends on the "
-            "judge's design choices and characterize the unsupported claims: the decision threshold τ from 0.5 to 0.9; one, "
-            "three or five evidence sentences per claim, with the three-sentence re-run checked against the stored labels; "
-            "the evidence text with MTSamples' line breaks repaired, with E2 regenerated from the repaired sentences; a "
-            "coverage proxy; a negation analysis; and a keyword-assisted error taxonomy. Without reference summaries there is "
-            "no direct measure of omission, so the coverage proxy asks, for every sentence of the note, whether some claim of "
-            "the summary resembles it closely (cosine similarity at least 0.6, chosen before the analysis, with 0.5 and 0.7 "
-            "reported for sensitivity) and reports the share of sentences for which it does, which penalizes summaries that "
-            "concentrate on a few passages. The taxonomy assigns each unsupported claim to one of eight categories "
-            "(medication or dosage; follow-up or scheduling; generic advice or patient education; diagnosis or assessment; "
-            "procedure or treatment; findings, examination, laboratory or imaging; history, symptoms or timeline; other) by "
-            "keyword patterns in a fixed priority order; the author reviewed the examples of every category, and the counts are "
-            "a coarse characterization rather than a validated clinical error typology.")]
+    b += [P("Six offline analyses examine whether the pilot comparison depends on the judge's design and characterize the unsupported "
+            "claims: the decision threshold τ from 0.5 to 0.9; one, three or five evidence sentences per claim; the evidence text with "
+            "MTSamples' line breaks repaired, with E2 regenerated from repaired sentences; a coverage proxy; a negation analysis; and a "
+            "keyword-assisted error taxonomy. Without reference summaries there is no direct measure of omission, so the coverage proxy "
+            "counts the share of source sentences that some claim resembles closely (cosine similarity at least 0.6, chosen before the "
+            "analysis, with 0.5 and 0.7 for sensitivity), which penalizes summaries that concentrate on a few passages. The taxonomy "
+            "assigns each unsupported claim to one of eight categories by keyword patterns in a fixed priority order; the counts are a "
+            "coarse characterization, not a validated clinical error typology.")]
     b += [H2("4.9 Judge Selection Study")]
-    b += [P("Chapter 5 validates the pilot judge and finds it wanting. The judge selection study therefore scores six candidate "
-            "judges, all runnable on a laptop, against the same 1,781 expert-annotated sentences with the protocol of Section 4.7. "
-            "The candidates are the pilot judge (cross-encoder/nli-MiniLM2-L6-H768); two general-domain DeBERTa-v3-large NLI models, "
-            "one trained on MultiNLI, FEVER-NLI, ANLI, LingNLI and WANLI and one from the sentence-transformers cross-encoder "
-            "collection [[cite:reimers2019]]; and two MiniCheck models, DeBERTa-v3-large and RoBERTa-large classifiers trained "
-            "specifically to decide whether a sentence is grounded in a document [[cite:tang2024minicheck]]. A sixth off-the-shelf "
-            "candidate, added after the first comparison, is Bespoke-MiniCheck-7B [[cite:bespoke2024]], a seven-billion-parameter "
-            "instruction-tuned language model fine-tuned for the same grounding decision that leads the LLM-AggreFact fact-checking "
-            "leaderboard [[cite:tang2024minicheck]]; it is served locally in eight-bit precision through Apple's MLX framework and "
-            "answers \"Yes\" or \"No\" to a fixed prompt, and its support score is the probability of \"Yes\" at the first generated "
-            "token. Each candidate is run in two evidence modes: the three retrieved sentences concatenated into one premise, and the "
-            "whole hospital course, which the encoder models see in windows of at most 400 tokens of consecutive sentences with the "
-            "maximum support probability over windows and which the 32,000-token language-model checker reads in one pass. The "
-            "support score is the entailment probability for NLI models and the supported-class probability for the MiniCheck models."),
-          P("Thresholds are never tuned on the sentences they are evaluated on: for the LLM-generated summaries the threshold that "
-            "maximizes kappa is chosen on the doctor-written summaries and vice versa, and for the pooled figure the two subsets "
-            "are pooled. AUROC, precision, recall, specificity, F1 and kappa are reported for every candidate and mode."),
-          P("The strongest general model is then adapted to clinical language by fine-tuning on MedNLI [[cite:romanov2018]] "
-            "(Section 3.4): one epoch over the 11,232 training pairs, learning rate 2e-5 with linear warm-up over six percent of the "
-            "steps and linear decay, an effective batch size of 16 (micro-batches of four with gradient accumulation over four), "
-            "maximum sequence length 128 (99 percent of MedNLI pairs are at most 120 tokens), the Adafactor optimizer "
-            "[[cite:shazeer2018]] with a fixed learning rate, no first-moment accumulation and weight decay 0.01, gradient "
-            "clipping at 1.0, seed 42, on the laptop's GPU through PyTorch's Metal backend, with the 128,000-token input embedding "
-            "matrix and its layer normalization frozen. Adafactor was chosen because it stores a factored second moment of a few "
-            "megabytes instead of AdamW's two full copies of the 435 million parameters, which did not fit in the GPU memory left "
-            "beside the language-model server; the frozen embedding block saves a further half gigabyte of gradients. The pre-trained three-way classification head is kept with its "
-            "labels mapped onto MedNLI's. The checkpoint with the best MedNLI development accuracy is kept and scored against the "
-            "expert annotations exactly like the other candidates. The decision rule, fixed before the comparison, selects the "
-            "candidate and evidence mode with the highest kappa on all sentences."),
-          P("Because the candidates are compared, and the winner chosen, on the same expert-annotated sentences on which its "
-            "agreement is then reported, the apparent agreement of the selected judge is optimistic: choosing the largest of "
-            "several noisy estimates inflates it. Three analyses quantify the optimism and the independence of the evaluation "
-            "(Section 6.5). First, the whole selection procedure, the choice of candidate, evidence mode and threshold by "
-            "maximum kappa, is cross-validated: the sentences are split into five folds by hospital course, the procedure is run "
-            "on four folds and its choice is applied to the fifth, and the split is repeated twenty times. Second, a "
-            "patient-disjoint transfer test runs the selection on the doctor-written instructions only, whose 110 hospital "
-            "courses are also the main-study documents, and evaluates the chosen judge on the LLM-generated summaries, whose 20 "
-            "courses come from other patients. Patient and admission identity was verified by matching every course to its "
-            "MIMIC-IV-Note discharge note through three normalized 60-character text snippets and comparing the subject and "
-            "admission identifiers. Third, agreement intervals are computed by resampling courses, and agreement is reported "
-            "separately for the doctor-written instructions and for each of the five LLM configurations whose outputs the "
-            "experts annotated.")]
+    b += [P("The judge selection study scores six candidate judges, all runnable on a laptop, against the same 1,781 expert-annotated "
+            "sentences with the protocol of Section 4.7: the pilot judge; two general-domain DeBERTa-v3-large NLI models, one trained "
+            "on MultiNLI, FEVER-NLI, ANLI, LingNLI and WANLI and one from the sentence-transformers cross-encoder collection "
+            "[[cite:reimers2019]]; two MiniCheck classifiers (DeBERTa-v3-large and RoBERTa-large) trained to decide whether a sentence "
+            "is grounded in a document [[cite:tang2024minicheck]]; and Bespoke-MiniCheck-7B [[cite:bespoke2024]], a seven-billion-parameter "
+            "language model fine-tuned for the same decision that leads the LLM-AggreFact leaderboard, served locally in eight-bit "
+            "precision and answering yes or no, with the probability of \"Yes\" as its support score. Each candidate runs in two evidence "
+            "modes, the three retrieved sentences concatenated and the whole hospital course (in windows of at most 400 tokens for the "
+            "encoders, taking the maximum over windows). Thresholds are never tuned on the sentences they are evaluated on: for the "
+            "LLM-generated summaries the threshold that maximizes kappa is chosen on the doctor-written ones and vice versa. The "
+            "strongest general model is then fine-tuned on MedNLI [[cite:romanov2018]] for one epoch (learning rate 2e-5, effective batch "
+            "16, sequence length 128, Adafactor [[cite:shazeer2018]] with the embedding matrix frozen to fit beside the language-model "
+            "server, seed 42), and the checkpoint with the best MedNLI development accuracy is scored like the other candidates. The "
+            "decision rule, fixed before the comparison, selects the candidate and mode with the highest kappa on all sentences."),
+          P("Because the winner is chosen on the sentences on which its agreement is reported, that agreement is optimistic. Three "
+            "analyses quantify this (Section 6.5): the whole selection procedure is cross-validated in five folds of courses, repeated "
+            "twenty times; a patient-disjoint transfer test selects on the doctor-written instructions, whose courses are the main-study "
+            "documents, and evaluates on the LLM-generated summaries of other patients, and vice versa; and agreement intervals are "
+            "bootstrapped over courses and reported per source of summaries. Patient and admission identity was verified by matching "
+            "every course to its MIMIC-IV-Note discharge note.")]
     b += [H2("4.10 Main Study on MIMIC-IV Hospital Courses"), H3("4.10.1 Generation")]
-    b += [P("The main study repeats the five conditions on the 110 hospital courses of ann-pt-summ (Section 3.4) with three changes "
-            "dictated by the data use agreement and by the proposal. First, the generator is Qwen2.5-7B-Instruct, an open-weight "
-            "instruction-tuned model [[cite:qwen2025]] quantized to four bits and served on the author's computer with Apple's MLX "
-            "framework through an OpenAI-compatible local interface, so that the pipeline code of the pilot runs unchanged while no "
-            "protected text leaves the machine. Second, the prompts ask for a patient-facing summary of the hospital course in four "
-            "parts (why the patient was in the hospital, key findings, treatments or procedures, medications and follow-up) and "
-            "instruct the model to write \"Not stated in the note.\" for a section without support; the retrieval conditions E1 "
-            "and E1b must in addition cite, after every sentence, the excerpt numbers it is based on. Third, because the MIMIC "
-            "documents have no description field, the retrieval query is a fixed list of the four section topics followed by the "
-            "first 300 characters of the course. E2 and E3 are unchanged. Decoding uses temperature 0.3 and at most 450 tokens; the "
-            "E3 verifier uses temperature 0.")]
+    b += [P("The main study repeats the five conditions on the 110 hospital courses of ann-pt-summ with three changes dictated by the "
+            "data use agreement and the proposal. The generator is Qwen2.5-7B-Instruct [[cite:qwen2025]], quantized to four bits and "
+            "served on the author's computer through an OpenAI-compatible local interface, so the pilot code runs unchanged while no "
+            "protected text leaves the machine. The prompts ask for a four-part patient-facing summary (why the patient was in the "
+            "hospital, key findings, treatments, medications and follow-up) and allow \"Not stated in the note.\" for a section "
+            "without support, and the retrieval conditions must cite, after every sentence, the excerpt numbers it is based on. "
+            "Because the courses have no description field, the retrieval query is the four section topics followed by the first 300 "
+            "characters of the course. Decoding uses temperature 0.3 and at most 450 tokens.")]
     b += [H3("4.10.2 What Differs Between the Conditions")]
-    b += [P("The conditions are meant to isolate retrieval and verification, but they differ in more than one variable. "
-            "[[tab:confounds]] lists every difference. Three of them could produce differences in the judge's rates independently "
-            "of the mechanism under study. Excerpt-only retrieval (E1) changes the content the model sees and, in the main study, "
-            "also adds the citation instruction, which may itself keep the model closer to its sources. Verification (E3) adds "
-            "about ten model calls and a revision that deletes statements, so it shortens the summary. And the conditions produce "
-            "summaries of different lengths, while shorter summaries may simply omit the kinds of sentences that the judge most "
-            "often fails to verify. Three additional variants separate these factors on the same 110 courses. E1 without the "
-            "citation instruction (an ablation of Section 4.10.4) isolates retrieval from the citation instruction, and E1b "
-            "without the citation instruction does the same for retrieval with the full course. E0 with a length instruction of "
-            "about 150 words, the mean length of the E1 summaries, tests whether brevity alone lowers the rate and gives a "
-            "length-matched comparison for E1 and E3. E2 differs from the LLM conditions in kind: it cannot paraphrase and "
-            "produces five sentences, so it serves as a reference for the judge's errors and is not compared with them on "
+    b += [P("The conditions are meant to isolate retrieval and verification, but they differ in more than one variable ([[tab:confounds]]). "
+            "Excerpt-only retrieval changes the content the model sees and adds the citation instruction, which may itself keep the "
+            "model closer to its sources; verification adds model calls and deletes statements, so it shortens the summary; and shorter "
+            "summaries may simply omit the sentences the judge most often fails to verify. Three variants separate these factors on the "
+            "same courses: E1 and E1b without the citation instruction, and E0 asked for about 150 words, the mean length of E1, as a "
+            "length-matched baseline. E2 cannot paraphrase and serves as a reference for the judge's errors, not as a competitor on "
             "usefulness."),
           ("table", dict(label="confounds", caption="Variables that differ between the main-study conditions and the variants that separate them. All LLM conditions use the same generator and decoding (Qwen2.5-7B-Instruct, temperature 0.3, at most 450 output tokens).",
                          columns=["Condition", "Source text shown to the model", "Citation instruction", "Length instruction", "Model calls", "Other differences"],
@@ -816,102 +587,62 @@ def blocks(R: Results) -> list:
                                ["E3", "E1 draft; three retrieved course sentences per claim for verification", "Draft only", "150 to 250 words", "About 10", "Verification at temperature 0; revision deletes, replaces or keeps each claim"],
                                ["E2", "All course sentences", "Not applicable", "Five sentences", "0", "Verbatim extraction; no language model"]]))]
     b += [H3("4.10.3 Claims, Citations and Measures")]
-    b += [P("Every summary is scored by the judge selected in Chapter 6 with its selected evidence mode and threshold, and so are "
-            "the clinician-written discharge instructions, which gives a human reference point on the same documents. Claims "
-            "are obtained with the pilot's segmentation, with two corrections that matter for the main study's output format. "
-            "Citation markers are removed before the text is split into sentences and are then assigned to the sentence that "
-            "contains them or, when a marker follows a sentence's final punctuation, to that sentence; splitting the raw text "
-            "instead attaches markers written after the period to the next sentence and discards markers written before it. "
-            "And section-header lines that the splitter merges into the following sentence are stripped from the claim "
-            "(Section 3.5 quantifies both problems)."),
-          P("Five measures are added to UFR and CR. *Coverage of the clinician's instructions* is the share of sentences of the "
-            "doctor-written instructions that the generated summary supports, obtained by running the judge in the reverse "
-            "direction with the whole generated summary as premise and each instruction sentence as hypothesis; it replaces the "
-            "embedding proxy of the pilot with a reference-based omission measure, as the proposal required, and the number of "
-            "the clinician's sentences not covered is reported alongside it. Three citation measures describe the retrieval "
-            "conditions: *citation coverage*, the share of claims that carry at least one valid citation (an excerpt number "
-            "between one and the number of excerpts); *citation accuracy*, the share of cited claims whose cited excerpts support "
-            "the claim under the judge; and *citation reliability*, the share of all claims that carry a valid and supporting "
-            "citation, which is the product of the first two. *Abstentions* are counted per summary. Paired Wilcoxon tests and "
-            "bootstrap intervals are computed as in Section 4.2.5 against E0, against E1 and against the clinician's "
-            "instructions.")]
+    b += [P("Every summary, and the clinician-written discharge instructions as a human reference, is scored by the judge selected in "
+            "Chapter 6 with its selected evidence mode and threshold. Claims use the pilot's segmentation with two corrections: citation "
+            "markers are removed before splitting and assigned to the sentence that contains them (a marker after the final period "
+            "belongs to that sentence), and header lines merged into the following sentence are stripped (Section 3.5). Five measures "
+            "are added to UFR and CR. *Coverage of the clinician's instructions* is the share of the clinician's sentences that the "
+            "summary supports, obtained by running the judge in the reverse direction with the summary as premise and each instruction "
+            "sentence as hypothesis; it replaces the pilot's embedding proxy with a reference-based omission measure. *Citation "
+            "coverage* is the share of claims with at least one valid citation, *citation accuracy* the share of cited claims whose cited "
+            "excerpts support the claim under the judge, and *citation reliability* their product, the share of all claims with a valid "
+            "and supporting citation. *Abstentions* are counted per summary. Tests follow Section 4.2.5.")]
     b += [H3("4.10.4 Additional Conditions and Robustness Analyses")]
-    b += [P("Six retrieval ablations vary one setting of E1 at a time: chunks of three or eight sentences instead of five, two or "
-            "five retrieved chunks instead of three, BM25 lexical retrieval [[cite:robertson2009]] instead of dense retrieval, and "
-            "citations not required. Each variant is compared with the base configuration on the same documents, with Holm "
-            "adjustment within each measure. The length-matched E0 and E1b without citations described in Section 4.10.2 are "
-            "compared with their base conditions in the same way."),
-          P("Six further analyses examine the robustness of the conclusions. (i) *Threshold:* every summary is also scored at the "
-            "pilot pipeline's threshold of 0.5. (ii) *A second judge:* every base-condition claim is also scored by the strongest "
-            "candidate of a different model family from the judge selection study, in its best evidence mode and at the "
-            "threshold chosen there. The share of claims flagged by both judges and by either judge are reported as a "
-            "conservative and an inclusive flagging rule; they are alternative estimates, not bounds on the true rate, because "
-            "both judges can miss the same unsupported statement or flag the same supported one. (iii) *Atomic facts:* every "
-            "expert-annotated sentence and every main-study claim is split by the local model into atomic facts, each carrying "
-            "one piece of information (prompt in Appendix A), every fact is scored by the selected judge, and a sentence is "
-            "flagged when its weakest fact is unsupported; agreement with the experts is compared with sentence-level scoring, "
-            "and judge-estimated rates are recomputed at the level of facts. (iv) *Evidence windows:* every claim the selected "
-            "judge flags is re-scored with half-overlapping windows, to count flags caused by evidence split across two windows. "
-            "(v) *Repeated generation:* for a random subset of 40 courses (seed 42), E0, E1, E1b and E3 are generated twice "
-            "more with fixed seeds, and the run-to-run variation and the stability of the condition differences are reported. "
-            "(vi) *Retrieval failures of the verifier:* every E1 draft claim that the E3 verifier judged is also scored by the "
-            "selected judge against the whole course and against the verifier's own three retrieved sentences; a claim that the "
-            "verifier rejected and that the judge supports from the whole course but not from those sentences is counted as a "
-            "candidate retrieval failure. (vii) *Other generators:* the four text conditions are regenerated on all 110 courses "
-            "with Llama-3.1-8B-Instruct and Mistral-7B-Instruct-v0.3, both four-bit and served by the same local server under "
-            "the same prompts, decoding settings and retrieval (Mistral's chat template takes no separate system role, so the "
-            "system prompt is folded into the user message), and every summary is evaluated by the same judge at the same "
-            "threshold, with the same tests and Holm adjustment.")]
+    b += [P("Six retrieval ablations vary one setting of E1 at a time (chunks of three or eight sentences, two or five retrieved chunks, "
+            "BM25 lexical retrieval [[cite:robertson2009]], and no citation instruction), each compared with the base configuration with "
+            "Holm adjustment within each measure; the length-matched E0 and E1b without citations are compared with their base conditions "
+            "the same way. Seven further analyses test the conclusions: (i) scoring at the pilot's threshold of 0.5; (ii) a second judge, "
+            "the strongest candidate of a different model family, with the shares flagged by both judges and by either reported as a "
+            "conservative and an inclusive rule, alternative estimates rather than bounds because both judges can share an error; (iii) "
+            "atomic facts, with every claim split by the local model (prompt in Appendix A), every fact scored, and a sentence flagged "
+            "when its weakest fact is; (iv) half-overlapping evidence windows, to count flags caused by evidence split across windows; "
+            "(v) repeated generation of E0, E1, E1b and E3 on a random subset of 40 courses (seed 42), twice more with fixed seeds; (vi) "
+            "retrieval failures of the verifier, scoring every rejected E1 draft claim against the whole course and against the "
+            "verifier's three retrieved sentences; and (vii) two further generators, Llama-3.1-8B-Instruct and Mistral-7B-Instruct-v0.3, "
+            "regenerating the four text conditions on all courses under the same prompts, decoding, retrieval, judge and tests.")]
     b += [H3("4.10.5 Manual Audit")]
-    b += [P("To check whether the selected judge remains reliable on the summaries this generator actually wrote, a blind manual "
-            "audit was designed. Sixty of the 110 courses were drawn at random (seed 7); within them, for each of E0, E1, E1b "
-            "and E3, up to 30 claims that the judge flagged and 30 that it accepted were drawn at random (235 claims, because "
-            "only 25 E3 claims in these courses were flagged), together with 30 cited claims of E1 and of E1b and the excerpts "
-            "they cite. A local labeling tool shows one course at a time with its sampled claims in random order and hides both "
-            "the judge's label and the condition. Each claim is labeled supported, partly supported (a sentence with several "
-            "facts of which at least one is unsupported), not supported, or unsure, and the type of error is recorded "
-            "(not stated in the course, generic advice or follow-up not in the course, contradiction, wrong or invented "
-            "medication, dose or number, other); each citation is labeled by whether the cited excerpt supports the claim. "
-            "The annotation protocol is reproduced in Appendix C. Partly and not supported count as unsupported. Because flagged "
-            "and accepted claims were sampled in fixed numbers, each labeled claim is weighted by its stratum's share of the "
-            "condition's claims over all 110 courses, divided by the number of labeled claims in that stratum. The weighted "
-            "labels give a manually confirmed estimate of the share of unsupported claims in each condition, which requires no "
-            "assumption about the judge, and, set against the judge's labels for the same claim texts in the final pipeline, the "
-            "judge's precision, false omission rate, sensitivity, specificity and kappa on these outputs. The sample was drawn "
-            "before the claim-splitting corrections of Section 3.5: the strata are those of the draw, and the audited texts have "
-            "their headers removed as the corrected pipeline does. Intervals come from 2,000 bootstrap resamples of courses, and "
-            "for each pair of conditions the difference in the manually confirmed share is compared with the difference in the "
-            "judge's share. The audit checks textual support by the course, not clinical correctness, and it was performed by "
-            "one annotator, the author, who is not a clinician."),
-          P("The audit was performed in two blind passes. A review of the first pass found that paraphrased claims had been "
-            "labeled partly supported, although the protocol counts paraphrase as supported. The written rubric was clarified "
-            "(Appendix C); the sample was extended by up to 15 further flagged and 15 further accepted claims per condition "
-            "from the same 60 courses under the same stratified design, drawn against the corrected pipeline's judge labels "
-            "(seed 8; 105 claims, bringing the sample to 340 claims and 60 citation checks); and the author relabeled the full "
-            "sample blind, with the first pass's answers hidden and the items in the same randomized presentation. Chapter 7 "
-            "reports the second pass, the agreement between the passes, and, under the first pass's stricter reading, how the "
-            "estimates change; both label files are preserved, and the error types were recorded in the second pass.")]
+    b += [P("A blind manual audit checks whether the selected judge remains reliable on the summaries this generator wrote. Sixty of "
+            "the 110 courses were drawn at random (seed 7); within them, for each of E0, E1, E1b and E3, up to 30 claims the judge "
+            "flagged and 30 it accepted were drawn, together with 30 cited claims of E1 and of E1b with their excerpts. A local labeling "
+            "tool shows one course at a time with its sampled claims in random order and hides the judge's label and the condition. Each "
+            "claim is labeled supported, partly supported (several facts, at least one unsupported), not supported, or unsure, with the "
+            "type of problem recorded; each citation is labeled by whether the cited excerpt supports the claim; the protocol is in "
+            "Appendix C. Partly and not supported count as unsupported. Because flagged and accepted claims were sampled in fixed numbers, "
+            "each label is weighted by its stratum's share of the condition's claims, which gives a manually confirmed unsupported share "
+            "per condition that requires no assumption about the judge, and, against the judge's labels for the same claims, the judge's "
+            "precision, false omission rate, sensitivity, specificity and kappa on these outputs. Intervals come from 2,000 bootstrap "
+            "resamples of courses, and for each pair of conditions the manual difference is compared with the judge's. The audit checks "
+            "textual support by the course, not clinical correctness, and was performed by one annotator, the author, who is not a "
+            "clinician."),
+          P("The audit was labeled in two blind passes. A review of the first pass found paraphrased claims labeled partly supported "
+            "against the protocol's paraphrase rule, so the rubric was clarified (Appendix C), the sample was extended by 105 claims "
+            "from the same courses under the same design (seed 8; 340 claims and 60 citation checks in all), and the author relabeled "
+            "the full sample with the first pass's answers hidden. Chapter 7 reports the second pass and the agreement between the "
+            "passes; both label files are preserved.")]
     b += [H2("4.11 Question-Answering Pilot")]
-    b += [P("The proposal's second task is piloted with three fixed questions per hospital course, about medications after "
-            "discharge, follow-up appointments or tests, and warning signs that should prompt care. The local model answers each "
-            "question in at most three sentences from the full course (QA-E0) or from the three chunks retrieved with the question "
-            "as query (QA-E1), with the instruction to reply \"Not stated in the note.\" when the course does not contain the "
-            "answer. Three quantities are reported per condition and question type: the abstention rate; UFR and CR of the answered "
-            "questions under the judge, with the hospital course as source; and the share of answer sentences supported by the "
-            "clinician's own discharge instructions, which measures agreement with what the clinician actually told the patient. "
-            "Abstentions are excluded from the claim set, so UFR and CR describe the reliability of the answers that were given, "
-            "not the usefulness of the system. To describe the latter, three shares are computed over all questions: questions "
-            "abstained on, questions answered with every sentence supported by the course, and questions answered with at least "
-            "one unsupported sentence. There are no clinician-written gold answers, so the pilot is exploratory: it shows how "
-            "abstention and grounding interact, not whether the answers are clinically correct.")]
+    b += [P("The proposal's second task is piloted with three fixed questions per course, about medications after discharge, follow-up "
+            "and warning signs. The local model answers each in at most three sentences from the full course (QA-E0) or from the three "
+            "chunks retrieved with the question as query (QA-E1), replying \"Not stated in the note.\" when the course is silent. Per "
+            "condition and question type the pilot reports the abstention rate, the UFR and CR of answered questions under the judge, "
+            "the share of answer sentences supported by the clinician's own instructions, and, over all questions, the shares abstained "
+            "on, answered with every sentence supported, and answered with an unsupported sentence. There are no clinician-written gold "
+            "answers, so the pilot is exploratory: it shows how abstention and grounding interact, not whether the answers are correct.")]
     b += [H2("4.12 Tools, Software and Computational Environment")]
-    b += [P("All experiments were run on an Apple MacBook Air (Apple M5, 10 cores, 24 GB unified memory). The pilot pipeline "
-            "runs on the CPU; the candidate judges, the MedNLI fine-tuning and the local language model use the GPU through "
-            "PyTorch's Metal backend and Apple's MLX framework. The complete offline recomputation of every pilot result takes "
-            "about five minutes, scoring one large candidate judge against the expert annotations about an hour, the MedNLI "
-            "fine-tuning two hours, and the generation of the 1,210 main-study summaries roughly seven hours. [[tab:tools]] lists "
-            "the software. Models are downloaded once from the Hugging Face hub and cached locally; every subsequent run is "
-            "offline except for the pilot study's generation calls to the OpenAI API."),
+    b += [P("All experiments ran on an Apple MacBook Air (Apple M5, 10 cores, 24 GB unified memory); the pilot pipeline on the CPU, the "
+            "candidate judges, the MedNLI fine-tuning and the local language model on the GPU through PyTorch's Metal backend and Apple's "
+            "MLX framework. Recomputing every pilot result takes about five minutes, scoring one large candidate judge against the expert "
+            "annotations about an hour, and generating the 1,210 main-study summaries roughly seven hours. [[tab:tools]] lists the "
+            "software; every run is offline except the pilot's generation calls to the OpenAI API."),
           ("table", dict(label="tools", caption="Software, models and versions used.",
                          columns=["Component", "Package or model", "Version"], widths=[2.2, 2.8, 1.5], font=9.5, align=["left", "left", "left"],
                          rows=[["Language", "Python", "3.9.6 (pipeline) and 3.13 (local model server)"],

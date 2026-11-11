@@ -35,14 +35,12 @@ def best_row(jc):
 def blocks(R: Results) -> list:
     jc, ftj = load()
     b = [("h1", "Chapter 6 Selecting a Valid Judge"), ("h2", "6.1 Purpose")]
-    b += [P("Chapter 5 showed that the pilot judge, a six-layer MiniLM cross-encoder trained on general-domain NLI data, agrees "
-            "with medical experts at chance level. The main study on MIMIC-IV hospital courses (Chapter 7) needs a judge whose "
-            "labels can be interpreted, so this chapter scores candidate judges against the same 1,781 expert-annotated sentences "
-            "with the protocol of Section 4.7 and the candidates of Section 4.9, and then adapts the strongest general model to "
-            "clinical language with MedNLI [[cite:romanov2018]]. The decision rule was fixed in advance: the candidate with the "
-            "highest Cohen's kappa on all sentences, with its decision threshold chosen on the other subset of summaries, becomes "
-            "the judge of the main study; its precision, recall and AUROC are reported alongside every main-study result so that "
-            "the residual measurement error is visible.")]
+    b += [P("The pilot judge agrees with medical experts at chance level (Chapter 5), so the main study needs a judge whose labels "
+            "can be interpreted. This chapter scores the candidates of Section 4.9 against the same 1,781 expert-annotated "
+            "sentences with the protocol of Section 4.7, adapts the strongest general model to clinical language with MedNLI "
+            "[[cite:romanov2018]], and applies a rule fixed in advance: the candidate with the highest Cohen's kappa on all "
+            "sentences, with its threshold chosen on the other subset of summaries, becomes the judge of the main study, and its "
+            "error profile is carried into every main-study result.")]
     if jc is None:
         b += [P("The candidate comparison has not been run yet.")]
         return b
@@ -51,98 +49,69 @@ def blocks(R: Results) -> list:
     allr["jn"] = allr.judge.map(JUDGE_NAMES).fillna(allr.judge); allr["mn"] = allr["mode"].map(MODE_NAMES)
     allr = allr.sort_values(["kappa"], ascending=False)
     best = best_row(jc)
-    b += [P(f"[[tab:judges]] reports, for every candidate and evidence mode, the area under the ROC curve of the support score, "
-            f"and precision, recall, F1, specificity and kappa at the threshold chosen on the other subset. [[fig:judges]] shows "
-            f"the same comparison graphically. (The DeBERTa-v3-large NLI model is the one trained on MultiNLI, FEVER-NLI, ANLI, LingNLI "
-            f"and WANLI, Section 4.9.) The pilot judge reaches an AUROC of "
-            f"{f2(allr[(allr.judge=='minilm_nli')&(allr['mode']=='top3')].auroc.iloc[0])} and a kappa of "
-            f"{f2(allr[(allr.judge=='minilm_nli')&(allr['mode']=='top3')].kappa.iloc[0])} even with a tuned threshold. The best "
-            f"candidate, {JUDGE_NAMES.get(best.judge, best.judge)} with {MODE_PHRASE.get(best['mode'], best['mode'])}, reaches "
-            f"an AUROC of {f2(best.auroc)} and a kappa of {f2(best.kappa)}, with precision {f2(best.precision)} and recall "
-            f"{f2(best.recall)} at a threshold of {best.tau_from_other_subset:.2f} on the support probability, and it flags "
-            f"{pct0(best.flag_rate)} of sentences where the experts flag {pct0(best.expert_rate)}."),
+    pilot = allr[(allr.judge == "minilm_nli") & (allr["mode"] == "top3")].iloc[0]
+    gen = jc[jc.group == "generated"].sort_values("kappa", ascending=False); doc = jc[jc.group == "doctor_written"].sort_values("kappa", ascending=False)
+    _A = jc[(jc.group == "all") & (jc.judge != "minilm_nli")].pivot_table(index="judge", columns="mode", values="kappa")
+    _A = _A.dropna(subset=[c for c in ("doc", "top3") if c in _A.columns])
+    bg, bdw = gen.iloc[0], doc.iloc[0]
+    b += [P(f"[[tab:judges]] and [[fig:judges]] report, for every candidate and evidence mode, the AUROC of the support score and the "
+            f"agreement statistics at the threshold chosen on the other subset. The pilot judge reaches a kappa of {f2(pilot.kappa)} "
+            f"even with a tuned threshold. The best candidate, {JUDGE_NAMES.get(best.judge, best.judge)} with "
+            f"{MODE_PHRASE.get(best['mode'], best['mode'])}, reaches an AUROC of {f2(best.auroc)} and a kappa of {f2(best.kappa)} "
+            f"(precision {f2(best.precision)}, recall {f2(best.recall)}, threshold {best.tau_from_other_subset:.2f}), flagging "
+            f"{pct0(best.flag_rate)} of sentences where the experts flag {pct0(best.expert_rate)}. Agreement is higher on "
+            f"doctor-written instructions (best kappa {f2(bdw.kappa)}) than on LLM-generated summaries (best kappa {f2(bg.kappa)}), "
+            f"where the experts flagged fewer sentences. Two lessons emerge: model size and training data matter more than the "
+            f"aggregation rule, since every large model improves on the pilot judge in every mode while Chapter 5 showed that "
+            f"re-aggregating the small model's evidence changes little; and for {int((_A['doc'] > _A['top3']).sum())} of the "
+            f"{len(_A)} large candidates, letting the model see the whole hospital course beats three retrieved sentences, because "
+            f"patient-facing paraphrase draws on several parts of the course at once."),
           ("table", dict(label="judges", caption="Candidate judges scored against the medical-expert annotations on all 1,781 sentences. Thresholds are chosen on the other subset (doctor-written for the generated summaries and vice versa; for the all-sentences row the two are pooled). Flag rate is the share of sentences the judge marks unsupported; the experts marked 20.4 percent.",
                          columns=["Judge", "Evidence", "AUROC", "Precision", "Recall", "Specificity", "F1", "Kappa", "Flag rate", "τ"],
                          widths=[1.55, 0.85, 0.55, 0.6, 0.5, 0.7, 0.4, 0.5, 0.45, 0.4], font=8, align=["left", "left"] + ["center"] * 8,
                          rows=[[r.jn, r.mn, f2(r.auroc), f2(r.precision), f2(r.recall), f2(r.specificity), f2(r.f1), f2(r.kappa), pct0(r.flag_rate), f"{r.tau_from_other_subset:.2f}"] for _, r in allr.iterrows()])),
           ("figure", dict(label="judges", path="results/fig_judges.png", width=6.3, caption="AUROC and kappa of each candidate judge and evidence mode against the expert annotations, all sentences."))]
-    gen = jc[jc.group == "generated"].sort_values("kappa", ascending=False); doc = jc[jc.group == "doctor_written"].sort_values("kappa", ascending=False)
-    _A = jc[(jc.group == "all") & (jc.judge != "minilm_nli")].pivot_table(index="judge", columns="mode", values="kappa")
-    _A = _A.dropna(subset=[c for c in ("doc", "top3") if c in _A.columns])
-    WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven"}
-    mode_total = WORDS.get(len(_A), str(len(_A))); mode_wins = WORDS.get(int((_A["doc"] > _A["top3"]).sum()), str(int((_A["doc"] > _A["top3"]).sum())))
-    bg, bd = gen.iloc[0], doc.iloc[0]
-    b += [P(f"Agreement differs between the two kinds of summaries. On LLM-generated summaries, where experts flagged "
-            f"{pct0(bg.expert_rate)} of sentences, the best candidate ({JUDGE_NAMES.get(bg.judge, bg.judge)}, {MODE_PHRASE.get(bg['mode'])}) reaches "
-            f"kappa {f2(bg.kappa)} and AUROC {f2(bg.auroc)}; on doctor-written instructions, where experts flagged {pct0(bd.expert_rate)}, "
-            f"the best candidate ({JUDGE_NAMES.get(bd.judge, bd.judge)}, {MODE_PHRASE.get(bd['mode'])}) reaches kappa {f2(bd.kappa)} and AUROC "
-            f"{f2(bd.auroc)}. Two design lessons emerge. Model size and training data matter more than the aggregation rule: the "
-            f"large models improve on the pilot judge in every mode, whereas Chapter 5 showed that changing the aggregation rule "
-            f"of the small model changes little. And for {mode_wins} of the {mode_total} large candidates the whole-course evidence "
-            f"mode, which lets the model see every sentence of the hospital course, gives a higher kappa than three retrieved "
-            f"sentences, because paraphrased patient-facing sentences draw on several parts of the course at once.")]
     bmc = jc[(jc.judge == "bespoke_minicheck_7b") & (jc.group == "all")]
     if len(bmc):
-        bd = bmc[bmc["mode"] == "doc"]; bt = bmc[bmc["mode"] == "top3"]; deb = jc[(jc.judge == "deberta_large_nli") & (jc["mode"] == "doc") & (jc.group == "all")].iloc[0]
-        bdr = bd.iloc[0] if len(bd) else None
-        b += [P(f"The language-model checker behaves differently from the encoders. Bespoke-MiniCheck-7B, which reads the whole hospital course in "
-                f"one pass and answers yes or no, reaches an AUROC of {f2(bdr.auroc) if bdr is not None else '—'} and a kappa of "
-                f"{f2(bdr.kappa) if bdr is not None else '—'} with whole-course evidence (precision {f2(bdr.precision) if bdr is not None else '—'}, recall "
-                f"{f2(bdr.recall) if bdr is not None else '—'}, flag rate {pct0(bdr.flag_rate) if bdr is not None else '—'}) and "
-                f"{f2(bt.iloc[0].kappa) if len(bt) else '—'} with three retrieved sentences. "
-                + (f"That is {'above' if bdr.kappa > deb.kappa else 'below'} the best encoder ({f2(deb.kappa)}), so "
-                   + ("the pre-specified rule selects it for the main study." if bdr.kappa > deb.kappa else
-                      "a model that tops the general fact-checking leaderboards does not agree with medical experts better than a strong NLI encoder on "
-                      "patient-facing sentences; the disagreement is not a matter of model size or reading the whole document.") if bdr is not None else ""))]
+        bdm = bmc[bmc["mode"] == "doc"]; deb = jc[(jc.judge == "deberta_large_nli") & (jc["mode"] == "doc") & (jc.group == "all")].iloc[0]
+        if len(bdm):
+            bdr = bdm.iloc[0]
+            b += [P(f"The language-model checker, Bespoke-MiniCheck-7B, which reads the whole course in one pass and answers yes or no, "
+                    f"reaches a kappa of {f2(bdr.kappa)} (AUROC {f2(bdr.auroc)}), "
+                    + (f"above the best encoder ({f2(deb.kappa)}), so the pre-specified rule selects it." if bdr.kappa > deb.kappa else
+                       f"below the best encoder ({f2(deb.kappa)}): a model that tops the general fact-checking leaderboards does not agree "
+                       f"with medical experts better than a strong NLI encoder on patient-facing sentences, so the disagreement is not "
+                       f"a matter of model size or of reading the whole document."))]
     b += [("h2", "6.3 Adaptation to Clinical Language with MedNLI")]
     if ftj is not None:
         mr = jc[(jc.judge == "mednli_deberta_large") & (jc.group == "all")]
-        lr_txt = f"{ftj['lr']:.0e}".replace("e-0", "e-")
-        epochs_txt = "one epoch" if ftj["epochs"] == 1 else f"{ftj['epochs']} epochs"
-        opt_txt = "Adafactor" if ftj.get("optimizer") == "adafactor" else "AdamW"
-        zs = f" from {pct(ftj['zero_shot_dev_accuracy'])} to" if "zero_shot_dev_accuracy" in ftj else " to"
-        zst = f" from {pct(ftj['zero_shot_test_accuracy'])} to" if "zero_shot_test_accuracy" in ftj else " to"
-        hours = ftj.get("train_minutes", 0) / 60
-        mdoc = mr[mr["mode"] == "doc"]; mtop = mr[mr["mode"] == "top3"]
-        agree = (f" Against the expert annotations the adapted model reaches an AUROC of {f2(mdoc.auroc.iloc[0]) if len(mdoc) else '—'} with "
-                 f"whole-course evidence and {f2(mtop.auroc.iloc[0]) if len(mtop) else '—'} with top-3 sentence evidence, with a kappa of "
-                 f"{f2(mr.kappa.max())} at best ([[tab:judges]])." if len(mr) else " Its agreement with the experts is reported in [[tab:judges]].")
+        mdoc = mr[mr["mode"] == "doc"]
         bdoc = jc[(jc.judge == "deberta_large_nli") & (jc["mode"] == "doc") & (jc.group == "all")]
-        comp = ""
+        zs = f" from {pct(ftj['zero_shot_dev_accuracy'])}" if "zero_shot_dev_accuracy" in ftj else ""
+        txt = (f"The strongest general model was fine-tuned on MedNLI, 11,232 clinician-written premise and hypothesis pairs from "
+               f"MIMIC-III notes (Sections 3.4 and 4.9). Its MedNLI development accuracy rose{zs} to {pct(ftj['dev_accuracy'])}")
         if len(mdoc) and len(bdoc):
-            bd, md = bdoc.iloc[0], mdoc.iloc[0]
-            comp = (f" Compared with the same model before adaptation (AUROC {f2(bd.auroc)}, kappa {f2(bd.kappa)}, precision {f2(bd.precision)}, "
-                    f"recall {f2(bd.recall)}), the adapted model flags {'fewer' if md.flag_rate < bd.flag_rate else 'more'} sentences ({pct0(md.flag_rate)} "
-                    f"versus {pct0(bd.flag_rate)}, where the experts flag {pct0(md.expert_rate)}), "
-                    f"{'keeps the same precision' if abs(md.precision - bd.precision) < 0.005 else ('gains' if md.precision > bd.precision else 'loses') + f' {abs(md.precision - bd.precision):.2f} in precision'} "
-                    f"and {'loses' if md.recall < bd.recall else 'gains'} {abs(md.recall - bd.recall):.2f} in "
-                    f"recall, so that its kappa is {'lower' if md.kappa < bd.kappa else 'higher'}. A nine-point gain on MedNLI did not transfer to the "
-                    f"expert task. One explanation consistent with this is a difference in granularity: MedNLI pairs a single note sentence with a "
-                    f"short clinical statement, whereas the expert-set sentences are patient-facing paraphrases that often combine several facts "
-                    f"drawn from different parts of a hospital course, so that better clinical vocabulary does not help the model decide which part "
-                    f"of a multi-fact sentence lacks support. The experiment does not establish this explanation; other differences between the "
-                    f"two tasks, such as the patient-facing register and the length of the evidence, could produce the same result. Section 6.6 "
-                    f"tests one implication of it by scoring atomic facts instead of sentences.")
-        b += [P(f"The strongest general model was fine-tuned on MedNLI, 11,232 clinician-written premise and hypothesis pairs from "
-                f"MIMIC-III notes (Section 3.4), for {epochs_txt} with the {opt_txt} optimizer, a learning rate of {lr_txt} and an "
-                f"effective batch size of {ftj['batch']} (Section 4.9), which took {hours:.1f} hours on the laptop's GPU while it was "
-                f"shared with the language-model server. Its MedNLI development accuracy rose{zs} {pct(ftj['dev_accuracy'])} and its test "
-                f"accuracy{zst} {pct(ftj['test_accuracy'])}." + agree + comp)]
+            bd_, md = bdoc.iloc[0], mdoc.iloc[0]
+            txt += (f", but its agreement with the experts did not improve: kappa {f2(md.kappa)} against {f2(bd_.kappa)} for the same "
+                    f"model before adaptation ([[tab:judges]]), with {'fewer' if md.flag_rate < bd_.flag_rate else 'more'} sentences "
+                    f"flagged and {'lower' if md.recall < bd_.recall else 'higher'} recall. One explanation consistent with this is "
+                    f"granularity: MedNLI pairs a single note sentence with a short clinical statement, whereas patient-facing "
+                    f"sentences combine several facts from different parts of a course, so better clinical vocabulary does not help "
+                    f"the model decide which part of a multi-fact sentence lacks support. The experiment does not establish this "
+                    f"explanation, and Section 6.6 tests one implication of it.")
+        else:
+            txt += "; its agreement with the experts is reported in [[tab:judges]]."
+        b += [P(txt)]
     else:
         b += [P("The MedNLI adaptation is described in Section 4.9; its results are added to [[tab:judges]] when the fine-tuning run completes.")]
     b += [("h2", "6.4 Decision")]
     b += [P(f"By the pre-specified rule the judge of the main study is {JUDGE_NAMES.get(best.judge, best.judge)} with "
-            f"{MODE_PHRASE.get(best['mode'], best['mode'])} and a support threshold of {best.tau_from_other_subset:.2f}."
-            + (f" The MedNLI-adapted model was not selected because its best kappa ({f2(jc[(jc.judge == 'mednli_deberta_large') & (jc.group == 'all')].kappa.max())}) "
-               f"is below that of the unadapted model." if ftj is not None and best.judge != "mednli_deberta_large" and (jc.judge == "mednli_deberta_large").any() else "")
-            + f" Its agreement with medical experts is "
-            f"moderate rather than high: a kappa of {f2(best.kappa)} means substantial disagreement remains, its precision of "
-            f"{f2(best.precision)} means that roughly {100 - round(100 * best.precision)} of every 100 sentences it flags were not "
-            f"flagged by the experts, and its recall of {f2(best.recall)} means that it misses about {100 - round(100 * best.recall)} of "
-            f"every 100 expert-flagged sentences. These figures are carried into Chapter 7: every unsupported fact rate reported "
-            f"there is an estimate produced by an instrument with this known error profile, and the comparisons between "
-            f"conditions are again paired comparisons on the same documents under the same instrument. Because the judge was "
-            f"chosen on the sentences on which these figures are measured, they are optimistic; Section 6.5 estimates by how much.")]
+            f"{MODE_PHRASE.get(best['mode'], best['mode'])} and a support threshold of {best.tau_from_other_subset:.2f}. Its agreement "
+            f"with the experts is moderate, not high: a kappa of {f2(best.kappa)}, a precision of {f2(best.precision)} (roughly "
+            f"{100 - round(100 * best.precision)} of every 100 sentences it flags were not flagged by the experts) and a recall of "
+            f"{f2(best.recall)} (it misses about {100 - round(100 * best.recall)} of every 100 expert-flagged sentences). Every rate "
+            f"in Chapter 7 is therefore an estimate from an instrument with this error profile, and because the judge was chosen on "
+            f"the sentences on which the profile is measured, the figures are optimistic; Section 6.5 estimates by how much.")]
     b += independence_blocks()
     b += atomic_blocks()
     b += verifact_blocks()
@@ -170,19 +139,17 @@ def independence_blocks():
     if ov is None and sb is None:
         return []
     b = [("h2", "6.5 Optimism of the Selection and Independence of the Evaluation")]
-    if ov is not None:
-        O = dict(ov.values.tolist())
-        b += [P(f"The agreement figures of Section 6.2 are measured on sentences that are not independent, and the selected judge was chosen "
-                f"on the same sentences. Three facts about the data, established by matching every hospital course to its MIMIC-IV-Note "
-                f"discharge note (Section 4.9), determine how far they can be trusted. First, each of the {int(O['main-study documents (doctor-written + validation courses)'])} "
-                f"main-study courses matches exactly one discharge note, and the notes belong to {int(O['distinct patients among matched main-study courses'])} "
-                f"different patients and {int(O['distinct admissions among matched main-study courses'])} different admissions, so the paired "
-                f"observations of Chapter 7 are independent at the level of the patient. Second, the 100 LLM-generated summaries of the expert set "
-                f"were written from {int(O['distinct hospital courses behind the 100 LLM-generated summaries'])} further courses, five summaries per "
-                f"course, and {'none of their patients or admissions appears' if int(O['generated-summary courses whose patient also appears in the main study']) == 0 and int(O['generated-summary courses whose admission also appears in the main study']) == 0 else 'some of their patients appear'} "
-                f"in the main study. Third, the doctor-written summaries of the expert set are the clinicians' instructions for the main-study "
-                f"courses themselves. The judge was therefore selected partly on text written for the same courses whose generated summaries it "
-                f"later scores; the generated summaries of the main study were never part of the selection, but their courses were.")]
+    O = dict(ov.values.tolist()) if ov is not None else None
+    if O is not None:
+        b += [P(f"The agreement figures above are measured on sentences that are not independent, and the judge was chosen on the same "
+                f"sentences. Matching every course to its MIMIC-IV-Note discharge note (Section 4.9) establishes three facts. Each of the "
+                f"{int(O['main-study documents (doctor-written + validation courses)'])} main-study courses belongs to a different patient "
+                f"and admission, so the paired observations of Chapter 7 are independent at patient level. The 100 LLM-generated "
+                f"summaries of the expert set were written for {int(O['distinct hospital courses behind the 100 LLM-generated summaries'])} "
+                f"other courses, {'none of whose patients appears' if int(O['generated-summary courses whose patient also appears in the main study']) == 0 else 'some of whose patients appear'} "
+                f"in the main study. But the doctor-written summaries of the expert set are the clinicians' instructions for the "
+                f"main-study courses themselves, so the judge was selected partly on text written for the courses whose generated "
+                f"summaries it later scores; the generated summaries themselves were never part of the selection.")]
     if sb is not None:
         def g(analysis, metric, col="estimate"):
             r = sb[(sb.analysis == analysis) & (sb.metric == metric)]
@@ -191,68 +158,46 @@ def independence_blocks():
             r = sb[(sb.analysis == analysis) & sb.note.notna()]
             return r.note.iloc[0] if len(r) else None
         bs = "selected_judge_course_bootstrap"; cv = "nested_cv_selection_procedure"
-        k_app = g("apparent_selected_judge", "kappa")
-        b += [P(f"Resampling hospital courses instead of sentences, which respects the dependence of sentences written for the same course, "
-                f"the selected judge's kappa of {f2(k_app)} has a 95 percent interval from {f2(g(bs, 'kappa', 'lo'))} to {f2(g(bs, 'kappa', 'hi'))}, "
-                f"its AUROC of {f2(g(bs, 'auroc'))} an interval from {f2(g(bs, 'auroc', 'lo'))} to {f2(g(bs, 'auroc', 'hi'))}, its precision "
-                f"from {f2(g(bs, 'precision', 'lo'))} to {f2(g(bs, 'precision', 'hi'))} and its recall from {f2(g(bs, 'recall', 'lo'))} to "
-                f"{f2(g(bs, 'recall', 'hi'))}.")]
-        k_cv, opt = g(cv, "kappa"), k_app - g(cv, "kappa")
+        k_app = g("apparent_selected_judge", "kappa"); k_cv = g(cv, "kappa")
         sel_share = None
         if fq is not None and len(fq):
             sel = fq[fq.candidate == "deberta_large_nli__doc"]
             sel_share = float(sel.share.iloc[0]) if len(sel) else 0.0
-            others = []
-            for c, sh in zip(fq.candidate, fq.share):
-                if c != "deberta_large_nli__doc":
-                    j, m = c.split("__")
-                    others.append(f"{JUDGE_NAMES.get(j, j)} with {MODE_PHRASE.get(m, m)} ({pct0(sh)})")
-            other_txt = f", and otherwise {_join_names(others)}" if others else ""
-        b += [P(f"Choosing the best of {int(len(JUDGE_NAMES))} candidates in two evidence modes and over a grid of thresholds on the same "
-                f"sentences inflates the agreement of the winner. Nested cross-validation estimates the agreement that the selection "
-                f"procedure itself achieves on courses it has not seen: the courses are split into five folds, the whole procedure "
-                f"(candidate, evidence mode and threshold chosen by maximum kappa) is run on four folds and its choice is applied to the "
-                f"fifth, and the split is repeated twenty times. The procedure reaches a kappa of {f2(k_cv)} (from {f2(g(cv, 'kappa', 'lo'))} to "
-                f"{f2(g(cv, 'kappa', 'hi'))} over the repetitions), an AUROC of {f2(g(cv, 'auroc'))}, precision {f2(g(cv, 'precision'))} and recall "
-                f"{f2(g(cv, 'recall'))}, against the apparent kappa of {f2(k_app)} of the judge it selects on all sentences, so the optimism "
-                f"of the apparent figure is about {f2(opt)} in kappa."
-                + (f" The procedure chose the selected configuration, {JUDGE_NAMES['deberta_large_nli']} with whole-course evidence, in "
-                   f"{pct0(sel_share)} of the 100 folds{other_txt}." if sel_share is not None else ""))]
+        b += [P(f"Two analyses measure how optimistic the apparent kappa of {f2(k_app)} is. Resampling hospital courses rather than "
+                f"sentences gives it a 95 percent interval of {f2(g(bs, 'kappa', 'lo'))} to {f2(g(bs, 'kappa', 'hi'))}. Nested "
+                f"cross-validation then re-runs the whole selection (candidate, evidence mode and threshold) on four of five folds of "
+                f"courses and applies the choice to the fifth, twenty times over: the procedure reaches a kappa of {f2(k_cv)} "
+                f"({f2(g(cv, 'kappa', 'lo'))} to {f2(g(cv, 'kappa', 'hi'))} over the repetitions) and an AUROC of {f2(g(cv, 'auroc'))}, "
+                f"so the optimism of the apparent figure is about {f2(k_app - k_cv)} in kappa"
+                + (f", and the procedure chose the selected configuration in {pct0(sel_share)} of the 100 folds" if sel_share is not None else "")
+                + ".")]
         t1, t2 = "select_on_doctor_test_on_generated", "select_on_generated_test_on_doctor"
         n1, n2 = note(t1), note(t2)
         if n1 and n2:
             j1, m1, tau1 = _cand(n1); j2, m2, tau2 = _cand(n2)
-            b += [P(f"The patient-disjoint transfer test asks the same question across patients. Selected on the doctor-written sentences "
-                    f"alone, which belong to the main-study courses, the procedure chooses {j1} with {m1} at a threshold of {tau1:.2f} (kappa "
-                    f"{f2(g(t1, 'training_kappa'))} on those sentences) and reaches a kappa of {f2(g(t1, 'kappa'))} and an AUROC of "
-                    f"{f2(g(t1, 'auroc'))} on the LLM-generated summaries of the {int(O['distinct hospital courses behind the 100 LLM-generated summaries']) if ov is not None else 20} "
-                    f"other courses. Selected on the generated summaries, it chooses {j2} with {m2} at {tau2:.2f} (training kappa "
-                    f"{f2(g(t2, 'training_kappa'))}) and reaches {f2(g(t2, 'kappa'))} and {f2(g(t2, 'auroc'))} on the doctor-written "
-                    f"sentences. In both directions the agreement on unseen patients and on a different kind of summary is "
-                    f"{'lower than' if max(g(t1, 'kappa'), g(t2, 'kappa')) < k_app - 0.02 else 'close to'} the apparent agreement, and "
-                    f"the AUROC, which does not depend on the threshold, "
-                    f"{'changes little' if abs(g(t1, 'auroc') - g(bs, 'auroc')) < 0.05 and abs(g(t2, 'auroc') - g(bs, 'auroc')) < 0.05 else 'also changes'}: "
-                    f"{'the ranking ability of the judge transfers, while its threshold and the expected flag rate depend on the kind of summary' if abs(g(t1, 'auroc') - g(bs, 'auroc')) < 0.05 and abs(g(t2, 'auroc') - g(bs, 'auroc')) < 0.05 else 'both its ranking ability and its threshold depend on the kind of summary'}.")]
+            same_rank = abs(g(t1, "auroc") - g(bs, "auroc")) < 0.05 and abs(g(t2, "auroc") - g(bs, "auroc")) < 0.05
+            b += [P(f"A patient-disjoint transfer test asks the same question across patients. Selected on the doctor-written sentences "
+                    f"alone, the procedure chooses {j1} with {m1} and reaches a kappa of {f2(g(t1, 'kappa'))} on the LLM-generated "
+                    f"summaries of other patients; selected on the generated summaries, it chooses {j2} with {m2} and reaches "
+                    f"{f2(g(t2, 'kappa'))} on the doctor-written sentences. Agreement on unseen patients and a different kind of summary "
+                    f"is {'lower than' if max(g(t1, 'kappa'), g(t2, 'kappa')) < k_app - 0.02 else 'close to'} the apparent figure, and "
+                    f"the AUROC {'changes little, so the judge' + chr(39) + 's ranking ability transfers while its threshold depends on the kind of summary' if same_rank else 'also changes'}; "
+                    f"with a different winner in each direction, this is instability of the choice rather than validation.")]
     if ps is not None and len(ps):
         order = [k for k in SOURCE_NAMES if k in set(ps.group)]
         P_ = ps.set_index("group")
         lo, hi = P_.kappa.idxmin(), P_.kappa.idxmax()
-        b += [P(f"[[tab:persource]] reports the selected judge's agreement separately for each source of summaries. Agreement is not "
-                f"uniform: kappa ranges from {f2(P_.loc[lo, 'kappa'])} on {SOURCE_NAMES.get(lo, lo).lower().replace('gpt', 'GPT').replace('llama', 'Llama')} "
-                f"to {f2(P_.loc[hi, 'kappa'])} on {SOURCE_NAMES.get(hi, hi).lower().replace('gpt', 'GPT').replace('llama', 'Llama')}, and precision is lowest where the experts "
-                f"found the least unsupported content, as expected when a judge with a fixed error rate is applied to texts with fewer real "
-                f"errors. Each LLM source has only 20 courses, so these per-source figures are imprecise. The main study's generator, "
-                f"Qwen2.5-7B-Instruct, is not among the sources; how the judge behaves on its summaries is measured directly by the "
-                f"manual audit of Section 7.9."),
+        b += [P(f"[[tab:persource]] gives the selected judge's agreement by source of the summaries: kappa ranges from {f2(P_.loc[lo, 'kappa'])} "
+                f"to {f2(P_.loc[hi, 'kappa'])}, and precision is lowest where the experts found the least unsupported content, as expected "
+                f"when a judge with a fixed error rate meets texts with fewer real errors. The main study's generator is not among the "
+                f"sources, which is why the manual audit of Section 7.9 measures the judge on its summaries directly. The selected "
+                f"judge's figures are therefore an optimistic estimate of its accuracy; the comparisons of Chapter 7 do not need it to "
+                f"be accurate in absolute terms, but they do need its errors to be similar across conditions, which the audit tests."),
               ("table", dict(label="persource", caption="Agreement of the selected judge (DeBERTa-v3-large NLI, whole-course evidence, τ = 0.20) with the experts, by source of the summaries.",
                              columns=["Source", "Sentences", "Expert rate", "Flag rate", "Precision", "Recall", "Kappa", "AUROC"],
                              widths=[1.85, 0.75, 0.7, 0.65, 0.7, 0.6, 0.55, 0.6], font=9, align=["left"] + ["center"] * 7,
                              rows=[[SOURCE_NAMES.get(k, k), str(int(P_.loc[k, 'n'])), pct0(P_.loc[k, 'expert_rate']), pct0(P_.loc[k, 'flag_rate']),
                                     f2(P_.loc[k, 'precision']), f2(P_.loc[k, 'recall']), f2(P_.loc[k, 'kappa']), f2(P_.loc[k, 'auroc'])] for k in order]))]
-    b += [P("For the main study these analyses mean two things. The selected judge's agreement figures are an optimistic estimate "
-            "of its accuracy, and its error rates on a new generator are not known from the expert set alone. The comparisons of "
-            "Chapter 7 do not require the judge to be accurate in absolute terms, but they do require its errors to be similar "
-            "across the conditions being compared, which is the assumption the manual audit tests.")]
     return b
 
 
@@ -275,39 +220,31 @@ def atomic_blocks():
     if a is None and (ex is None or not len(ex)):
         return []
     b = [("h2", "6.6 Sentence-Level Versus Atomic-Fact Scoring")]
-    b += [P("Patient-facing sentences often combine several facts, and the judge assigns one label to the whole sentence. To test "
-            "whether finer units agree better with the experts, the local model split each expert-set sentence into atomic facts, "
-            "each carrying a single piece of information (prompt in Appendix A), and every fact was scored by the selected judge "
-            "against the whole hospital course. A sentence counts as flagged when its weakest fact falls below a threshold chosen, "
-            "as before, on the other subset of summaries."
-            + (f" Sentences contain {fx['mean']:.1f} facts on average and {pct0(fx.share_multi)} of them contain more than one; "
-               f"{pct(fx.share_fallback)} could not be decomposed and were kept whole." if fx is not None else ""))]
+    txt = ("A patient-facing sentence often combines several facts, and the judge labels the whole sentence. To test whether finer "
+           "units agree better with the experts, the local model split each expert-set sentence into atomic facts (prompt in "
+           "Appendix A), every fact was scored by the selected judge against the whole course, and a sentence counts as flagged when "
+           "its weakest fact falls below a threshold chosen on the other subset."
+           + (f" Sentences contain {fx['mean']:.1f} facts on average and {pct0(fx.share_multi)} contain more than one." if fx is not None else ""))
     if a is not None and sn is not None:
         better = a.kappa > sn.kappa + 0.02; worse = a.kappa < sn.kappa - 0.02
-        b += [P(f"Scored by their weakest atomic fact, the sentences agree with the experts at a kappa of {f2(a.kappa)} and an AUROC of "
-            f"{f2(a.auroc)} (precision {f2(a.precision)}, recall {f2(a.recall)}, flag rate {pct0(a.flag_rate)}), against {f2(sn.kappa)} "
-            f"and {f2(sn.auroc)} for the same judge scoring whole sentences. "
-            + ("Atomic decomposition therefore improves agreement, which supports the granularity explanation of Section 6.3 without "
-               "proving it, and Chapter 7 reports the main-study rates at the level of facts as well as sentences." if better else
-               ("Atomic decomposition therefore lowers agreement: requiring every fact to be supported multiplies the chances of a "
-                "false flag, because each fact, read alone, loses the context that its sentence supplied." if worse else
-                "Atomic decomposition therefore leaves agreement essentially unchanged.")
-               + " The granularity explanation of Section 6.3 is not supported in this form: if agreement is limited by granularity, "
-               "splitting sentences into facts with the same judge does not remove the limitation. Chapter 7 reports the main-study "
-               "rates at the level of facts as a robustness check."))]
+        txt += (f" Scored this way the sentences agree with the experts at a kappa of {f2(a.kappa)} (AUROC {f2(a.auroc)}) against "
+                f"{f2(sn.kappa)} ({f2(sn.auroc)}) for whole sentences, so "
+                + ("decomposition improves agreement, which supports the granularity explanation of Section 6.3 without proving it." if better else
+                   ("decomposition lowers agreement: each fact, read alone, loses the context its sentence supplied." if worse else
+                    "decomposition leaves agreement essentially unchanged, and the granularity explanation of Section 6.3 is not "
+                    "supported in this form.")))
+    b += [P(txt)]
     if ex is not None and len(ex):
         rows = []
         for i, (sent, g) in enumerate(ex.groupby("sentence", sort=False)):
             for j, r in enumerate(g.itertuples()):
                 rows.append([f"{sent} ({r.sentence_support:.2f})" if j == 0 else "", r.fact, f"{r.fact_support:.2f}"])
         mixed = sum(1 for _, g in ex.groupby("sentence", sort=False) if (g.fact_support >= g.tau).any() and (g.fact_support < g.tau).any())
-        b += [P(f"[[tab:atomicex]] illustrates the decomposition on public text: the longest full-note summary sentence of each of the "
-                f"first {ex.sentence.nunique()} pilot documents, written by GPT-4o-mini from an MTSamples note, split by the local model and "
-                f"scored by the selected judge against the whole note. "
-                + (f"In {mixed} of the {ex.sentence.nunique()} sentences some facts are supported and others are not, which a single "
-                   f"sentence-level score cannot express." if mixed else
-                   "In these examples the facts of each sentence agree in support, so the sentence-level score loses nothing."))]
-        b += [("table", dict(label="atomicex", caption=f"Atomic decomposition of three pilot summary sentences (public MTSamples data). The number after each sentence and each fact is the selected judge's support probability against the whole note; values below {ex.tau.iloc[0]:.2f} are flagged.",
+        b += [P(f"[[tab:atomicex]] shows the decomposition on public text, the longest full-note summary sentence of each of the first "
+                f"{ex.sentence.nunique()} pilot documents"
+                + (f"; in {mixed} of them some facts are supported and others are not, which a single sentence-level score cannot express."
+                   if mixed else "; in these examples the facts of each sentence agree in support.")),
+              ("table", dict(label="atomicex", caption=f"Atomic decomposition of three pilot summary sentences (public MTSamples data). The number after each sentence and each fact is the selected judge's support probability against the whole note; values below {ex.tau.iloc[0]:.2f} are flagged.",
                              columns=["Sentence (support)", "Atomic fact", "Support"], widths=[2.9, 2.9, 0.7], font=8.5,
                              align=["left", "left", "center"], rows=rows))]
     return b
@@ -319,9 +256,7 @@ def _and_join(parts):
 
 
 def _retriever_choice_sentence(k, n_cap_texts=None):
-    """How the window ranking was chosen, from results/verifact_retriever_check.csv (every setting on the propositions all
-    of them scored); empty when the file is absent or only one ranking was tried.  n_cap_texts is the number of admissions
-    in the cap check, so the sentence can say whether the ranking was chosen on all of them or on the shortest."""
+    """How the window ranking was chosen, from results/verifact_retriever_check.csv; empty when absent or only one ranking tried."""
     rc = _res("verifact_retriever_check.csv")
     if not k or rc is None or not len(rc) or "setting" not in rc.columns:
         return ""
@@ -331,10 +266,9 @@ def _retriever_choice_sentence(k, n_cap_texts=None):
         return ""
     best = rk.kappa.idxmax()
     nt = int(rk.n_reference_texts.iloc[0]) if "n_reference_texts" in rk.columns and pd.notna(rk.n_reference_texts.iloc[0]) else None
-    where = "on these same admissions" if nt is None or nt == n_cap_texts else f"on the {nt} shortest of these admissions"
-    return (f"The ranking was chosen {where} before the full run: on the {int(rk.n.iloc[0]):,} propositions "
-            f"scored every way, " + "; ".join(f"{names[s]} gave kappa {f2(r.kappa)} (AUROC {f2(r.auroc)})" for s, r in rk.iterrows())
-            + f", so {names[best]} was used throughout. ")
+    where = "these admissions" if nt is None or nt == n_cap_texts else f"the {nt} shortest of them"
+    return (f"The ranking was chosen on {where} before the full run (" + "; ".join(f"{names[s]} kappa {f2(r.kappa)}" for s, r in rk.iterrows())
+            + f"), so {names[best]} was used throughout. ")
 
 
 def verifact_blocks():
@@ -346,70 +280,46 @@ def verifact_blocks():
     al = E.loc["all"]
     adm = str(al.get("premise", "patient")) == "admission"
     k = int(al.get("topk", 0) or 0)
-    retr = {"dense": "the bi-encoder of the judge selection's top-3 evidence mode (all-MiniLM-L6-v2; a window ranks by its "
-                     "sentence most similar to the proposition)",
-            "bm25": "BM25 over whole windows",
-            "hybrid": "the bi-encoder of the judge selection's top-3 evidence mode (all-MiniLM-L6-v2; a window ranks by its "
-                      "sentence most similar to the proposition) and BM25, interleaved"}.get(str(al.get("retriever", "")), "")
+    retr = {"dense": "the judge selection's bi-encoder", "bm25": "BM25",
+            "hybrid": "the judge selection's bi-encoder and BM25, interleaved"}.get(str(al.get("retriever", "")), "")
     b = [("h2", "6.7 External Check on Clinician-Labeled Propositions (VeriFact-BHC)")]
-    b += [P(f"The selection above used expert annotations connected to the main-study courses, and the audit of Section 7.9 "
-            f"measures the judge on this thesis's own outputs. As an external check, the selected judge was run, unchanged, on "
-            f"MIMIC-III-Ext-VeriFact-BHC [[cite:chung2026verifact]]: {int(al.n):,} valid propositions decomposed from "
-            f"human-written and LLM-written brief hospital course summaries of 100 MIMIC-III patients, each adjudicated by "
-            f"clinicians as supported, not supported or not addressed against the patient's complete EHR notes. The judge read "
-            + ("the notes of the summarized admission" if adm else "each patient's notes")
-            + f" in chart-time order with the main study's windowing"
-            + (f". Those notes are far longer than a hospital course: an admission spans {int(al.min_windows)} to "
-               f"{int(al.max_windows):,} windows of 400 tokens (median {int(al.median_windows)}) against one to three for a "
-               f"main-study course, and scoring every proposition against every window would have taken more than a million "
-               f"judge calls, weeks on the laptop used for this thesis. Each proposition was therefore scored against the "
-               f"{k} windows ranked highest by {retr}, with the maximum over those windows taken as in the main study "
-               f"({int(al.judge_calls):,} judge calls) — the retrieve-then-judge design of the dataset's own raters, which "
-               f"read 5 to 50 retrieved sentences or facts. A"
-               if k else ", a")
-            + f" proposition counts as flagged when its best window's support falls below the main study's threshold "
-            f"({al.tau:.2f}), and clinician labels other than supported count as unsupported, as in the dataset's own analysis. "
-            + ("The clinicians judged against the whole record, so a proposition that restates history from an earlier "
-               "admission can be unsupported by the admission's own notes; the dataset's authors evaluate this reference "
-               "setting as well, and the comparison below uses their raters with the same restriction. "
-               if adm else
-               "The setting is deliberately harder than the main study's: the reference is a patient's whole record rather "
-               "than a single course. ")
-            + "The propositions come from another institution's patients, another decade's notes and other models' summaries.")]
+    b += [P(f"As an external check, the selected judge was run unchanged on MIMIC-III-Ext-VeriFact-BHC [[cite:chung2026verifact]]: "
+            f"{int(al.n):,} valid propositions from human-written and LLM-written brief hospital course summaries of 100 MIMIC-III "
+            f"patients, each adjudicated by clinicians as supported, not supported or not addressed against the patient's notes. These "
+            f"propositions come from another institution, another decade and other models' summaries. The judge read "
+            + ("the notes of the summarized admission" if adm else "each patient's notes") + " with the main study's windowing"
+            + (f"; an admission spans {int(al.min_windows)} to {int(al.max_windows):,} windows of 400 tokens (median {int(al.median_windows)}) "
+               f"against one to three for a main-study course, so each proposition was scored against the {k} windows ranked highest by "
+               f"{retr}, with the maximum over those windows as in the main study ({int(al.judge_calls):,} judge calls), the "
+               f"retrieve-then-judge design of the dataset's own raters"
+               if k else "")
+            + f". A proposition counts as flagged when its best window's support falls below the main study's threshold ({al.tau:.2f}), "
+            f"and clinician labels other than supported count as unsupported, as in the dataset's own analysis"
+            + ("; because the clinicians judged against the whole record, the comparison below uses the dataset's raters with the same "
+               "admission-only restriction." if adm else "."))]
     if k and "cap_check_vs_all_windows" in E.index:
         cc = E.loc["cap_check_vs_all_windows"]
-        b += [P(f"The cap was checked on the {int(cc.n_reference_texts)} shortest admissions ({int(cc.n):,} propositions, at most "
-                f"{int(cc.max_windows)} windows), where every window had also been scored: scoring only the retrieved windows "
-                f"changed the judge's flag for {int(cc.n_flag_changed)} propositions ({pct0(1 - cc.flag_agreement)}"
-                + ((", all" if int(cc.n_newly_flagged) == int(cc.n_flag_changed) else f", {int(cc.n_newly_flagged)} of them")
-                   + " from supported to flagged" if pd.notna(cc.get("n_newly_flagged", None)) else "")
-                + f"), and agreement with the clinicians was kappa {f2(cc.kappa)} with the cap against "
-                f"{f2(cc.kappa_all_windows)} without it (AUROC {f2(cc.auroc)} against {f2(cc.auroc_all_windows)}; sensitivity "
-                f"{f2(cc.sensitivity)} against {f2(cc.sensitivity_all_windows)}, specificity {f2(cc.specificity)} against "
-                f"{f2(cc.specificity_all_windows)}). "
-                + (f"The maximum over every window of a long record finds support for almost everything (sensitivity "
-                   f"{f2(cc.sensitivity_all_windows)} without the cap), so the cap also keeps the judge close to the main "
-                   f"study's regime of one to three windows per course. "
-                   if cc.kappa_all_windows < cc.kappa else "")
+        b += [P(f"On the {int(cc.n_reference_texts)} shortest admissions ({int(cc.n):,} propositions), where every window was also scored, "
+                f"the cap changed the judge's flag for {pct0(1 - cc.flag_agreement)} of propositions"
+                + (", all from supported to flagged" if pd.notna(cc.get("n_newly_flagged", None)) and int(cc.n_newly_flagged) == int(cc.n_flag_changed) else "")
+                + f", and agreement with the clinicians was kappa {f2(cc.kappa)} with the cap against {f2(cc.kappa_all_windows)} without "
+                f"it (sensitivity {f2(cc.sensitivity)} against {f2(cc.sensitivity_all_windows)}): "
+                + ("the maximum over every window of a long record finds support for almost everything, so the cap also keeps the "
+                   "judge close to the main study's regime of one to three windows per course. " if cc.kappa_all_windows < cc.kappa else "")
                 + _retriever_choice_sentence(k, int(cc.n_reference_texts))
-                + (f"Across all propositions whose admission exceeds {k} windows ({pct0(al.share_capped)} of them), the window "
-                   f"with the highest support was the last of the {k} retrieved for {pct0(al.share_best_at_last_rank)}, so "
-                   f"evidence beyond the retrieved windows is likely for a minority of propositions and the figures below "
-                   f"measure the judge together with this retrieval step, not the judge alone."
+                + (f"The best-supporting window was the last of the {k} retrieved for {pct0(al.share_best_at_last_rank)} of propositions, "
+                   f"so the figures below measure the judge together with this retrieval step."
                    if pd.notna(al.get("share_best_at_last_rank", None)) else ""))]
     perf = (f"On all propositions the judge reaches an AUROC of {f2(al.auroc)} and, at the main study's threshold, sensitivity "
-            f"{f2(al.sensitivity)}, specificity {f2(al.specificity)} and kappa {f2(al.kappa)} against the adjudicated clinician "
-            f"labels. ")
+            f"{f2(al.sensitivity)}, specificity {f2(al.specificity)} and kappa {f2(al.kappa)} against the clinician labels. ")
     auth = {i.split("=", 1)[1]: E.loc[i] for i in E.index if i.startswith("author=")}
     typ = {i.split("=", 1)[1]: E.loc[i] for i in E.index if i.startswith("type=")}
     labs = {i.split("=", 1)[1]: E.loc[i] for i in E.index if i.startswith("label=")}
     anames = {"human": "human-written summaries", "llm": "LLM-written summaries"}
     tnames = {"claim": "claims", "sentence": "sentences"}
     if auth:
-        perf += ("By the summary's author the kappa is "
-                 + _and_join(f"{f2(r.kappa)} for {anames.get(k, k)} (AUROC {f2(r.auroc)})" for k, r in auth.items()) + ". ")
-    if typ:
-        perf += "By proposition type it is " + _and_join(f"{f2(r.kappa)} for {tnames.get(k, k)}" for k, r in typ.items()) + ". "
+        perf += "Kappa is " + _and_join(f"{f2(r.kappa)} for {anames.get(k, k)}" for k, r in auth.items())
+        perf += (" and " + _and_join(f"{f2(r.kappa)} for {tnames.get(k, k)}" for k, r in typ.items()) if typ else "") + ". "
     if labs:
         perf += ("The judge flags "
                  + _and_join(f"{pct0(r.flag_rate)} of the propositions the clinicians adjudicated {k.lower()}" if j == 0
@@ -422,18 +332,12 @@ def verifact_blocks():
             ai = ai[ai.reference_only_admission.astype(str).str.lower() == str(adm).lower()]
         if len(ai):
             bt = ai.iloc[0]
-            perf += (f"For context, the dataset ships the verdicts of {n_all} configurations of its own retrieval-plus-LLM rater; "
-                     f"among the {len(ai)} that use the same reference, the best reaches kappa {f2(bt.kappa)} (sensitivity "
-                     f"{f2(bt.sensitivity)}, specificity {f2(bt.specificity)}) on the same propositions. The comparison is "
-                     + ("indicative rather than exact: both designs retrieve before judging, but those raters are large language "
-                        "models that read the retrieved sentences or facts with their chart times, while the judge here is a "
-                        "sentence-pair entailment model reading retrieved 400-token windows."
-                        if k else
-                        "indicative rather than exact, because those raters judge each proposition against retrieved parts of the "
-                        "reference while the judge here reads all of it in windows."))
+            perf += (f"For context, the best of the dataset's own {n_all} retrieval-plus-LLM rater configurations with the same reference "
+                     f"reaches kappa {f2(bt.kappa)} (sensitivity {f2(bt.sensitivity)}, specificity {f2(bt.specificity)}); the comparison "
+                     f"is indicative, since those raters are large language models reading retrieved facts with their chart times while "
+                     f"the judge here is a sentence-pair entailment model. ")
+    perf += ("The check shows that the judge, chosen on one corpus, still separates supported from unsupported statements on another, "
+             "with the same low sensitivity the audit found; it does not re-validate the threshold, and a kappa on retrieved "
+             "admission-note evidence is not comparable in size to the course-level agreement of Section 6.2.")
     b += [P(perf)]
-    b += [P("The check asks whether the judge, chosen on one corpus, still separates supported from unsupported statements on "
-            "another; it does not re-validate the threshold, which was chosen for the main study's courses, and a kappa on "
-            + ("retrieved admission-note evidence" if k else "whole-record evidence")
-            + " is not comparable in size to the course-level agreement of Section 6.2.")]
     return b
