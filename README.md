@@ -132,7 +132,7 @@ No credentialed text is committed, uploaded to shared storage, or sent to any ex
 of E0, E1, E1b and E3, plus 30 cited claims of E1 and of E1b → `results_private/audit_items.json`. `python audit_tool.py` serves a
 local labeling page at http://127.0.0.1:8765 that shows one course at a time and hides the condition and the judge's label; labels
 (supported, partly supported, not supported, unsure, with an error type) are saved to `results_private/audit_labels.json`. The
-protocol is Appendix F of the thesis. After the main-study evaluation, `python audit_sample.py --refresh-judge` stores the judge's
+protocol is Appendix C of the thesis. After the main-study evaluation, `python audit_sample.py --refresh-judge` stores the judge's
 current label of every audited claim, and `python audit_summary.py` writes `results/audit_summary.csv`, `audit_types.csv` and
 `audit_citations.csv` (Section 7.9).
 

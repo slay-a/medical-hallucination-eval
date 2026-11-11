@@ -47,38 +47,8 @@ def blocks(R: Results) -> list:
           ("pni", "E1b without citations: the E1b prompts of A.5 with the citation instruction left out. Repeated generations use the base prompts with fixed seeds."),
           ("h2", "A.8 Atomic-Fact Decomposition"),
           ("pni", "System prompt (temperature 0):"), ("code", ac.SYSTEM), ("pni", "User prompt; the sentences of one summary are numbered:"), ("code", ac.USER)]
-    # ── Appendix B: per-document results
-    rows = []
-    for _, r in R.cmp.sort_values("doc_id").iterrows():
-        row = [str(int(r.doc_id)), "C" if r.specialty.startswith("Consult") else "D", str(int(r.source_word_count))]
-        for c in R.conds:
-            row += [f3(r[f"{c}_UFR"]), f3(r[f"{c}_CR"])]
-        row += [str(int(r[f"{c}_n_claims"])) for c in R.conds]
-        rows.append(row)
-    ncond = len(R.conds)
-    b += [("h1", "Appendix B: Per-Document Results"),
-          ("pni", "UFR and CR per document and condition (header lines excluded), with the number of claims (n). Type C is a consultation note and D a discharge summary; document identifiers are the row indices of the sampled MTSamples subset."),
-          ("table", dict(caption="Per-document Unsupported Fact Rate, Contradiction Rate and claim counts under each condition.",
-                         columns=["Doc", "Type", "Words"] + [f"{c} {m}" for c in R.conds for m in ("UFR", "CR")] + [f"{c} n" for c in R.conds],
-                         widths=[0.32, 0.3, 0.42] + [0.4] * (2 * ncond) + [0.3] * ncond, font=7.5, rows=rows))]
-    # ── Appendix C: worked examples
-    b += [("h1", "Appendix C: Worked Examples"),
-          ("pni", "Two documents are shown with their summaries under every condition and the judge's label and probabilities for each claim "
-                  "(header lines omitted). MTSamples is a public corpus of sample transcriptions; no real patient is described.")]
-    for doc_id in (16, 0):
-        row = R.cmp[R.cmp.doc_id == doc_id].iloc[0]
-        b += [("h2", f"C.{1 if doc_id == 16 else 2} Document {doc_id}: {row.description[:90]}")]
-        b += [("pni", f"Note type: {row.specialty}. Source length: {int(row.source_word_count)} words.")]
-        for c in R.conds:
-            text = R.example_summary(doc_id, c).replace("**", "").strip()
-            cl = R.example_claims(doc_id, c)
-            b += [("h3", f"{c} summary ({int(row[f'{c}_n_claims'])} claims; UFR {f3(row[f'{c}_UFR'])}, CR {f3(row[f'{c}_CR'])})"),
-                  ("code", text),
-                  ("table", dict(caption=f"Judge labels for the {c} claims of document {doc_id}.", columns=["Claim", "Label", "p(e)", "p(c)"],
-                                 widths=[4.3, 0.9, 0.6, 0.6], font=8.5, align=["left", "center", "center", "center"],
-                                 rows=[[str(r.claim).replace("**", "").replace("\n", " ").strip(), r.label, f2(r.p_entailment), f2(r.p_contradiction)] for _, r in cl.iterrows()]))]
-    # ── Appendix D: repository
-    b += [("h1", "Appendix D: Code Repository and Reproduction"),
+    # ── Appendix B: repository
+    b += [("h1", "Appendix B: Code Repository and Reproduction"),
           ("pni", "The complete code is available at https://github.com/slay-a/medical-hallucination-eval (branch main). The repository "
                   "contains the scripts listed below, the result files from which every number in this thesis is computed, and the "
                   "scripts that generate this document. Credentialed PhysioNet data and any output containing text derived from them "
@@ -117,7 +87,7 @@ def blocks(R: Results) -> list:
                          columns=["Result", "Data needed", "In the public repository", "Reproduction"],
                          widths=[1.45, 1.55, 1.9, 1.6], font=8.5, align=["left"] * 4,
                          rows=[["Pilot study (Chapter 5)", "MTSamples (public)", "All summaries, claims, labels and probabilities", "bash run.sh --offline reproduces every number without API or model calls"],
-                               ["Judge validation (Section 5.4) and selection (Chapter 6)", "ann-pt-summ (PhysioNet, credentialed)", "Aggregate agreement statistics only", "Requires PhysioNet access; local models only"],
+                               ["Judge validation (Section 5.3) and selection (Chapter 6)", "ann-pt-summ (PhysioNet, credentialed)", "Aggregate agreement statistics only", "Requires PhysioNet access; local models only"],
                                ["MedNLI adaptation (Section 6.3)", "MedNLI (PhysioNet, credentialed)", "Training script and summary statistics; the fine-tuned model is not distributed", "Requires PhysioNet access; about two hours on the GPU"],
                                ["Main study and robustness checks (Chapter 7)", "ann-pt-summ hospital courses (derived from MIMIC-IV-Note)", "Aggregates in results/mimic_*.csv; generations and per-claim labels stay private", "Requires PhysioNet access and the local model server"],
                                ["Data overlap check (Section 6.5)", "MIMIC-IV-Note discharge notes (credentialed)", "Counts only", "Requires PhysioNet access"],
@@ -135,16 +105,7 @@ def blocks(R: Results) -> list:
                   "requirements-llm.txt pin the versions of Table 4.3, and the lock files list both environments completely."),
           ("pni", "Reproduction from a clean machine:"),
           ("code", "git clone https://github.com/slay-a/medical-hallucination-eval.git\ncd medical-hallucination-eval\nbash setup.sh\n# place mtsamples.csv one directory above the repository\nexport OPENAI_API_KEY='sk-...'   # only for generation\nbash run.sh            # full chain\nbash run.sh --offline  # recompute every pilot result from the stored results\nbash run.sh --main-study  # judge study, MedNLI fine-tuning, MIMIC-IV main study, QA pilot (credentialed data, local models)\npython thesis/build_thesis.py")]
-    # ── Appendix E: calibration threshold sweep
-    if R.cal_sweep is not None:
-        sw = R.cal_sweep[R.cal_sweep.group == "all"]
-        b += [("h1", "Appendix E: Judge Threshold Sweep Against Expert Annotations"),
-              ("pni", "Sentence-level agreement of the any detector with the expert annotations on all 1,781 sentences as the entailment threshold τ varies."),
-              ("table", dict(caption="Agreement statistics of the judge with the expert annotations as a function of the entailment threshold τ.",
-                             columns=["τ", "Judge flag rate", "Precision", "Recall", "Specificity", "F1", "Balanced accuracy", "Kappa"],
-                             widths=[0.5, 0.9, 0.8, 0.7, 0.85, 0.6, 1.0, 0.7], font=9,
-                             rows=[[f"{r.tau:.2f}", f3(r.judge_flag_rate), f3(r.precision), f3(r.recall), f3(r.specificity), f3(r.f1), f3(r.balanced_accuracy), f3(r.kappa)] for _, r in sw.iterrows()]))]
-    b += [("h1", "Appendix F: Manual Audit Protocol"),
+    b += [("h1", "Appendix C: Manual Audit Protocol"),
           ("pni", "The annotator labels each sampled statement against the hospital course shown beside it, and only against that course. "
                   "The tool hides the condition that produced the statement and the judge's label."),
           ("table", dict(caption="Labels of the manual audit.", columns=["Label", "When it is used"], widths=[1.4, 5.1], font=9.5, align=["left", "left"],

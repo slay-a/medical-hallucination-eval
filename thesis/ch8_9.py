@@ -98,7 +98,7 @@ def blocks(R: Results) -> list:
     b += [H1("Chapter 8 Discussion"), H2("8.1 Answers to the Research Questions")]
     rq1 = (f"**RQ1.** The pilot's judge answers RQ1 only qualitatively: it labeled {pct0(R.mean('E0','UFR'))} of the sentences in "
            f"full-note GPT-4o-mini summaries unsupported, but against the medical experts it overstated the problem several-fold "
-           f"(Section 5.4), so the pilot shows that the summaries contain unsupported statements in identifiable categories and that "
+           f"(Section 5.3), so the pilot shows that the summaries contain unsupported statements in identifiable categories and that "
            f"this instrument cannot say how many.")
     if main:
         rq1 += (f" The main study answers it with the judge selected in Chapter 6. Under that judge, {pct(M.mean('E0','UFR'))} of the claims "
@@ -138,7 +138,7 @@ def blocks(R: Results) -> list:
                 + (f", and the second judge confirmed {'none' if G.loc['E2', 'first_flags_confirmed'] == 0 else pct0(G.loc['E2', 'first_flags_confirmed'])} "
                    f"of the selected judge's flags on verbatim sentences, which places that error in the judge rather than in the text "
                    f"(Section 7.10)." if G is not None and "E2" in G.index else "."))
-    rq3 = ("**RQ3.** The pilot's effects (Section 5.8) describe how a judge later shown to be invalid for this task reacted to the "
+    rq3 = ("**RQ3.** The pilot's effects (Section 5.7) describe how a judge later shown to be invalid for this task reacted to the "
            "conditions, and they are not interpreted further.")
     if main and tu:
         rq3 += (f" In the main study, excerpt-only retrieval, retrieval with the whole course and verification lowered the "
@@ -172,21 +172,19 @@ def blocks(R: Results) -> list:
                    f"on the judge and remains open." if s31 is not None else "."))]
 
     b += [H2("8.2 Why the Judge Disagrees with the Experts")]
-    b += [P("Four causes are consistent with the pilot judge's disagreement with the experts; the evidence for each differs. The first "
-            "is a *granularity mismatch*. A patient-facing sentence such as \"You came in because of stomach pain after meals and "
-            "foul-smelling urine, and you were found to have a urinary infection and reflux\" compresses the chief complaint, the "
-            "history and the assessment of a note into one sentence. No single source sentence entails it, so the maximum over three "
-            "retrieved sentences is low, and concatenating three or five sentences helps only marginally because the model was trained "
-            "on single-sentence premises [[cite:bowman2015,williams2018]]. Laban et al. showed that sentence-level NLI works when summary "
-            "sentences are roughly co-extensive with source sentences [[cite:laban2022]]; patient-facing paraphrase violates that "
-            "assumption systematically. The second is *model capacity and domain*: the pilot judge has six layers and was fine-tuned on "
-            "general-domain pairs, while the TRUE meta-evaluation found that reliable consistency judgments required much larger models "
-            "trained on diverse consistency data [[cite:honovich2022]], and Romanov and Shivade documented the loss of accuracy of "
-            "general NLI models on clinical language, abbreviations and negation [[cite:romanov2018]]. The third is the *decision rule*: "
-            "taking the maximum contradiction probability over several evidence sentences turns any spurious contradiction into the "
-            "claim's label. The fourth is the *definition of the target*: the UFR counts every claim that is not entailed, including "
-            "appropriate extrinsic advice, whereas the experts marked unsupported facts, so the two instruments never measured exactly "
-            "the same construct.")]
+    b += [P("Four causes are consistent with the pilot judge's disagreement with the experts. The first is a *granularity mismatch*: "
+            "a patient-facing sentence such as \"You came in because of stomach pain after meals and foul-smelling urine, and you were "
+            "found to have a urinary infection and reflux\" compresses the chief complaint, the history and the assessment into one "
+            "sentence that no single source sentence entails, and concatenating a few sentences helps only marginally because the "
+            "model was trained on single-sentence premises [[cite:bowman2015,williams2018]]; sentence-level NLI works when summary "
+            "sentences are roughly co-extensive with source sentences [[cite:laban2022]], which patient-facing paraphrase violates "
+            "systematically. The second is *model capacity and domain*: the pilot judge has six layers and was fine-tuned on "
+            "general-domain pairs, whereas reliable consistency judgments required much larger models trained on diverse consistency "
+            "data [[cite:honovich2022]], and general NLI models lose accuracy on clinical language, abbreviations and negation "
+            "[[cite:romanov2018]]. The third is the *decision rule*: the maximum contradiction probability over several evidence "
+            "sentences turns any spurious contradiction into the claim's label. The fourth is the *definition of the target*: the UFR "
+            "counts every claim that is not entailed, including appropriate extrinsic advice, whereas the experts marked unsupported "
+            "facts, so the two instruments never measured exactly the same construct.")]
     jc = _csv("judge_candidates.csv")
     if jc is not None:
         AA = jc[jc.group == "all"].set_index(["judge", "mode"])
@@ -272,17 +270,15 @@ def blocks(R: Results) -> list:
 
     # ── 8.4 interpreting retrieval and verification
     b += [H2("8.4 Interpreting the Effects of Retrieval and Verification")]
-    b += [P(f"The pilot's RAG effect must be read in the light of Sections 5.4 and 5.5. It is modest (a {rel(t10c)} relative reduction of "
-            f"CR, d(z) = {f2(t10c.d_z)}), it disappears when the judge is made more conservative, and part of what it measures is a "
-            f"change in how the model writes rather than in what it asserts: RAG summaries are shorter and contain fewer claims and "
-            f"fewer generic sentences. The categories in which RAG helped most, medications, procedures and findings, are those for "
-            f"which the excerpts contain specific, near-verbatim facts, which is the mechanism by which grounding is expected to work "
-            f"[[cite:lewis2020]]; the categories in which it did not help, follow-up instructions and advice, come from the model's "
-            f"prior over patient instructions rather than from the input. Verification in the pilot judged about a quarter of the draft "
-            f"claims unsupported, removed or replaced them and abstained where a section was left empty, and it was the only condition "
-            f"that removed extrinsic follow-up and advice sentences; it depends on the same retrieval as the judge, so a claim whose "
-            f"support lies in an unretrieved sentence is deleted rather than confirmed ({fewer_e3} of {R.n_docs} E3 summaries have fewer "
-            f"claims than their drafts).")]
+    b += [P(f"The pilot's RAG effect (Sections 5.3 and 5.4) is modest (a {rel(t10c)} relative reduction of CR, d(z) = {f2(t10c.d_z)}), "
+            f"disappears when the judge is made more conservative, and partly reflects a change in how the model writes rather than "
+            f"in what it asserts: RAG summaries are shorter, with fewer claims and fewer generic sentences, and the categories in "
+            f"which RAG helped most, medications, procedures and findings, are those for which the excerpts contain specific, "
+            f"near-verbatim facts [[cite:lewis2020]], while follow-up instructions and advice come from the model's prior over "
+            f"patient instructions. Pilot verification removed or replaced about a quarter of the draft claims and was the only "
+            f"condition that removed extrinsic follow-up and advice sentences, but it depends on the same retrieval as the judge, so "
+            f"a claim whose support lies in an unretrieved sentence is deleted rather than confirmed ({fewer_e3} of {R.n_docs} E3 "
+            f"summaries have fewer claims than their drafts).")]
     if main and tu:
         short = vrow("E0/short vs E0/base", "UFR")
         lm = {c: vrow(k, "UFR", fl) for c, k, fl in (("E1", "E0/short vs E1/base", True), ("E1b", "E1b/base vs E0/short", False), ("E3", "E3/base vs E0/short", False))}
