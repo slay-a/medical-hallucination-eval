@@ -87,7 +87,8 @@ def main():
         ("analyze.py", "Figures (results/fig_*.png, 200 dpi) and example tables (claims fixed by RAG, persistent unsupported claims)."),
         ("thesis/build_thesis.py", "Builds the thesis (.docx and .pdf) in CSUN format from the result files; content modules ch1_4.py, ch5_pilot.py, ch_judge.py, ch_mimic.py, ch8_9.py, appendices.py; two-pass table of contents, list of tables and list of figures via LibreOffice."),
         ("thesis/render_docx.py, thesis/results_loader.py, thesis/mimic_results.py, thesis/references.py", "Rendering engine (python-docx), results access layers for the pilot and the main study, IEEE reference database with citation resolver."),
-        ("deliverables/build_progress_slides.py", "Progress report slides (PDF and PPTX)."),
+        ("deliverables/build_progress_slides.py", "Progress report slides (PDF and PPTX); --final writes the final progress report of the semester."),
+        ("deliverables/build_defense_slides.py", "Thesis defense slides (PPTX and PDF) in the six sections set by the advisor, with backup slides; the shared deck has no speaker notes."),
         ("deliverables/build_source_data_description.py", "This document."),
         ("make_pdfs.py, build_thesis.py", "Repository root: the May 2026 generators of the first progress report and the first thesis draft, superseded by thesis/build_thesis.py and the deliverables/ builders; kept for the record."),
         ("setup.sh, run.sh, requirements.txt, requirements-llm.txt", "Environment bootstrap (setup.sh --llm also creates the model-server environment); reproduction chains (bash run.sh, bash run.sh --offline, bash run.sh --main-study); pinned dependencies, with complete lock files requirements-lock.txt and requirements-llm-lock.txt."),
@@ -146,7 +147,7 @@ def main():
         ["Size", f"code {code_kb/1024:.0f} KB; result artifacts {res_kb/1024/1024:.1f} MB"],
         ["Language and runtime", "Python 3.9.6 in a virtual environment (.venv) for the pipeline; Python 3.13 in .venv-llm for the mlx-lm model server; macOS on Apple silicon (M5, 24 GB). The pilot runs on the CPU; the judge study, MedNLI fine-tuning and main study use the GPU through PyTorch Metal and MLX"],
         ["License / use", "Academic use. MTSamples-derived results are public. Outputs derived from PhysioNet data are never committed (results_private/ is git-ignored)."],
-        ["Thesis and deliverables", (lambda t: f"thesis/Ponangi_Thesis_Fall2026.pdf, built by thesis/build_thesis.py from the result files: {t['pages']} pages, {t['tables']} tables, {t['figures']} figures, {t['refs']} references; " if t else "thesis/Ponangi_Thesis_Fall2026.pdf, built by thesis/build_thesis.py from the result files; ")(thesis_stats()) + "the progress slides and this description are built the same way (deliverables/). The built files are not tracked; one command regenerates each."],
+        ["Thesis and deliverables", (lambda t: f"thesis/Ponangi_Thesis_Fall2026.pdf, built by thesis/build_thesis.py from the result files: {t['pages']} pages, {t['tables']} tables, {t['figures']} figures, {t['refs']} references; " if t else "thesis/Ponangi_Thesis_Fall2026.pdf, built by thesis/build_thesis.py from the result files; ")(thesis_stats()) + "the final progress slides, the defense slides and this description are built the same way in deliverables/, where their PDF and PowerPoint files are tracked; the thesis files are not tracked. One command regenerates each."],
         ["Reproducibility", "Seeds: 42 (MTSamples sample, MedNLI fine-tuning, repeated-generation subset, selection-bias analyses), 1000r + k (repeated generations), 7 (audit sample) and 8 (its wave-2 extension), 0 (pilot bootstrap); pinned requirements and lock files; every pilot number is reproducible offline from results/claims_all.csv with recompute_metrics.py; main-study numbers require the credentialed data and are reproduced by run.sh --main-study"],
     ], [1.6, 4.9])
 
@@ -202,7 +203,9 @@ def main():
               "python verifact_eval.py --baseline  # published VeriFact raters against the clinician labels",
               "python verifact_eval.py --score --premise admission --batch 8 --chunk 256   # external check of the judge (resumable, about a day)",
               "python verifact_eval.py --summarize --premise admission                     # metrics -> results/verifact_judge_eval.csv",
-              "python deliverables/build_progress_slides.py && python deliverables/build_source_data_description.py"]:
+              "python deliverables/build_progress_slides.py --final   # final progress slides",
+              "python deliverables/build_defense_slides.py           # defense slides",
+              "python deliverables/build_source_data_description.py  # this description"]:
         p = doc.add_paragraph(); _pf(p, spacing="single", after=2, left_indent=0.3); r = p.add_run(s); _font(r, 9.5); r.font.name = "Courier New"
     heading(doc, "8. Changes between versions of this description")
     table(doc, ["Versions", "What changed"], [
@@ -211,6 +214,7 @@ def main():
         ["October 12 to November 1, 2026", "Citation markers removed before sentence segmentation and assigned by position, merged section headers stripped (citations.py), which corrects the citation measures; length-matched and no-citation variants, repeated generations, atomic-fact scoring, a selection-bias analysis, a patient-overlap check, an overlapping-window check, per-condition intervals and the blind manual-audit tool; dependencies pinned with lock files; a scan confirming that no tracked file contains protected text."],
         ["November 1 to November 9, 2026", "The manual audit relabeled in a second blind pass under a clarified rubric on an extended sample (400 items), with the agreement between the passes (audit_agreement.py) and the problem types mapped from the annotator's notes (audit_map_types.py); the four main-study conditions regenerated and re-evaluated with Llama-3.1-8B-Instruct and Mistral-7B-Instruct-v0.3 (MIMIC_TAG in mimic_generate.py and mimic_evaluate.py); verifact_eval.py added and run for the external check of the judge (Section 6.7)."],
         ["November 9 to November 10, 2026", "No result file or number changed. The thesis text modules were rewritten in a compact form (105 pages from 163): each result is a table or figure with a short paragraph, the methods state what was done, and the discussion interprets without repeating the results; the pilot chapter was cut to six tables and one figure, and the methods table that listed the robustness analyses was dropped; the per-document results, worked examples and threshold-sweep appendices were removed, so the code appendix is now Appendix B and the audit protocol Appendix C; the progress slides and this description were rebuilt to match."],
+        ["November 10 to November 24, 2026", "No result file or number changed. After Dr. McIlhenny's comments, every table and figure caption in the thesis is a short phrase, and the details needed to read a table are in a note under it (104 pages). The final progress slides and the defense slides, without speaker notes, were added to deliverables/, and the second progress slides were removed as superseded."],
     ], [1.5, 5.0], font=8.5)
 
     docx_path = OUT.with_suffix(".docx"); doc.save(docx_path)
