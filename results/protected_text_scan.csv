@@ -29,10 +29,10 @@ deliverables/Defense_Slides_Fall2026.pdf,8326,0,0,0
 deliverables/Defense_Slides_Fall2026.pptx,6024,0,0,0
 deliverables/Final_Progress_Slides_Fall2026.pdf,2978,0,0,0
 deliverables/Final_Progress_Slides_Fall2026.pptx,1685,0,0,0
-deliverables/Source_Code_and_Data_Description_Fall2026.pdf,4541,0,0,0
+deliverables/Source_Code_and_Data_Description_Fall2026.pdf,4684,0,0,0
 deliverables/build_defense_slides.py,24717,0,0,0
 deliverables/build_progress_slides.py,6111,0,0,0
-deliverables/build_source_data_description.py,5158,0,0,0
+deliverables/build_source_data_description.py,5292,0,0,0
 e1b_fullnote_rag_eval.py,530,0,0,0
 e2_extractive_eval.py,2296,0,0,0
 e3_cove_eval.py,1276,0,0,0
@@ -137,8 +137,8 @@ results/progress_report.docx,673,0,0,0
 results/progress_report.pdf,718,0,0,0
 results/progress_slides.pdf,1076,0,0,0
 results/progress_slides.pptx,1022,0,0,0
-results/protected_text_scan.csv,1253,0,0,0
-results/protected_text_scan_history.csv,4309,0,0,0
+results/protected_text_scan.csv,1281,0,0,0
+results/protected_text_scan_history.csv,4334,0,0,0
 results/protected_text_scan_summary.csv,86,0,0,0
 results/verifact_ai_raters.csv,1713,0,0,0
 results/verifact_judge_eval.csv,278,0,0,0
