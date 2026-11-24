@@ -53,7 +53,7 @@ def blocks(R: Results) -> list:
                   "contains the scripts listed below, the result files from which every number in this thesis is computed, and the "
                   "scripts that generate this document. Credentialed PhysioNet data and any output containing text derived from them "
                   "are excluded from the repository."),
-          ("table", dict(caption="Scripts in the repository and their roles.", columns=["Script", "Role"], widths=[2.2, 4.3], font=9, align=["left", "left"],
+          ("table", dict(caption="Scripts in the repository and their roles", columns=["Script", "Role"], widths=[2.2, 4.3], font=9, align=["left", "left"],
                          rows=[["hallucination_eval.py", "E0 and E1 generation on the 50 sampled notes and NLI evaluation (requires OPENAI_API_KEY)"],
                                ["e2_extractive_eval.py", "E2 extractive baseline and evaluation (no API)"],
                                ["e1b_fullnote_rag_eval.py, e3_cove_eval.py", "E1b (RAG with the full note) and E3 (RAG with Chain-of-Verification) generation and evaluation (require OPENAI_API_KEY)"],
@@ -83,7 +83,7 @@ def blocks(R: Results) -> list:
           ("pni", "What can be reproduced depends on data access. [[tab:repro]] lists, for every part of the thesis, the data it needs "
                   "and what the public repository contains. No result requires sending protected text to any external service; an "
                   "automated scan of every tracked file, described in Section 3.7, found no word sequence from the credentialed sources."),
-          ("table", dict(label="repro", caption="Reproducibility of the results by data access.",
+          ("table", dict(label="repro", caption="Reproducibility of the results by data access",
                          columns=["Result", "Data needed", "In the public repository", "Reproduction"],
                          widths=[1.45, 1.55, 1.9, 1.6], font=8.5, align=["left"] * 4,
                          rows=[["Pilot study (Chapter 5)", "MTSamples (public)", "All summaries, claims, labels and probabilities", "bash run.sh --offline reproduces every number without API or model calls"],
@@ -108,7 +108,7 @@ def blocks(R: Results) -> list:
     b += [("h1", "Appendix C: Manual Audit Protocol"),
           ("pni", "The annotator labels each sampled statement against the hospital course shown beside it, and only against that course. "
                   "The tool hides the condition that produced the statement and the judge's label."),
-          ("table", dict(caption="Labels of the manual audit.", columns=["Label", "When it is used"], widths=[1.4, 5.1], font=9.5, align=["left", "left"],
+          ("table", dict(caption="Labels of the manual audit", columns=["Label", "When it is used"], widths=[1.4, 5.1], font=9.5, align=["left", "left"],
                          rows=[["S, supported", "Every fact in the statement is in the course or follows directly from it; plain-language paraphrase is acceptable."],
                                ["P, partly supported", "The statement has several facts; at least one is supported and at least one is not."],
                                ["U, not supported", "The main content is not in the course, or it contradicts the course."],

@@ -66,11 +66,11 @@ def blocks(R: Results) -> list:
             f"re-aggregating the small model's evidence changes little; and for {int((_A['doc'] > _A['top3']).sum())} of the "
             f"{len(_A)} large candidates, letting the model see the whole hospital course beats three retrieved sentences, because "
             f"patient-facing paraphrase draws on several parts of the course at once."),
-          ("table", dict(label="judges", caption="Candidate judges scored against the medical-expert annotations on all 1,781 sentences. Thresholds are chosen on the other subset (doctor-written for the generated summaries and vice versa; for the all-sentences row the two are pooled). Flag rate is the share of sentences the judge marks unsupported; the experts marked 20.4 percent.",
+          ("table", dict(label="judges", caption="Candidate judges against the medical-expert annotations", note="Scored on all 1,781 sentences. Thresholds are chosen on the other subset (doctor-written for the generated summaries and vice versa; for the all-sentences row the two are pooled). Flag rate is the share of sentences the judge marks unsupported; the experts marked 20.4 percent.",
                          columns=["Judge", "Evidence", "AUROC", "Precision", "Recall", "Specificity", "F1", "Kappa", "Flag rate", "τ"],
                          widths=[1.55, 0.85, 0.55, 0.6, 0.5, 0.7, 0.4, 0.5, 0.45, 0.4], font=8, align=["left", "left"] + ["center"] * 8,
                          rows=[[r.jn, r.mn, f2(r.auroc), f2(r.precision), f2(r.recall), f2(r.specificity), f2(r.f1), f2(r.kappa), pct0(r.flag_rate), f"{r.tau_from_other_subset:.2f}"] for _, r in allr.iterrows()])),
-          ("figure", dict(label="judges", path="results/fig_judges.png", width=6.3, caption="AUROC and kappa of each candidate judge and evidence mode against the expert annotations, all sentences."))]
+          ("figure", dict(label="judges", path="results/fig_judges.png", width=6.3, caption="AUROC and kappa of each candidate judge and evidence mode"))]
     bmc = jc[(jc.judge == "bespoke_minicheck_7b") & (jc.group == "all")]
     if len(bmc):
         bdm = bmc[bmc["mode"] == "doc"]; deb = jc[(jc.judge == "deberta_large_nli") & (jc["mode"] == "doc") & (jc.group == "all")].iloc[0]
@@ -193,7 +193,7 @@ def independence_blocks():
                 f"sources, which is why the manual audit of Section 7.9 measures the judge on its summaries directly. The selected "
                 f"judge's figures are therefore an optimistic estimate of its accuracy; the comparisons of Chapter 7 do not need it to "
                 f"be accurate in absolute terms, but they do need its errors to be similar across conditions, which the audit tests."),
-              ("table", dict(label="persource", caption="Agreement of the selected judge (DeBERTa-v3-large NLI, whole-course evidence, τ = 0.20) with the experts, by source of the summaries.",
+              ("table", dict(label="persource", caption="Agreement of the selected judge with the experts by source of the summaries", note="Selected judge: DeBERTa-v3-large NLI, whole-course evidence, τ = 0.20.",
                              columns=["Source", "Sentences", "Expert rate", "Flag rate", "Precision", "Recall", "Kappa", "AUROC"],
                              widths=[1.85, 0.75, 0.7, 0.65, 0.7, 0.6, 0.55, 0.6], font=9, align=["left"] + ["center"] * 7,
                              rows=[[SOURCE_NAMES.get(k, k), str(int(P_.loc[k, 'n'])), pct0(P_.loc[k, 'expert_rate']), pct0(P_.loc[k, 'flag_rate']),
@@ -244,7 +244,7 @@ def atomic_blocks():
                 f"{ex.sentence.nunique()} pilot documents"
                 + (f"; in {mixed} of them some facts are supported and others are not, which a single sentence-level score cannot express."
                    if mixed else "; in these examples the facts of each sentence agree in support.")),
-              ("table", dict(label="atomicex", caption=f"Atomic decomposition of three pilot summary sentences (public MTSamples data). The number after each sentence and each fact is the selected judge's support probability against the whole note; values below {ex.tau.iloc[0]:.2f} are flagged.",
+              ("table", dict(label="atomicex", caption="Atomic decomposition of three pilot summary sentences", note=f"Public MTSamples data. The number after each sentence and each fact is the selected judge's support probability against the whole note; values below {ex.tau.iloc[0]:.2f} are flagged.",
                              columns=["Sentence (support)", "Atomic fact", "Support"], widths=[2.9, 2.9, 0.7], font=8.5,
                              align=["left", "left", "center"], rows=rows))]
     return b

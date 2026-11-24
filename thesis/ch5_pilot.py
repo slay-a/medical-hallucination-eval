@@ -118,7 +118,7 @@ def blocks(R: Results) -> list:
             f"the retrieval conditions ({pct0(share[('E0','Supported')])} for E0) and {pct0(share[('E3','Supported')])} under "
             f"verification; of the verbatim E2 sentences it labeled {e2_ns} Not-Supported and {e2c_total} Contradicted, judge errors by "
             f"construction (Section 5.4)."),
-          ("table", dict(label="desc", caption=f"Length, number of claims, share of claims labeled Supported, and per-document Unsupported Fact Rate and Contradiction Rate per condition (n = {R.n_docs} documents; header lines excluded).",
+          ("table", dict(label="desc", caption="Pilot summaries by condition", note=f"n = {R.n_docs} documents; header lines excluded.",
                          columns=["Condition", "Words per summary, mean (SD)", "Claims per summary", "Total claims", "Supported share", "UFR, mean (SD)", "CR, mean (SD)"],
                          widths=[1.35, 1.2, 0.8, 0.7, 0.8, 0.9, 0.9], font=9.5,
                          rows=[[NAME[c], f"{R.words[c].mean():.0f} ({R.words[c].std():.0f})", f"{R.claims_per[c]:.1f}", f"{tot[c]:,}",
@@ -134,7 +134,7 @@ def blocks(R: Results) -> list:
             f"rates, as a reference for the judge's errors on verbatim text should. The pattern was the same in consultation notes and "
             f"discharge summaries, and note length did not moderate the effects (Spearman's rho with the paired E1 minus E0 difference "
             f"{rho_u:+.2f} for UFR and {rho_c:+.2f} for CR)."),
-          ("table", dict(label="tests", caption="Paired comparisons between conditions. Delta is the mean of per-document differences (second condition minus first); negative values favor the second condition. CI is the 95 percent percentile bootstrap interval (10,000 resamples). p is the two-sided Wilcoxon signed-rank p-value and p(Holm) its Holm adjustment over the twenty tests of the table. d(z) is the standardized mean difference and r the matched-pairs rank-biserial correlation (positive = improvement).",
+          ("table", dict(label="tests", caption="Paired comparisons between conditions", note="Delta is the mean of per-document differences (second condition minus first); negative values favor the second condition. CI is the 95 percent percentile bootstrap interval (10,000 resamples). p is the two-sided Wilcoxon signed-rank p-value and p(Holm) its Holm adjustment over the twenty tests of the table. d(z) is the standardized mean difference and r the matched-pairs rank-biserial correlation (positive = improvement).",
                          columns=["Comparison", "Metric", "Delta", "95% CI", "Median delta", "p", "p (Holm)", "d(z)", "r", "Improved / same / worse"],
                          widths=[0.85, 0.55, 0.65, 1.0, 0.6, 0.6, 0.6, 0.5, 0.5, 0.95], font=8.5,
                          rows=[[t.comparison, t.metric, signed(t.delta_mean), f"[{t.ci95_low:+.3f}, {t.ci95_high:+.3f}]", signed(t.delta_median), fpn(t.p), fpn(t.p_holm),
@@ -152,12 +152,12 @@ def blocks(R: Results) -> list:
             f"[[cite:hegselmann2024]]. At the level of individual summaries the judge's UFR is only weakly correlated with the experts' "
             f"flagged share (Spearman rho = {f2(cs.spearman_rho)}), and its contradiction label recovered {pct0(contra_recall)} of the "
             f"sentences experts marked as contradicting the source while firing on 28 to 32 percent of all sentences."),
-          ("table", dict(label="calib", caption="Agreement between the judge and the medical-expert annotations at the sentence level. The any detector flags Not-Supported or Contradicted sentences; AUROC uses one minus the entailment probability as the score. Kappa is Cohen's kappa.",
+          ("table", dict(label="calib", caption="Sentence-level agreement between the judge and the medical experts", note="The any detector flags Not-Supported or Contradicted sentences; AUROC uses one minus the entailment probability as the score. Kappa is Cohen's kappa.",
                          columns=["Group", "Summaries", "Sentences", "Expert-flagged", "Judge-flagged (UFR)", "Precision", "Recall", "Specificity", "F1", "Kappa", "AUROC"],
                          widths=[1.2, 0.6, 0.6, 0.65, 0.65, 0.55, 0.5, 0.6, 0.45, 0.45, 0.5], font=8.5,
                          rows=[[r.group.replace("_", " "), str(int(r.n_summaries)), f"{int(r.n_sentences):,}", pct(r.expert_flag_rate), pct(r.judge_UFR), f2(r.any_precision), f2(r.any_recall),
                                 f2(r.any_specificity), f2(r.any_f1), f2(r.any_kappa), f2(r.auroc_1_minus_p_entail)] for _, r in R.cal.iterrows()])),
-          ("figure", dict(label="calib", path=f"{FIG}/fig_calibration.png", width=6.5, caption="Left: share of sentences flagged by the experts and by the judge, with the precision and recall of the judge's flags, per group. Right: distribution of the judge's entailment probability for sentences that the experts did and did not flag."))]
+          ("figure", dict(label="calib", path=f"{FIG}/fig_calibration.png", width=6.5, caption="Expert and judge flags (left) and the judge's entailment probabilities (right)"))]
     if var_all is not None:
         best_auc = var_all.auroc_1_minus_pe.idxmax()
         b += [P(f"[[tab:variants]] tests whether the disagreement stems from how evidence is aggregated. It does not: concatenating the "
@@ -168,7 +168,7 @@ def blocks(R: Results) -> list:
                 f"to 512 tokens cannot find a sentence's support in a long premise. The best attainable kappa over every threshold and "
                 f"variant was {f2(var_all.best_kappa.max())}; the limiting factor is the NLI model's judgment of individual "
                 f"patient-facing sentences, not the retrieval or aggregation rule."),
-              ("table", dict(label="variants", caption="Evidence-aggregation variants of the judge evaluated on all 1,781 expert-annotated sentences with the same cross-encoder. Flag rate, precision, recall and kappa are at τ = 0.5; best kappa is the maximum over thresholds from 0.05 to 0.95; rho is Spearman's correlation between judge and expert rates per summary.",
+              ("table", dict(label="variants", caption="Evidence-aggregation variants of the judge", note="Evaluated on all 1,781 expert-annotated sentences with the same cross-encoder. Flag rate, precision, recall and kappa are at τ = 0.5; best kappa is the maximum over thresholds from 0.05 to 0.95; rho is Spearman's correlation between judge and expert rates per summary.",
                              columns=["Variant", "Judge flag rate", "AUROC", "Precision", "Recall", "Kappa", "Best kappa (τ)", "Summary rho"],
                              widths=[2.2, 0.75, 0.6, 0.7, 0.6, 0.6, 0.85, 0.7], font=9.5,
                              rows=[[VNAME[k], pct(r.judge_flag_rate), f2(r.auroc_1_minus_pe), f2(r.precision), f2(r.recall), f2(r.kappa), f"{f2(r.best_kappa)} ({r.best_kappa_tau:.2f})", f2(r.summary_spearman)]
@@ -200,11 +200,11 @@ def blocks(R: Results) -> list:
             f"proposal anticipated, and restoring the note (E1b) restored it; E3's coverage did not fall below the baseline despite its "
             f"brevity, because the verifier's corrections draw on the full note. Among the LLM conditions, only excerpt-only retrieval "
             f"paid for its faithfulness gain with a clear loss of coverage."),
-          ("table", dict(label="cov", caption="Coverage proxy per condition: mean share of source sentences whose best cosine similarity to any claim reaches the threshold, and mean best similarity.",
+          ("table", dict(label="cov", caption="Coverage proxy per condition",
                          columns=["Condition", "Coverage at 0.5", "Coverage at 0.6", "Coverage at 0.7", "Mean best similarity", "Claims per summary"],
                          widths=[1.7, 0.95, 0.95, 0.95, 1.05, 0.9], font=10,
                          rows=[[NAME[c], pct(r.coverage_at_0_5), pct(r.coverage_at_0_6), pct(r.coverage_at_0_7), f3(r.mean_best_similarity), f"{r.n_claims:.1f}"] for c, r in cov.iterrows()],
-                         note="Paired tests on coverage at 0.6: " + "; ".join(f"{col[8:].replace('_vs_', ' vs ')} {fp(cov.loc['E0', col])}" for col in cov.columns if col.startswith("p_cov06_")) + "."))]
+                         note="Coverage is the mean share of source sentences whose best cosine similarity to any claim reaches the threshold. Paired tests on coverage at 0.6: " + "; ".join(f"{col[8:].replace('_vs_', ' vs ')} {fp(cov.loc['E0', col])}" for col in cov.columns if col.startswith("p_cov06_")) + "."))]
     b += [H2("5.6 What Remains Unsupported"),
           P(f"[[tab:tax]] categorizes the claims the judge did not label Supported. Follow-up and scheduling statements are the largest "
             f"category under every LLM condition and the only one that grows under excerpt-only RAG "
@@ -218,7 +218,7 @@ def blocks(R: Results) -> list:
             f"complications\" was called Contradicted and the E1 phrasing \"there were no complications from the procedures\" Supported, "
             f"and claims that appear almost verbatim under both conditions and are unsupported under both are faithful paraphrases that "
             f"the NLI model cannot match to any single sentence, the failure mode Section 5.3 quantified."),
-          ("table", dict(label="tax", caption="Keyword-assisted categories of claims that the judge did not label Supported, for the LLM conditions. Contradicted counts are the subset labeled Contradicted.",
+          ("table", dict(label="tax", caption="Categories of claims the judge did not label Supported", note="Keyword-assisted categories for the LLM conditions. Contradicted counts are the subset labeled Contradicted.",
                          columns=["Category"] + [f"{c} {k}" for c in GEN for k in ("unsupp.", "contra.")], widths=[1.9] + [0.575] * (2 * len(GEN)), font=9, rows=tax_rows))]
     b += [H2("5.7 Summary of the Pilot"),
           ("bullets", [

@@ -266,7 +266,7 @@ def blocks(R: Results) -> list:
             "courses, each paired with the discharge instructions written by the treating clinician, are the documents of the main "
             "study. MIMIC-IV-Note, from which those courses are drawn, and MedNLI, used to adapt a candidate judge, were obtained under "
             "PhysioNet credentialing (Section 3.7)."),
-          ("table", dict(label="datasources", caption="Data sources used in this thesis, their access conditions and their roles.",
+          ("table", dict(label="datasources", caption="Data sources used in this thesis",
                          columns=["Source", "Access", "Content", "Size", "Role in this thesis"],
                          widths=[1.1, 1.0, 2.1, 0.8, 1.5], font=9.5, align=["left", "left", "left", "center", "left"],
                          rows=[["MTSamples [[cite:mtsamples]]", "Public", f"{R.total_rows:,} sample medical transcriptions, "
@@ -287,7 +287,7 @@ def blocks(R: Results) -> list:
             f"transcriptions are heavily structured, with upper-case section headings and many terse negations (\"No nausea, vomiting, or "
             f"diarrhea\"), and the public file has lost its line breaks, so that wherever the source had a new line the file has a comma "
             f"(\"CHIEF COMPLAINT:,  Foul-smelling urine...,HISTORY OF PRESENT ILLNESS:,\"), which Section 3.5 handles."),
-          ("table", dict(label="mtstats", caption="Characteristics of the fifty sampled MTSamples documents.",
+          ("table", dict(label="mtstats", caption="Characteristics of the fifty sampled MTSamples documents",
                          columns=["Characteristic", "Value"], widths=[3.4, 3.1], font=10, align=["left", "left"],
                          rows=[["Eligible documents (two note types, non-empty)", f"{R.n_eligible} ({R.n_consult_eligible} consultation, {R.n_discharge_eligible} discharge)"],
                                ["Sampled documents", f"{R.n_docs} ({R.n_consult} consultation, {R.n_discharge} discharge), seed 42"],
@@ -327,7 +327,7 @@ def blocks(R: Results) -> list:
             "what the clinician chose to tell the patient has omitted something a clinician judged important. (The PhysioNet download "
             "was incomplete; the fourteen annotation files, stored at the start of the archive, were extracted sequentially and each "
             "matched its published SHA-256 digest, and the missing portion is training data this thesis does not use.)"),
-          ("table", dict(label="expertlabels", caption="Expert annotation labels in ann-pt-summ and the number of agreed spans of each type in the 210 summaries used. Descriptions paraphrase the label names of the published annotation protocol.",
+          ("table", dict(label="expertlabels", caption="Expert annotation labels in ann-pt-summ", note="Spans is the number of agreed spans of each type in the 210 summaries used. Descriptions paraphrase the label names of the published annotation protocol.",
                          columns=["Label", "Spans", "Description"], widths=[1.7, 0.7, 4.1], font=9.5, align=["left", "center", "left"], rows=lab_rows))]
     b += [H2("3.5 Preprocessing Pipeline")]
     b += [P("Preprocessing determines what the judge sees, and two of its steps changed the conclusions of the study. In order:"),
@@ -372,7 +372,7 @@ def blocks(R: Results) -> list:
             f"artifact is the comma-encoded line break of Section 3.2, which produces evidence fragments such as \",CARDIOVASCULAR: "
             f",RESPIRATORY:\" that the extractive baseline copies into its summaries; the cleaned-evidence ablation of Section 5.4 "
             f"measures how much of the judge's error on verbatim sentences it explains."),
-          ("table", dict(label="headerfilter", caption="Effect of removing markdown header lines from the claim set. Means are per-document means over the fifty documents.",
+          ("table", dict(label="headerfilter", caption="Effect of removing markdown header lines from the claim set", note="Means are per-document means over the fifty documents.",
                          columns=["Condition", "Claim rows before", "Header lines", "Claims after", "Headers labeled Contradicted", "Mean CR before", "Mean CR after", "Mean UFR before", "Mean UFR after"],
                          widths=[0.8, 0.75, 0.7, 0.7, 0.9, 0.7, 0.7, 0.7, 0.7], font=9,
                          rows=[[c, str(int(R.hdr(c, "CR", "n_claims_before"))), str(int(R.hdr(c, "CR", "n_headers"))), str(int(R.hdr(c, "CR", "n_claims_after"))),
@@ -419,7 +419,7 @@ def blocks(R: Results) -> list:
             "judge-estimated throughout; only the expert annotations (Section 4.7) and the manual audit (Section 4.10.5) provide "
             "human-confirmed labels."),
           ("figure", dict(label="pipeline", path=f"{FIG}/fig_pipeline.png", width=6.5,
-                          caption="Overview of the experimental pipeline. Each source note is summarized under five conditions; every summary is scored by the same claim-level NLI judge, whose evidence sentences are retrieved from the same note."))]
+                          caption="Overview of the experimental pipeline"))]
     b += [H2("4.2 The Claim-Level Evaluation Framework"), H3("4.2.1 Claim Segmentation")]
     b += [P("A summary is decomposed into claims at sentence granularity with spaCy; sentences under ten characters, section header "
             "lines and explicit abstention lines are removed (Section 3.5), and in the main study merged headers are stripped and "
@@ -489,7 +489,7 @@ def blocks(R: Results) -> list:
             "corpus is the document itself and the generator sees the excerpts only, so that the effect of retrieval can be isolated; "
             "the predictable cost is that content in unretrieved chunks cannot appear in the summary, which the coverage proxy of "
             "Section 4.8 measures, and the variant that also sees the note is E1b (Section 4.6)."),
-          ("table", dict(label="conditions", caption="Generation settings of the five evaluated conditions.",
+          ("table", dict(label="conditions", caption="Generation settings of the five evaluated conditions",
                          columns=["Condition", "Generator", "Input to the generator", "Retrieval", "Decoding"],
                          widths=[0.8, 1.0, 2.3, 1.5, 0.9], font=9, align=["left", "left", "left", "left", "left"],
                          rows=[["E0", "GPT-4o-mini", "First 4,500 characters of the note; four-part instruction", "none", "T = 0.3, 450 tokens"],
@@ -575,7 +575,7 @@ def blocks(R: Results) -> list:
             "same courses: E1 and E1b without the citation instruction, and E0 asked for about 150 words, the mean length of E1, as a "
             "length-matched baseline. E2 cannot paraphrase and serves as a reference for the judge's errors, not as a competitor on "
             "usefulness."),
-          ("table", dict(label="confounds", caption="Variables that differ between the main-study conditions and the variants that separate them. All LLM conditions use the same generator and decoding (Qwen2.5-7B-Instruct, temperature 0.3, at most 450 output tokens).",
+          ("table", dict(label="confounds", caption="Variables that differ between the main-study conditions and their variants", note="All LLM conditions use the same generator and decoding (Qwen2.5-7B-Instruct, temperature 0.3, at most 450 output tokens).",
                          columns=["Condition", "Source text shown to the model", "Citation instruction", "Length instruction", "Model calls", "Other differences"],
                          widths=[1.05, 1.55, 0.8, 0.85, 0.6, 1.65], font=8.5, align=["left"] * 6,
                          rows=[["E0", "Whole course (at most 6,000 characters)", "No", "150 to 250 words", "1", "Abstention allowed"],
@@ -643,7 +643,7 @@ def blocks(R: Results) -> list:
             "MLX framework. Recomputing every pilot result takes about five minutes, scoring one large candidate judge against the expert "
             "annotations about an hour, and generating the 1,210 main-study summaries roughly seven hours. [[tab:tools]] lists the "
             "software; every run is offline except the pilot's generation calls to the OpenAI API."),
-          ("table", dict(label="tools", caption="Software, models and versions used.",
+          ("table", dict(label="tools", caption="Software, models and versions used",
                          columns=["Component", "Package or model", "Version"], widths=[2.2, 2.8, 1.5], font=9.5, align=["left", "left", "left"],
                          rows=[["Language", "Python", "3.9.6 (pipeline) and 3.13 (local model server)"],
                                ["LLM generator, pilot study", "OpenAI GPT-4o-mini via openai", "gpt-4o-mini; openai 2.31.0"],

@@ -162,7 +162,7 @@ def blocks(R: Results) -> list:
               if fewer_sup else ", while stating as many supported claims as E0 within the precision of the test")
            + ". A lower rate is therefore not by itself a better summary; Section 7.4 measures what the summaries leave out.")
     b += [P(txt),
-          ("table", dict(label="mdesc", caption="Length, claims and abstentions per summary in the main study (means over the 110 courses). Supported and unsupported claims are counted by the selected judge.",
+          ("table", dict(label="mdesc", caption="Length, claims and abstentions per summary in the main study", note="Means over the 110 courses. Supported and unsupported claims are counted by the selected judge.",
                          columns=["Condition", "Words", "Claims", "Supported claims", "Unsupported claims", "Abstentions"],
                          widths=[2.3, 0.7, 0.7, 0.95, 1.0, 0.85], font=9.5,
                          rows=[[NAME.get(c, c), f"{D.m(c, 'words_mean'):.0f}", f"{D.m(c, 'claims_mean'):.1f}", f"{D.m(c, 'supported_mean'):.1f}",
@@ -198,10 +198,10 @@ def blocks(R: Results) -> list:
               f"Among the grounded conditions only {_join([c for c, _ in among if c not in zero_in])} differs from E1 with an interval "
               f"that excludes zero, a secondary comparison that Section 7.10 examines under a second judge. "))
     b += [P(txt),
-          ("table", dict(label="mrates", caption="Judge-estimated UFR and CR per summary in the main study: mean with 95 percent bootstrap interval, median, paired mean difference from E0 with 95 percent interval and Holm-adjusted p-value (primary family of twelve tests), and paired difference from E1 with unadjusted Wilcoxon p-value. Negative differences favor the row condition.",
+          ("table", dict(label="mrates", caption="Judge-estimated UFR and CR in the main study", note="Intervals are 95 percent bootstrap intervals. Holm p is the Holm-adjusted p-value of the difference from E0 (primary family of twelve tests); the p-value of the difference from E1 is an unadjusted Wilcoxon p-value. Negative differences favor the row condition.",
                          columns=["Metric", "Condition", "Mean (95% CI)", "Median", "Δ vs E0 (95% CI)", "Holm p", "Δ vs E1 (p)"],
                          widths=[0.53, 1.37, 1.21, 0.57, 1.32, 0.55, 0.95], font=8, rows=rows)),
-          ("figure", dict(label="mbox", path="results/fig_mimic_box.png", width=6.5, caption="Per-document judge-estimated UFR (left) and CR (right) in the main study under each condition and for the clinician's instructions."))]
+          ("figure", dict(label="mbox", path="results/fig_mimic_box.png", width=6.5, caption="Per-document judge-estimated UFR (left) and CR (right) in the main study"))]
     ref = _csv("mimic_reference.csv")
     sj = _csv("mimic_judge_agreement.csv")
     sj_e2 = sj.set_index("condition").loc["E2"] if sj is not None and "E2" in set(sj.condition) else None
@@ -272,10 +272,10 @@ def blocks(R: Results) -> list:
                     + ("its coverage loss is inherited from its E1 draft rather than caused by abstaining." if not assoc else
                        "part of its coverage loss accompanies its abstentions."))
     b += [P(txt),
-          ("table", dict(label="mcov", caption="Judge-estimated coverage of the clinician's discharge instructions: mean percentage of the clinician's sentences supported by the summary (95 percent interval), mean number of the clinician's sentences not covered, and paired differences in percentage points from E0 (95 percent interval, Holm-adjusted p) and from E1 (unadjusted p).",
+          ("table", dict(label="mcov", caption="Judge-estimated coverage of the clinician's discharge instructions", note="Coverage is the mean percentage of the clinician's sentences supported by the summary; differences are in percentage points. Intervals are 95 percent intervals. The p-value of the difference from E0 is Holm-adjusted and that of the difference from E1 is unadjusted.",
                          columns=["Condition", "Coverage, % (95% CI)", "Sentences not covered", "Δ vs E0, points (95% CI)", "Holm p", "Δ vs E1 (p)"],
                          widths=[1.6, 1.15, 0.95, 1.35, 0.55, 0.9], font=8.5, rows=rows)),
-          ("figure", dict(label="mcov", path="results/fig_mimic_coverage.png", width=5.6, caption="Judge-estimated coverage of the clinician's discharge instructions per document under each condition."))]
+          ("figure", dict(label="mcov", path="results/fig_mimic_coverage.png", width=5.6, caption="Per-document coverage of the clinician's discharge instructions"))]
 
     # ── retrieval-ablation families (Holm within each measure), used in Sections 7.5 and 7.7
     abl = _csv("mimic_ablations.csv")
@@ -350,7 +350,7 @@ def blocks(R: Results) -> list:
                     f"({padj(adjp.get((lab, 'UFR')))}), so part of E1b's effect "
                     + ("does come from citing." if adjp.get((lab, "UFR"), 1) < 0.05 and nb.delta_mean > 0 else "may come from citing, but the separate effect is not established."))
         b += [P(txt),
-              ("table", dict(label="mvar", caption="Variants that separate length and the citation instruction from retrieval: mean words of the two summaries compared, paired differences in judge-estimated UFR and in coverage (percentage points) with 95 percent intervals, and Holm-adjusted p-values within the family of six comparisons. The last row is the citation ablation of Section 7.7, reversed.",
+              ("table", dict(label="mvar", caption="Variants that separate length and the citation instruction from retrieval", note="Words is the mean length of the two summaries compared. Differences in judge-estimated UFR and in coverage (percentage points) have 95 percent intervals, and p-values are Holm-adjusted within the family of six comparisons. The last row is the citation ablation of Section 7.7, reversed.",
                              columns=["Comparison", "Words", "Δ UFR (95% CI)", "Holm p", "Δ coverage, points (95% CI)", "Holm p"],
                              widths=[1.9, 0.8, 1.35, 0.55, 1.35, 0.55], font=8.5, align=["left"] + ["center"] * 5, rows=rows))]
 
@@ -385,7 +385,7 @@ def blocks(R: Results) -> list:
                                 + (f" (judge agreement {pct0(A.loc[c, 'agreement'])})" if "agreement" in A.columns and not _nan(A.loc[c, "agreement"]) else "")
                                 for c in A.index) + ".")
         b += [P(txt),
-              ("table", dict(label="mcite", caption="Citation coverage, accuracy and reliability of the retrieval conditions, from the pooled counts over the 110 courses. Accuracy is the share of cited claims supported by their cited excerpts under the judge; reliability is the share of all claims that carry a valid and supporting citation.",
+              ("table", dict(label="mcite", caption="Citation coverage, accuracy and reliability of the retrieval conditions",
                              columns=["Condition", "Claims", "Cited claims", "Citation coverage", "Cited and supported", "Citation accuracy", "Citation reliability"],
                              widths=[1.7, 0.65, 0.7, 0.8, 0.85, 0.8, 0.85], font=8.5, rows=rows))]
 
@@ -410,7 +410,7 @@ def blocks(R: Results) -> list:
                + ("Lexical BM25 and dense retrieval produced indistinguishable rates and coverage. "
                   if all("bm25" not in F[m] or F[m]["bm25"][1] >= 0.05 for m in ("UFR", "CR", "coverage_ref")) else ""))
         b += [P(txt),
-              ("table", dict(label="mabl", caption="Retrieval ablations: paired mean difference of each variant from the E1 base configuration (five-sentence chunks, top three, dense retrieval, citations required), with unadjusted Wilcoxon p-values. UFR and CR differences are in rate units, the others in percentage points. Negative UFR and CR differences and positive coverage and citation differences favor the variant.",
+              ("table", dict(label="mabl", caption="Retrieval ablations", note="Paired mean difference of each variant from the E1 base configuration (five-sentence chunks, top three, dense retrieval, citations required), with unadjusted Wilcoxon p-values. UFR and CR differences are in rate units, the others in percentage points. Negative UFR and CR differences and positive coverage and citation differences favor the variant.",
                              columns=["Variant", "Δ UFR (p)", "Δ CR (p)", "Δ coverage (p)", "Δ citation coverage (p)", "Δ citation accuracy (p)"],
                              widths=[1.75, 0.95, 0.95, 0.95, 0.95, 0.95], font=8.5, align=["left"] + ["center"] * 5, rows=rows))]
 
@@ -451,10 +451,10 @@ def blocks(R: Results) -> list:
                + (f", whereas {_join(unstable)} change{'s' if len(unstable) == 1 else ''} sign or significance between generations, "
                   f"which is why the grounded conditions are not ranked against one another." if unstable else "."))
         b += [P(txt),
-              ("table", dict(label="mrepvar", caption=f"Run-to-run variation over three generations on {n_rep} courses: mean UFR, standard deviation of UFR between generations of the same course and between courses, intraclass correlation (ICC), and the same for coverage (standard deviation in percentage points).",
+              ("table", dict(label="mrepvar", caption=f"Run-to-run variation over three generations on {n_rep} courses", note="SD is the standard deviation of UFR between generations of the same course and between courses, and ICC is the intraclass correlation. Coverage standard deviations are in percentage points.",
                              columns=["Condition", "Mean UFR", "UFR SD within course", "UFR SD between courses", "UFR ICC", "Coverage SD within course", "Coverage ICC"],
                              widths=[1.75, 0.65, 0.85, 0.9, 0.6, 0.95, 0.75], font=8.5, rows=rows)),
-              ("table", dict(label="mrepcmp", caption=f"Paired UFR differences (Wilcoxon p) on the {n_rep} courses in each generation and for the mean of the three generations.",
+              ("table", dict(label="mrepcmp", caption=f"Paired UFR differences on the {n_rep} courses in each generation", note="Wilcoxon p in parentheses. The last column uses the mean of the three generations.",
                              columns=["Comparison"] + [GEN_NAMES[g] for g in ("base", "rep1", "rep2", "mean")],
                              widths=[1.4, 1.3, 1.3, 1.3, 1.2], font=9, rows=crow))]
 
@@ -507,7 +507,7 @@ def blocks(R: Results) -> list:
                     + (f"; citation checks kappa {f2(cg.iloc[0].kappa)}" if len(cg) else "")
                     + "), with the most common change from partly supported to supported, in the direction of the clarified rule.")
         b += [P(txt),
-              ("table", dict(label="maudit", caption="Manual audit of the selected judge on the main-study claims: number of claims labeled, manually confirmed share of unsupported claims weighted to the condition's claims (95 percent course-bootstrap interval), share of the condition's claims the judge flags, and the judge's precision, false omission rate, sensitivity, specificity and kappa against the manual labels.",
+              ("table", dict(label="maudit", caption="Manual audit of the selected judge on the main-study claims", note="Manual unsupported is the manually confirmed share of unsupported claims, weighted to the condition's claims, with a 95 percent course-bootstrap interval. Judge flags is the share of the condition's claims the judge flags. Precision, false omission rate, sensitivity, specificity and kappa are the judge's, against the manual labels.",
                              columns=["Condition", "Labeled", "Manual unsupported (95% CI)", "Judge flags", "Precision", "False omission", "Sensitivity", "Specificity", "Kappa"],
                              widths=[1.45, 0.55, 1.25, 0.55, 0.6, 0.6, 0.65, 0.65, 0.5], font=8, rows=rows))]
 
@@ -531,7 +531,7 @@ def blocks(R: Results) -> list:
                 f"{'raises' if alt.loc['E0', 'UFR_mean'] > D.m('E0', 'UFR_mean') else 'lowers'} the absolute rates ([[tab:mtau]]) but leaves "
                 f"the paired comparisons against E0 unchanged in direction and significance for {su_[0]} of {su_[1]} UFR, {sc_[0]} of "
                 f"{sc_[1]} CR and {scv_[0]} of {scv_[1]} coverage comparisons."),
-              ("table", dict(label="mtau", caption=f"Main-study means at the selected threshold ({D.tau:.2f}) and at the pilot pipeline's threshold (0.5).",
+              ("table", dict(label="mtau", caption="Main-study means at the selected threshold and at the pilot threshold",
                              columns=["Condition", f"UFR (τ={D.tau:.2f})", "UFR (τ=0.5)", f"CR (τ={D.tau:.2f})", "CR (τ=0.5)", f"Coverage (τ={D.tau:.2f})", "Coverage (τ=0.5)"],
                              widths=[1.9, 0.75, 0.75, 0.75, 0.75, 0.8, 0.8], font=9,
                              rows=[[NAME.get(c, c), f3(D.m(c, 'UFR_mean')), f3(alt.loc[c, 'UFR_mean']), f3(D.m(c, 'CR_mean')), f3(alt.loc[c, 'CR_mean']),
@@ -579,7 +579,7 @@ def blocks(R: Results) -> list:
                        if len(low_f) == len(GROUNDED) else
                        (f"At the level of facts only {_join(low_f)} had a significantly lower rate than E0." if low_f else
                         "At the level of facts no grounded condition had a significantly lower rate than E0."))),
-                  ("table", dict(label="matomic", caption="Atomic-fact analysis of the main-study claims: mean facts per claim, share of claims mixing supported and unsupported facts, share of facts flagged by the judge (per-summary mean), share of claims with at least one flagged fact, and the sentence-level UFR of Section 7.3.",
+                  ("table", dict(label="matomic", caption="Atomic-fact analysis of the main-study claims", note="Mixed claims mix supported and unsupported facts. Fact-level UFR is the share of facts flagged by the judge (per-summary mean). The last column is the sentence-level UFR of Section 7.3.",
                                  columns=["Condition", "Facts per claim", "Mixed claims", "Fact-level UFR", "Claims with a flagged fact", "Sentence-level UFR"],
                                  widths=[1.9, 0.8, 0.75, 0.85, 1.1, 0.95], font=9, rows=rows))]
     agr = _csv("mimic_judge_agreement.csv")
@@ -603,7 +603,7 @@ def blocks(R: Results) -> list:
                     f"{f3(G.loc['E1', 'UFR_second'])}, {fp(s31.p)}), whereas under the selected judge the two do not differ, so whether "
                     f"verification adds to retrieval depends on the judge and this thesis does not claim that it does.")
         b += [P(txt),
-              ("table", dict(label="magree", caption="Agreement between the selected judge (S) and the second judge (2) on the base-condition claims: share of claims flagged by each, agreement and kappa, share of the selected judge's flags confirmed by the second judge, and per-document UFR under each judge, under the conservative rule (flagged by both) and under the inclusive rule (flagged by either).",
+              ("table", dict(label="magree", caption="Agreement between the selected judge and the second judge", note="Base-condition claims. S is the selected judge and 2 the second judge. S flags confirmed is the share of the selected judge's flags confirmed by the second judge. UFR, both uses the conservative rule (flagged by both) and UFR, either the inclusive rule (flagged by either).",
                              columns=["Condition", "Claims", "Flagged S", "Flagged 2", "Agree", "Kappa", "S flags confirmed", "UFR S", "UFR 2", "UFR, both", "UFR, either"],
                              widths=[0.85, 0.55, 0.6, 0.6, 0.5, 0.5, 0.75, 0.5, 0.5, 0.55, 0.6], font=8,
                              rows=[[{"REF": "Clinician", "all": "All"}.get(c, c), f"{int(r.n_claims):,}", pct0(r.flag_rate_first), pct0(r.flag_rate_second), pct0(r.agreement), f2(r.kappa),
@@ -651,7 +651,7 @@ def blocks(R: Results) -> list:
         b += [P(f"*Other generators.* The four text conditions were regenerated for all {D.n} courses with {_join([g for g, _, _ in gens])} "
                 f"under the same prompts, decoding and retrieval, and scored by the same judge ([[tab:mgen]]; the clinician-written "
                 f"reference scores identically in every run, as it must). " + (lambda x: x[0].upper() + x[1:])("; ".join(sents)) + ". " + concl),
-              ("table", dict(label="mgen", caption="Judge-estimated UFR under three generators: per-document means on the same 110 courses, scored by the selected judge at the selected threshold. The reference row is identical by construction.",
+              ("table", dict(label="mgen", caption="Judge-estimated UFR under three generators", note="Per-document means on the same 110 courses, scored by the selected judge at the selected threshold. The reference row is identical by construction.",
                              columns=["Condition", "Qwen2.5-7B (main)"] + [g for g, _, _ in gens],
                              widths=[1.9] + [1.35] * (1 + len(gens)), font=9, rows=grows))]
 
@@ -688,7 +688,7 @@ def blocks(R: Results) -> list:
                     f"knowledge of discharge advice, had the highest rates. Agreement with the clinician's own instructions is low for "
                     f"every condition and is a proxy for correctness, not a measurement of it.")
         b += [P(txt),
-              ("table", dict(label="mqa", caption="Question-answering pilot by condition and question type: share of questions abstained on, answered with every sentence supported by the course, and answered with at least one unsupported sentence (the three shares sum to one); judge-estimated UFR of the answered questions; and share of answer sentences supported by the clinician's discharge instructions.",
+              ("table", dict(label="mqa", caption="Question-answering pilot by condition and question type", note="Abstained, answered with every sentence supported by the course, and answered with at least one unsupported sentence are shares of all questions and sum to one. UFR of answers is the judge-estimated UFR of the answered questions. Supported by clinician is the share of answer sentences supported by the clinician's discharge instructions.",
                              columns=["Condition", "Question", "Abstained", "Answered, all supported", "Answered, some unsupported", "UFR of answers", "Supported by clinician"],
                              widths=[0.75, 1.15, 0.75, 1.0, 1.05, 0.75, 0.95], font=8.5, rows=rows))]
 

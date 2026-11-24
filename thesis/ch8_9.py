@@ -320,7 +320,7 @@ def blocks(R: Results) -> list:
     else:
         cmp_text = "[[tab:compare]] summarizes the strengths, weaknesses and appropriate uses of the five conditions."
     b += [P(cmp_text),
-          ("table", dict(label="compare", caption="Comparison of the five conditions across both studies. Pilot values are per-document means under the MiniLM judge on MTSamples; main-study values are judge-estimated per-document means under the selected judge on MIMIC-IV hospital courses; coverage is the judge-estimated share of the clinician's discharge-instruction sentences supported by the summary.",
+          ("table", dict(label="compare", caption="Comparison of the five conditions across both studies", note="Pilot values are per-document means under the MiniLM judge on MTSamples; main-study values are judge-estimated per-document means under the selected judge on MIMIC-IV hospital courses; coverage is the judge-estimated share of the clinician's discharge-instruction sentences supported by the summary.",
                          columns=["Approach", "Pilot UFR / CR", "Main study UFR / CR", "Coverage of clinician's sentences", "Strengths", "Weaknesses", "Appropriate use"],
                          widths=[0.85, 0.7, 0.75, 0.75, 1.15, 1.15, 1.15], font=8, align=["left", "center", "center", "center", "left", "left", "left"],
                          rows=[[NAME[c], f"{f3(R.mean(c,'UFR'))} / {f3(R.mean(c,'CR'))}",
@@ -374,7 +374,7 @@ def blocks(R: Results) -> list:
              "They state content the course does not (supported by the experts' spans)", "None"],
             ["Question answering", "Retrieval raised abstention and lowered the UFR of answers",
              "Warning-sign answers come from general knowledge (plausible)", "Correctness against clinician-written answers"]]
-        b += [("table", dict(label="findings", caption="Findings of the thesis, the explanations offered for them and the status of each explanation, and the questions that remain open.",
+        b += [("table", dict(label="findings", caption="Findings, explanations and open questions",
                              columns=["Topic", "Finding", "Explanation offered (status)", "Open question"],
                              widths=[1.05, 2.05, 1.85, 1.55], font=8.5, align=["left"] * 4, rows=rows))]
 
