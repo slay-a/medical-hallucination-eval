@@ -71,7 +71,7 @@ Rate (CR).
 | `analyze.py` | Figures (`results/fig_*.png`) and example tables | none |
 | `preprocessing.py` | Shared header filter, abstention filter, and the MTSamples line break repair | none |
 | `thesis/build_thesis.py` | Builds the thesis (.docx and .pdf, CSUN format) from the results | LibreOffice |
-| `deliverables/build_progress_slides.py`, `deliverables/build_source_data_description.py` | Course deliverables | none |
+| `deliverables/build_progress_slides.py`, `deliverables/build_source_data_description.py`, `deliverables/build_defense_slides.py` | Course deliverables | none |
 
 ## Reproduce
 
